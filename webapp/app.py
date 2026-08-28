@@ -155,7 +155,8 @@ def index():
 def api_config():
     with open(CONFIG_PATH, encoding="utf-8") as f:
         cfg = json.load(f)
-    return jsonify({"programas": cfg["programas"], "actividades_base": cfg["actividades_base"], "cursos_de_vida": cfg["cursos_de_vida"]})
+    return jsonify({"programas": cfg["programas"], "actividades_base": cfg["actividades_base"],
+                    "cursos_de_vida": cfg["cursos_de_vida"], "finalidades": cfg.get("finalidades", {})})
 
 # ══════════════════════════════════════════════════════════════════════════
 # RUTAS PRESTADORES (IPS)
@@ -249,6 +250,107 @@ def create_usuario():
 # ══════════════════════════════════════════════════════════════════════════
 # RUTAS EVALUACIÓN (mismas que antes + auth)
 # ══════════════════════════════════════════════════════════════════════════
+def _parsear_rips_txt(content_bytes):
+    """
+    Parsea el formato TXT de RIPS (Res. 3374/2000): pipe-delimited, latin-1.
+    Retorna dict {seccion: [lista_de_dicts]}.
+    """
+    text = content_bytes.decode("latin-1")
+    lines = [l.rstrip("|").strip() for l in text.replace("\r","").split("\n")]
+
+    secciones_raw = {}
+    seccion_actual = None
+    for line in lines:
+        if line.startswith("°---- ARCHIVO-") and line.endswith("----°"):
+            nombre_sec = line.replace("°---- ARCHIVO-","").replace(" ----°","").strip()
+            if nombre_sec not in secciones_raw:
+                secciones_raw[nombre_sec] = []
+                seccion_actual = nombre_sec
+            else:
+                seccion_actual = None  # marcador de cierre — dejar de leer esta sección
+        elif seccion_actual and line and not line.startswith("°"):
+            secciones_raw[seccion_actual].append(line)
+
+    result = {}
+
+    def cols(line):
+        return [c.strip() for c in line.split(",")]
+
+    if "USUARIOS" in secciones_raw:
+        rows = []
+        for line in secciones_raw["USUARIOS"]:
+            c = cols(line)
+            if len(c) < 5: continue
+            rows.append({
+                "tipoDocumentoIdentificacion": c[0],
+                "numDocumentoIdentificacion":  c[1],
+                "codPrestador":                c[2] if len(c) > 2 else "",
+                "fechaNacimiento":             c[3] if len(c) > 3 else "",
+                "codSexo":                     c[4] if len(c) > 4 else "",
+                "codZona":                     c[5] if len(c) > 5 else "",
+                "codMunicipio":                c[6] if len(c) > 6 else "",
+            })
+        result["usuarios"] = rows
+
+    if "CONSULTAS" in secciones_raw:
+        rows = []
+        for line in secciones_raw["CONSULTAS"]:
+            c = cols(line)
+            if len(c) < 7: continue
+            rows.append({
+                "tipoDocumentoIdentificacion":  c[1],
+                "numDocumentoIdentificacion":   c[2],
+                "fechaInicioAtencion":          c[4][:10] if len(c) > 4 else "",
+                "codConsulta":                  c[6] if len(c) > 6 else "",
+                "finalidadTecnologiaSalud":     c[20] if len(c) > 20 else "",
+            })
+        result["consultas"] = rows
+
+    if "PROCEDIMIENTOS" in secciones_raw:
+        rows = []
+        for line in secciones_raw["PROCEDIMIENTOS"]:
+            c = cols(line)
+            if len(c) < 8: continue
+            rows.append({
+                "tipoDocumentoIdentificacion":  c[1],
+                "numDocumentoIdentificacion":   c[2],
+                "fechaInicioAtencion":          c[4][:10] if len(c) > 4 else "",
+                "codProcedimiento":             c[7] if len(c) > 7 else "",
+                "finalidadTecnologiaSalud":     c[19] if len(c) > 19 else "",
+            })
+        result["procedimientos"] = rows
+
+    if "MEDICAMENTOS" in secciones_raw:
+        rows = []
+        for line in secciones_raw["MEDICAMENTOS"]:
+            c = cols(line)
+            if len(c) < 10: continue
+            rows.append({
+                "tipoDocumentoIdentificacion":   c[1],
+                "numDocumentoIdentificacion":    c[2],
+                "fechaDispensacionMedicamento":  c[6][:10] if len(c) > 6 else "",
+                "codTecnologiaSalud":            c[10] if len(c) > 10 else "",
+                "nomTecnologiaSalud":            c[11] if len(c) > 11 else "",
+            })
+        result["medicamentos"] = rows
+
+    if "OTROS SERVICIOS" in secciones_raw:
+        rows = []
+        for line in secciones_raw["OTROS SERVICIOS"]:
+            c = cols(line)
+            if len(c) < 8: continue
+            rows.append({
+                "tipoDocumentoIdentificacion":  c[1],
+                "numDocumentoIdentificacion":   c[2],
+                "fechaInicioAtencion":          c[6][:10] if len(c) > 6 else "",
+                "codServicio":                  c[8] if len(c) > 8 else "",
+                "nomServicio":                  c[9] if len(c) > 9 else "",
+            })
+        result["otrosServicios"] = rows
+
+    return result
+
+
 @app.route("/api/upload-rips", methods=["POST"])
 @login_required
 def upload_rips():
@@ -258,7 +360,25 @@ def upload_rips():
     info = []
     for file in request.files.getlist("files"):
         if not file.filename: continue
-        nombre = file.filename.lower().replace(".json","")
+        fname_lower = file.filename.lower()
+
+        # ── Formato TXT (RIPS Res. 3374 antiguo) ──────────────────────────────
+        if fname_lower.endswith(".txt"):
+            try:
+                content = file.read()
+                secciones = _parsear_rips_txt(content)
+                if not secciones:
+                    info.append({"archivo": file.filename, "error": "No se encontraron secciones RIPS en el archivo", "ok": False})
+                    continue
+                for seccion, datos in secciones.items():
+                    sd["archivos"][seccion] = datos
+                    info.append({"archivo": seccion, "registros": len(datos), "ok": True})
+            except Exception as e:
+                info.append({"archivo": file.filename, "error": str(e), "ok": False})
+            continue
+
+        # ── Formato JSON (RIPS nuevo) ─────────────────────────────────────────
+        nombre = fname_lower.replace(".json","")
         canon = _canonicalizar_nombre(nombre)
         try:
             data = json.load(file)
@@ -267,6 +387,7 @@ def upload_rips():
             info.append({"archivo": canon, "registros": len(data), "ok": True})
         except Exception as e:
             info.append({"archivo": nombre, "error": str(e), "ok": False})
+
     cobertura = {}
     if "usuarios" in sd["archivos"]:
         from evaluator import _calcular_edad, _grupo_edad, _load_config

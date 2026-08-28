@@ -216,8 +216,8 @@ textarea.form-control{resize:vertical;min-height:56px}
   <button class="nav-tab active" onclick="switchTab(event,'tab-dashboard')">📊 Dashboard</button>
   <button class="nav-tab" onclick="switchTab(event,'tab-evaluacion')">⚡ Evaluación</button>
   <button class="nav-tab" onclick="switchTab(event,'tab-actas')">📋 Actas <span id="nav-badge-actas" class="nav-badge">0</span></button>
-  {% if current_user.rol == 'admin' %}
-  <button class="nav-tab" onclick="switchTab(event,'tab-admin')">⚙️ Administración</button>
+  {% if current_user.rol in ['admin','evaluador'] %}
+  <button class="nav-tab" onclick="switchTab(event,'tab-mant');cargarMant()">🔧 Mantenimiento</button>
   {% endif %}
 </div>
 
@@ -273,9 +273,9 @@ textarea.form-control{resize:vertical;min-height:56px}
           ondragover="event.preventDefault();this.style.borderColor='var(--azul2)'"
           ondragleave="this.style.borderColor=''"
           ondrop="event.preventDefault();subirRIPS(event.dataTransfer.files)">
-          <input type="file" accept=".json" style="display:none" onchange="subirRIPS(this.files,'{{ nombre }}')">
+          <input type="file" accept=".json,.txt" style="display:none" onchange="subirRIPS(this.files,'{{ nombre }}')">
           <span style="font-size:16px">{{ icon }}</span>
-          <div style="flex:1"><div style="font-size:11px;font-weight:700;color:var(--azul)">{{ nombre }}.json</div>
+          <div style="flex:1"><div style="font-size:11px;font-weight:700;color:var(--azul)">{{ nombre }} (.json / .txt)</div>
           <div style="font-size:10px;color:var(--gris3)" id="sub-{{ nombre }}">{{ desc }}</div></div>
           <span id="chk-{{ nombre }}" style="font-size:13px;color:var(--gris2)">○</span>
         </label>
@@ -418,30 +418,119 @@ textarea.form-control{resize:vertical;min-height:56px}
 </div>
 </div>
 
-<!-- TAB ADMIN -->
-{% if current_user.rol == 'admin' %}
-<div id="tab-admin" class="tab-content">
-<div class="panel-right" style="max-width:860px;margin:0 auto;padding:18px 20px;display:block;overflow-y:auto;height:calc(100vh - 113px)">
-  <div class="pr-card" style="margin-bottom:14px">
-    <div class="pr-card-header"><div class="pr-card-icon">👥</div><div><div class="pr-card-title">Usuarios del Sistema</div><div class="pr-card-sub">Gestión de acceso y roles</div></div>
-    <button class="btn btn-primary" style="margin-left:auto;font-size:12px;padding:6px 14px" onclick="abrirModal('modal-user')">+ Nuevo usuario</button></div>
-    <div style="padding:0">
-      <table class="users-table">
-        <thead><tr><th>Nombre</th><th>Usuario</th><th>Rol</th><th>Estado</th></tr></thead>
-        <tbody id="users-tbody"><tr><td colspan="4" style="text-align:center;padding:18px;color:var(--gris3)">Cargando...</td></tr></tbody>
-      </table>
-    </div>
+<!-- TAB MANTENIMIENTO -->
+{% if current_user.rol in ['admin','evaluador'] %}
+<div id="tab-mant" class="tab-content">
+<div style="display:flex;flex-direction:column;height:calc(100vh - 113px);overflow:hidden;width:100%">
+
+  <!-- Sub-nav -->
+  <div style="background:#fff;border-bottom:1.5px solid var(--gris1);padding:0 22px;display:flex;gap:2px;flex-shrink:0">
+    <button class="it-btn active" style="padding:10px 15px;font-size:12px" onclick="switchMantTab(event,'mant-prestadores')">🏥 Prestadores</button>
+    <button class="it-btn" style="padding:10px 15px;font-size:12px" onclick="switchMantTab(event,'mant-cups')">📋 CUPS Personalizados</button>
+    <button class="it-btn" style="padding:10px 15px;font-size:12px" onclick="switchMantTab(event,'mant-tipos')">🔬 Tipos de Servicio</button>
+    {% if current_user.rol == 'admin' %}
+    <button class="it-btn" style="padding:10px 15px;font-size:12px" onclick="switchMantTab(event,'mant-usuarios')">👥 Usuarios</button>
+    {% endif %}
   </div>
-  <div class="pr-card">
-    <div class="pr-card-header"><div class="pr-card-icon">🔑</div><div><div class="pr-card-title">Roles y Permisos</div></div></div>
-    <div class="pr-card-body">
-      <div class="perm-grid">
-        <div class="perm-card"><div class="perm-role">👑 Administrador</div><ul class="perm-list"><li>Ver todos los prestadores</li><li>Crear / editar IPS</li><li>Cargar RIPS y evaluar</li><li>Generar actas</li><li>Gestionar usuarios</li></ul></div>
-        <div class="perm-card"><div class="perm-role">⚡ Evaluador</div><ul class="perm-list"><li>Ver prestadores</li><li class="no">Crear / editar IPS</li><li>Cargar RIPS y evaluar</li><li>Generar actas</li><li class="no">Gestionar usuarios</li></ul></div>
-        <div class="perm-card"><div class="perm-role">👁 Visualizador</div><ul class="perm-list"><li>Ver prestadores</li><li class="no">Cargar RIPS</li><li class="no">Evaluar</li><li>Ver actas existentes</li><li class="no">Gestionar usuarios</li></ul></div>
+
+  <!-- ── PRESTADORES ── -->
+  <div id="mant-prestadores" class="mant-pane" style="display:flex;flex:1;overflow:hidden">
+    <div class="panel-left" style="width:340px">
+      <div class="pl-header">
+        <span>🏥</span><div class="pl-title">Prestadores de Servicio</div>
+        {% if current_user.rol in ['admin','evaluador'] %}
+        <button class="btn-add" onclick="abrirModal('modal-ips')">+ Nuevo</button>
+        {% endif %}
+      </div>
+      <div class="search-wrap"><input class="search-input" id="search-mant" placeholder="Buscar por nombre, NIT o contrato..." oninput="filtrarMant(this.value)"></div>
+      <div class="ips-list" id="mant-ips-list"><div class="empty-state">Cargando prestadores...</div></div>
+    </div>
+    <div class="panel-right" style="overflow-y:auto">
+      <div id="mant-detalle-wrap">
+        <div class="pr-card">
+          <div class="pr-card-body" style="text-align:center;padding:52px 20px;color:var(--gris3)">
+            <div style="font-size:40px;margin-bottom:12px">🏥</div>
+            <div style="font-size:13.5px;font-weight:600;margin-bottom:5px">Selecciona un prestador</div>
+            <div style="font-size:12px">Haz clic en un prestador para ver y gestionar sus contratos.</div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
+
+  <!-- ── CUPS PERSONALIZADOS ── -->
+  <div id="mant-cups" class="mant-pane" style="display:none;flex:1;overflow-y:auto;padding:18px 22px">
+    <div class="pr-card">
+      <div class="pr-card-header">
+        <div class="pr-card-icon">📋</div>
+        <div><div class="pr-card-title">CUPS por Programa y Actividad</div><div class="pr-card-sub">Codificación parametrizada según Res. 3280/2018</div></div>
+      </div>
+      <div style="padding:0;overflow-x:auto">
+        <table class="users-table" id="cups-table">
+          <thead><tr><th style="width:110px">CUPS</th><th>Descripción</th><th style="width:200px">Programa</th><th style="width:170px">Actividad</th><th style="width:90px">Finalidad</th></tr></thead>
+          <tbody id="cups-tbody"><tr><td colspan="5" style="text-align:center;padding:24px;color:var(--gris3)">Cargando...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── TIPOS DE SERVICIO ── -->
+  <div id="mant-tipos" class="mant-pane" style="display:none;flex:1;overflow-y:auto;padding:18px 22px">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+      <div class="pr-card">
+        <div class="pr-card-header"><div class="pr-card-icon">👶</div><div><div class="pr-card-title">Cursos de Vida</div><div class="pr-card-sub">Grupos etáreos según Res. 3280</div></div></div>
+        <div style="padding:0;overflow-x:auto">
+          <table class="users-table" id="cv-table">
+            <thead><tr><th>Curso de Vida</th><th>Edad mín.</th><th>Edad máx.</th></tr></thead>
+            <tbody id="cv-tbody"><tr><td colspan="3" style="text-align:center;padding:14px;color:var(--gris3)">Cargando...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="pr-card">
+        <div class="pr-card-header"><div class="pr-card-icon">🎯</div><div><div class="pr-card-title">Finalidades</div><div class="pr-card-sub">Códigos de finalidad tecnología salud</div></div></div>
+        <div style="padding:0;overflow-x:auto">
+          <table class="users-table" id="fin-table">
+            <thead><tr><th style="width:70px">Código</th><th>Descripción</th><th style="width:80px">Tipo</th></tr></thead>
+            <tbody id="fin-tbody"><tr><td colspan="3" style="text-align:center;padding:14px;color:var(--gris3)">Cargando...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="pr-card" style="grid-column:1/-1">
+        <div class="pr-card-header"><div class="pr-card-icon">📂</div><div><div class="pr-card-title">Programas de Salud</div><div class="pr-card-sub">Programas y número de actividades configuradas</div></div></div>
+        <div style="padding:14px;display:flex;flex-wrap:wrap;gap:9px" id="progs-wrap"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── USUARIOS (solo admin) ── -->
+  {% if current_user.rol == 'admin' %}
+  <div id="mant-usuarios" class="mant-pane" style="display:none;flex:1;overflow-y:auto;padding:18px 22px">
+    <div class="pr-card" style="margin-bottom:14px">
+      <div class="pr-card-header">
+        <div class="pr-card-icon">👥</div>
+        <div><div class="pr-card-title">Usuarios del Sistema</div><div class="pr-card-sub">Gestión de acceso y roles</div></div>
+        <button class="btn btn-primary" style="margin-left:auto;font-size:12px;padding:6px 14px" onclick="abrirModal('modal-user')">+ Nuevo usuario</button>
+      </div>
+      <div style="padding:0">
+        <table class="users-table">
+          <thead><tr><th>Nombre</th><th>Usuario</th><th>Rol</th><th>Estado</th></tr></thead>
+          <tbody id="users-tbody"><tr><td colspan="4" style="text-align:center;padding:18px;color:var(--gris3)">Cargando...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="pr-card">
+      <div class="pr-card-header"><div class="pr-card-icon">🔑</div><div><div class="pr-card-title">Roles y Permisos</div></div></div>
+      <div class="pr-card-body">
+        <div class="perm-grid">
+          <div class="perm-card"><div class="perm-role">👑 Administrador</div><ul class="perm-list"><li>Ver todos los prestadores</li><li>Crear / editar IPS</li><li>Cargar RIPS y evaluar</li><li>Generar actas</li><li>Gestionar usuarios</li></ul></div>
+          <div class="perm-card"><div class="perm-role">⚡ Evaluador</div><ul class="perm-list"><li>Ver prestadores</li><li>Crear / editar IPS</li><li>Cargar RIPS y evaluar</li><li>Generar actas</li><li class="no">Gestionar usuarios</li></ul></div>
+          <div class="perm-card"><div class="perm-role">👁 Visualizador</div><ul class="perm-list"><li>Ver prestadores</li><li class="no">Cargar RIPS</li><li class="no">Evaluar</li><li>Ver actas existentes</li><li class="no">Gestionar usuarios</li></ul></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
 </div>
 </div>
 {% endif %}
@@ -814,6 +903,139 @@ async function descargarActa(){
     alert("Error: "+(d.error||"No se pudo generar"));
   }
   btn.innerHTML="⬇ Descargar Acta Excel";btn.disabled=false;
+}
+
+// ── MANTENIMIENTO ────────────────────────────────────────────────────────
+let _mantLoaded=false;
+function switchMantTab(e,id){
+  document.querySelectorAll(".mant-pane").forEach(p=>{p.style.display="none";});
+  document.getElementById(id).style.display="flex";
+  const subnav=e.target.closest("div");
+  subnav.querySelectorAll(".it-btn").forEach(b=>b.classList.remove("active"));
+  e.target.classList.add("active");
+}
+
+async function cargarMant(){
+  if(_mantLoaded) return;
+  _mantLoaded=true;
+  // Prestadores
+  const r=await fetch("/api/ips");
+  const d=await r.json();
+  _ips_list=d.ips||[];
+  renderMantIPS(_ips_list);
+  // Config (CUPS, Cursos de vida, finalidades)
+  if(S.config) renderMantConfig(S.config);
+  else {const rc=await fetch("/api/config");S.config=await rc.json();renderMantConfig(S.config);}
+}
+
+function filtrarMant(q){
+  const f=_ips_list.filter(i=>(i.nombre+i.nit+i.num_contrato).toLowerCase().includes(q.toLowerCase()));
+  renderMantIPS(f);
+}
+
+function renderMantIPS(lista){
+  const el=document.getElementById("mant-ips-list");
+  if(!lista.length){el.innerHTML='<div class="empty-state">Sin prestadores registrados</div>';return;}
+  el.innerHTML=lista.map(ip=>`
+    <div class="ips-item" onclick="verDetalleMant('${ip.id}',event)">
+      <div class="ips-name">${ip.nombre}</div>
+      <div class="ips-meta">
+        NIT: ${ip.nit||'—'} &nbsp;
+        <span class="reg-tag ${ip.regimen==='SUBSIDIADO'?'reg-sub':'reg-cont'}">${ip.regimen||''}</span>
+        <span style="margin-left:4px">📍 ${ip.municipio||'—'}</span>
+      </div>
+    </div>`).join("");
+}
+
+function verDetalleMant(id,event){
+  document.querySelectorAll("#mant-ips-list .ips-item").forEach(e=>e.classList.remove("active"));
+  event.currentTarget.classList.add("active");
+  const ip=_ips_list.find(i=>i.id==id);if(!ip) return;
+  const regColor=ip.regimen==="SUBSIDIADO"?"reg-sub":"reg-cont";
+  document.getElementById("mant-detalle-wrap").innerHTML=`
+    <div class="pr-card" style="margin-bottom:14px">
+      <div class="pr-card-header">
+        <div class="pr-card-icon">🏥</div>
+        <div style="flex:1">
+          <div class="pr-card-title">${ip.nombre}</div>
+          <div class="pr-card-sub">NIT: ${ip.nit||'—'} · ${ip.municipio||'—'}</div>
+        </div>
+        <span class="nav-badge" style="background:var(--azul4);color:var(--azul)">${ip.num_actas||0} actas</span>
+        <button class="btn btn-primary" style="font-size:11px;padding:5px 12px;margin-left:8px" onclick="iniciarEvalIPSMant('${ip.id}')">⚡ Evaluar</button>
+        <button class="btn btn-outline" style="font-size:11px;padding:5px 12px" onclick="abrirModal('modal-ips');llenarModalIPS('${ip.id}')">✏️</button>
+      </div>
+      <div class="pr-card-body" style="padding:10px 16px">
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:12px">
+          <div style="background:var(--gris0);border-radius:8px;padding:10px;border:1px solid var(--gris1)"><div style="font-size:10px;color:var(--gris3);font-weight:600;text-transform:uppercase">Contrato</div><div style="font-size:12.5px;font-weight:700;color:var(--text);margin-top:3px">${ip.num_contrato||'—'}</div></div>
+          <div style="background:var(--gris0);border-radius:8px;padding:10px;border:1px solid var(--gris1)"><div style="font-size:10px;color:var(--gris3);font-weight:600;text-transform:uppercase">Régimen</div><div style="margin-top:3px"><span class="reg-tag ${regColor}">${ip.regimen||'—'}</span></div></div>
+          <div style="background:var(--gris0);border-radius:8px;padding:10px;border:1px solid var(--gris1)"><div style="font-size:10px;color:var(--gris3);font-weight:600;text-transform:uppercase">Rep. Legal</div><div style="font-size:11.5px;font-weight:600;color:var(--text);margin-top:3px">${ip.rep_legal||'—'}</div></div>
+          <div style="background:var(--gris0);border-radius:8px;padding:10px;border:1px solid var(--gris1)"><div style="font-size:10px;color:var(--gris3);font-weight:600;text-transform:uppercase">Creado por</div><div style="font-size:11.5px;font-weight:600;color:var(--text);margin-top:3px">${ip.creado_por||'—'}</div></div>
+        </div>
+        <div style="border-top:1px solid var(--gris1);padding-top:10px;color:var(--gris3);font-size:12px;text-align:center;font-style:italic">
+          Historial de actas: ${ip.num_actas||0} actas generadas para este prestador.
+        </div>
+      </div>
+    </div>`;
+}
+
+function iniciarEvalIPSMant(id){
+  const ip=_ips_list.find(i=>i.id==id);if(!ip) return;
+  S.ips_activa=ip;
+  ["empresa","nit","num_contrato","regimen","municipio"].forEach(k=>{
+    const el=document.getElementById(k);
+    if(el&&ip[k==="empresa"?"nombre":k]) el.value=ip[k==="empresa"?"nombre":k];
+  });
+  document.getElementById("rep_ips").value=ip.rep_legal||"";
+  goEvaluar();
+}
+
+function llenarModalIPS(id){
+  const ip=_ips_list.find(i=>i.id==id);if(!ip) return;
+  document.getElementById("m-nombre").value=ip.nombre||"";
+  document.getElementById("m-nit").value=ip.nit||"";
+  document.getElementById("m-contrato").value=ip.num_contrato||"";
+  document.getElementById("m-regimen").value=ip.regimen||"SUBSIDIADO";
+  document.getElementById("m-municipio").value=ip.municipio||"";
+  document.getElementById("m-rep").value=ip.rep_legal||"";
+}
+
+function renderMantConfig(cfg){
+  // Cursos de vida
+  const cvtb=document.getElementById("cv-tbody");
+  if(cvtb) cvtb.innerHTML=(cfg.cursos_de_vida||[]).map(cv=>`
+    <tr><td><strong>${cv.label}</strong></td><td style="text-align:center">${cv.edad_min} años</td><td style="text-align:center">${cv.edad_max===200?"60+":" "+cv.edad_max+" años"}</td></tr>`).join("");
+  // Finalidades
+  const fintb=document.getElementById("fin-tbody");
+  if(fintb) fintb.innerHTML=Object.entries(cfg.finalidades||{}).map(([cod,desc])=>`
+    <tr><td><code style="font-size:11px;background:var(--azul4);padding:1px 5px;border-radius:4px">${cod}</code></td>
+    <td style="font-size:11px">${typeof desc==="object"?desc.descripcion||JSON.stringify(desc):desc}</td>
+    <td style="font-size:10px;color:var(--gris3)">${typeof desc==="object"&&desc.tipo?desc.tipo:""}</td></tr>`).join("");
+  // Programas
+  const pw=document.getElementById("progs-wrap");
+  if(pw) pw.innerHTML=(cfg.programas||[]).map(p=>`
+    <div style="background:var(--azul4);border:1px solid var(--azul3);border-radius:8px;padding:8px 13px;font-size:11.5px">
+      <div style="font-weight:700;color:var(--azul);margin-bottom:2px">${p.nombre||p.id}</div>
+      <div style="font-size:10px;color:var(--gris3)">${(p.actividades||[]).length} actividades</div>
+    </div>`).join("");
+  // CUPS por actividad
+  const cupstb=document.getElementById("cups-tbody");
+  if(!cupstb) return;
+  const rows=[];
+  for(const prog of (cfg.programas||[])){
+    for(const act_id of (prog.actividades||[])){
+      const act=cfg.actividades_base?.[act_id];if(!act) continue;
+      for(const cups of (act.cups||[])){
+        rows.push(`<tr>
+          <td><code style="font-size:11px;background:var(--azul4);padding:2px 6px;border-radius:4px;font-weight:700">${cups}</code></td>
+          <td style="font-size:11px">${act.descripcion||act_id}</td>
+          <td style="font-size:10.5px;color:var(--azul)">${prog.nombre||prog.id}</td>
+          <td style="font-size:10.5px;color:var(--gris3)">${act_id}</td>
+          <td style="font-size:10.5px;text-align:center">${(act.finalidades||[]).join(", ")||"—"}</td>
+        </tr>`);
+      }
+    }
+  }
+  cupstb.innerHTML=rows.length?rows.join(""):'<tr><td colspan="5" style="text-align:center;padding:18px;color:var(--gris3)">No hay CUPS configurados</td></tr>';
 }
 
 async function limpiarSesion(){
