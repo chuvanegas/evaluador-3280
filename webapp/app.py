@@ -14,11 +14,15 @@ from evaluator import RIPSEvaluator
 
 # ── Config ─────────────────────────────────────────────────────────────────
 BASE_DIR    = Path(__file__).parent
-UPLOAD_DIR  = BASE_DIR / "uploads"
 CONFIG_PATH = BASE_DIR / "config" / "res3280_cups.json"
-DATA_PATH   = BASE_DIR / "data"
-UPLOAD_DIR.mkdir(exist_ok=True)
-DATA_PATH.mkdir(exist_ok=True)
+
+# Vercel tiene sistema de archivos read-only; usar /tmp para escritura
+_IS_VERCEL = os.environ.get("VERCEL") == "1"
+_TMP       = Path("/tmp") if _IS_VERCEL else BASE_DIR
+UPLOAD_DIR = _TMP / "uploads"
+DATA_PATH  = _TMP / "data"
+UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+DATA_PATH.mkdir(parents=True, exist_ok=True)
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "dusakawi_3280_secret_2026")
