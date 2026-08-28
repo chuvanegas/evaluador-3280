@@ -1,0 +1,845 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Evaluador 3280 · DUSAKAWI EPSI</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --azul:#1F4E79;--azul2:#2E75B6;--azul3:#BDD7EE;--azul4:#DEEAF1;
+  --verde:#375623;--verde2:#70AD47;--verde3:#E2EFDA;
+  --amarillo:#F4B942;--amarillo2:#FFF2CC;
+  --rojo:#C00000;--rojo2:#FCE4D6;
+  --gris0:#F4F6FA;--gris1:#E8ECF2;--gris2:#CDD2DC;--gris3:#8A94A6;
+  --text:#1A2332;--white:#fff;
+  --shadow-sm:0 1px 4px rgba(0,0,0,.07);--shadow-md:0 4px 16px rgba(0,0,0,.10);
+  --radius:10px;--radius-lg:14px;
+}
+body{font-family:'Inter',sans-serif;background:var(--gris0);color:var(--text);min-height:100vh;display:flex;flex-direction:column}
+.header{background:#fff;border-bottom:1.5px solid var(--gris1);padding:0 24px;height:58px;display:flex;align-items:center;gap:16px;position:sticky;top:0;z-index:200;box-shadow:var(--shadow-sm)}
+.header-brand{display:flex;align-items:center;gap:8px;margin-right:auto}
+.brand-icon{font-size:20px}
+.brand-name{font-size:15px;font-weight:800;color:var(--azul);letter-spacing:-.2px}
+.brand-sub{font-size:10.5px;color:var(--gris3)}
+.header-actions{display:flex;align-items:center;gap:8px}
+.user-chip{display:flex;align-items:center;gap:8px;padding:5px 12px;background:var(--gris0);border:1.5px solid var(--gris1);border-radius:30px}
+.uc-name{font-size:12px;font-weight:600;color:var(--text)}
+.role-badge{padding:2px 9px;border-radius:12px;font-size:10px;font-weight:700;letter-spacing:.3px}
+.role-admin{background:#EDE9FE;color:#6D28D9}
+.role-evaluador{background:var(--azul4);color:var(--azul)}
+.role-viewer{background:var(--gris1);color:var(--gris3)}
+.icon-btn{width:32px;height:32px;border-radius:50%;background:var(--gris0);border:1.5px solid var(--gris1);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px;transition:.15s}
+.icon-btn:hover{background:var(--gris1)}
+.btn-hdr{padding:6px 14px;border-radius:7px;border:none;font-family:inherit;font-size:12px;font-weight:600;cursor:pointer;transition:.15s;display:inline-flex;align-items:center;gap:6px}
+.btn-hdr-primary{background:var(--azul2);color:#fff}
+.btn-hdr-primary:hover{background:var(--azul)}
+.nav-tabs{background:#fff;border-bottom:1.5px solid var(--gris1);padding:0 24px;display:flex;gap:2px}
+.nav-tab{padding:11px 16px;font-size:12.5px;font-weight:600;color:var(--gris3);border-bottom:2.5px solid transparent;margin-bottom:-1.5px;cursor:pointer;display:flex;align-items:center;gap:6px;background:none;border-top:none;border-left:none;border-right:none;font-family:inherit;transition:.15s;white-space:nowrap}
+.nav-tab:hover{color:var(--azul2)}
+.nav-tab.active{color:var(--azul);border-bottom-color:var(--azul2)}
+.nav-badge{background:var(--azul);color:#fff;border-radius:10px;padding:1px 7px;font-size:10px;font-weight:700}
+.tab-content{display:none}
+.tab-content.active{display:flex;flex:1;overflow:hidden}
+.split{display:flex;height:calc(100vh - 113px);overflow:hidden;width:100%}
+.panel-left{width:330px;min-width:270px;background:#fff;border-right:1.5px solid var(--gris1);display:flex;flex-direction:column;overflow:hidden;flex-shrink:0}
+.panel-right{flex:1;overflow-y:auto;background:var(--gris0);padding:18px 20px}
+.pl-header{padding:12px 14px;border-bottom:1px solid var(--gris1);display:flex;align-items:center;gap:7px}
+.pl-title{font-size:13.5px;font-weight:700;color:var(--azul);flex:1}
+.btn-add{padding:4px 11px;background:var(--azul2);color:#fff;border:none;border-radius:6px;font-family:inherit;font-size:11px;font-weight:600;cursor:pointer}
+.search-wrap{padding:9px 11px;border-bottom:1px solid var(--gris1)}
+.search-input{width:100%;padding:7px 11px 7px 32px;border:1.5px solid var(--gris1);border-radius:7px;font-family:inherit;font-size:12px;outline:none;background:var(--gris0) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='13' height='13' fill='%238A94A6' viewBox='0 0 16 16'%3E%3Cpath d='M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.868-3.834zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z'/%3E%3C/svg%3E") no-repeat 9px center;transition:.15s}
+.search-input:focus{border-color:var(--azul2)}
+.ips-list{flex:1;overflow-y:auto}
+.ips-item{padding:11px 14px;border-bottom:1px solid var(--gris1);cursor:pointer;transition:.12s}
+.ips-item:hover{background:var(--gris0)}
+.ips-item.active{background:var(--azul4);border-left:3px solid var(--azul2)}
+.ips-name{font-size:12px;font-weight:700;color:var(--text);margin-bottom:2px}
+.ips-meta{font-size:10.5px;color:var(--gris3);display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.reg-tag{font-weight:600;padding:1px 6px;border-radius:9px;font-size:9.5px}
+.reg-sub{background:#E0F2FE;color:#0369A1}
+.reg-cont{background:#FEF9C3;color:#854D0E}
+.empty-state{padding:36px 16px;text-align:center;color:var(--gris3);font-size:12.5px}
+.pr-card{background:#fff;border-radius:var(--radius-lg);box-shadow:var(--shadow-sm);overflow:hidden;margin-bottom:14px}
+.pr-card-header{padding:13px 18px;border-bottom:1px solid var(--gris1);display:flex;align-items:center;gap:9px}
+.pr-card-icon{width:34px;height:34px;border-radius:8px;background:var(--azul4);display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+.pr-card-title{font-size:13.5px;font-weight:700;color:var(--azul)}
+.pr-card-sub{font-size:11px;color:var(--gris3);margin-top:1px}
+.pr-card-body{padding:16px 18px}
+.ds-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:14px}
+.ds-card{background:#fff;border-radius:var(--radius);padding:14px 16px;border:1px solid var(--gris1);box-shadow:var(--shadow-sm)}
+.ds-val{font-size:26px;font-weight:800;color:var(--azul);margin-bottom:3px}
+.ds-label{font-size:10.5px;color:var(--gris3);font-weight:600;text-transform:uppercase;letter-spacing:.4px}
+.upload-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.upload-drop{border:2px dashed var(--gris2);border-radius:9px;padding:18px 14px;text-align:center;cursor:pointer;transition:.18s;background:var(--gris0)}
+.upload-drop:hover,.upload-drop.drag{border-color:var(--azul2);background:var(--azul4)}
+.upload-drop.loaded{border-color:var(--verde2);border-style:solid;background:var(--verde3)}
+.upload-drop input[type=file]{display:none}
+.upload-big{border:2px dashed var(--gris2);border-radius:9px;padding:22px 18px;text-align:center;cursor:pointer;transition:.18s;background:var(--gris0)}
+.upload-big:hover,.upload-big.drag{border-color:var(--azul2);background:var(--azul4)}
+.upload-big.loaded{border-color:var(--verde2);border-style:solid;background:var(--verde3)}
+.upload-big input[type=file]{display:none}
+.wizard-steps{display:flex;align-items:center;gap:0;margin-bottom:14px;background:#fff;border-radius:var(--radius);padding:7px 14px;box-shadow:var(--shadow-sm);overflow-x:auto}
+.ws{display:flex;align-items:center;gap:6px;padding:5px 9px;cursor:pointer;border-radius:7px;transition:.15s;flex-shrink:0}
+.ws:hover{background:var(--gris0)}
+.ws.active .ws-num{background:var(--azul2);color:#fff}
+.ws.done .ws-num{background:var(--verde2);color:#fff}
+.ws-num{width:20px;height:20px;border-radius:50%;background:var(--gris1);font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center}
+.ws-label{font-size:11px;font-weight:600;color:var(--gris3)}
+.ws.active .ws-label{color:var(--azul)}
+.ws.done .ws-label{color:var(--verde)}
+.ws-sep{color:var(--gris2);font-size:13px;flex-shrink:0;padding:0 2px}
+.btn{padding:8px 18px;border-radius:7px;border:none;font-family:inherit;font-size:12.5px;font-weight:600;cursor:pointer;transition:.15s;display:inline-flex;align-items:center;gap:6px}
+.btn-primary{background:var(--azul);color:#fff}
+.btn-primary:hover{background:var(--azul2)}
+.btn-success{background:var(--verde);color:#fff}
+.btn-success:hover{background:var(--verde2)}
+.btn-outline{background:transparent;border:1.5px solid var(--gris2);color:var(--text)}
+.btn-outline:hover{background:var(--gris1)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn-row{display:flex;gap:9px;flex-wrap:wrap;align-items:center;margin-top:16px}
+.form-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+.form-group{display:flex;flex-direction:column;gap:4px}
+.form-label{font-size:10.5px;font-weight:600;color:var(--gris3);text-transform:uppercase;letter-spacing:.5px}
+.form-control{padding:7px 11px;border:1.5px solid var(--gris1);border-radius:7px;font-family:inherit;font-size:12.5px;color:var(--text);background:#fff;outline:none;transition:.15s}
+.form-control:focus{border-color:var(--azul2);box-shadow:0 0 0 3px rgba(46,117,182,.1)}
+textarea.form-control{resize:vertical;min-height:56px}
+.inner-tabs{display:flex;gap:0;border-bottom:2px solid var(--gris1);margin-bottom:14px}
+.it-btn{padding:8px 16px;font-size:12px;font-weight:600;cursor:pointer;border-bottom:2.5px solid transparent;margin-bottom:-2px;color:var(--gris3);background:none;border-top:none;border-left:none;border-right:none;font-family:inherit;transition:.15s}
+.it-btn:hover{color:var(--azul2)}
+.it-btn.active{color:var(--azul2);border-bottom-color:var(--azul2)}
+.it-pane{display:none}
+.it-pane.active{display:block}
+.meta-wrap{max-height:360px;overflow-y:auto;border:1px solid var(--gris1);border-radius:8px}
+.meta-table{width:100%;border-collapse:collapse;font-size:11px}
+.meta-table th{background:var(--azul);color:#fff;padding:7px 10px;text-align:left;position:sticky;top:0;z-index:5;font-size:10.5px;font-weight:600}
+.meta-table th:not(:first-child){text-align:right}
+.meta-table td{padding:4px 10px;border-bottom:1px solid var(--gris1)}
+.meta-table td:not(:first-child){text-align:right}
+.meta-table tr.prog-row td{background:var(--azul4);font-weight:700;color:var(--azul);padding:6px 10px}
+.meta-table input[type=number]{width:70px;padding:2px 6px;border:1.5px solid var(--gris2);border-radius:4px;font-size:11px;text-align:right;font-family:inherit;outline:none}
+.meta-table input[type=number]:focus{border-color:var(--azul2)}
+.stat-row{display:grid;grid-template-columns:repeat(4,1fr);gap:11px;margin-bottom:14px}
+.stat-card{background:#fff;border-radius:var(--radius);padding:12px 14px;border:1px solid var(--gris1);box-shadow:var(--shadow-sm)}
+.sc-label{font-size:10px;color:var(--gris3);font-weight:600;text-transform:uppercase;letter-spacing:.4px}
+.sc-val{font-size:17px;font-weight:800;color:var(--azul);margin-top:2px}
+.sc-val.neg{color:var(--rojo)}
+.sc-val.pos{color:var(--verde2)}
+.res-card{border:1px solid var(--gris1);border-radius:var(--radius);overflow:hidden;margin-bottom:9px}
+.res-header{display:grid;grid-template-columns:1fr repeat(4,auto);align-items:center;gap:9px;padding:10px 14px;cursor:pointer;user-select:none}
+.res-header:hover{background:var(--gris0)}
+.res-prog{font-size:12px;font-weight:700;color:var(--azul)}
+.res-col{text-align:right;min-width:95px}
+.res-col .rc-label{font-size:9.5px;color:var(--gris3);font-weight:500}
+.res-col .rc-val{font-size:12px;font-weight:600;margin-top:1px}
+.res-col .rc-val.neg{color:var(--rojo)}
+.badge-pct{padding:3px 10px;border-radius:18px;font-size:11px;font-weight:700;min-width:58px;text-align:center}
+.b-green{background:var(--verde3);color:var(--verde)}
+.b-yellow{background:var(--amarillo2);color:#7d5a00}
+.b-red{background:var(--rojo2);color:var(--rojo)}
+.res-body{display:none}
+.res-body.open{display:block}
+.det-wrap{overflow-x:auto}
+.det-table{width:100%;border-collapse:collapse;font-size:10.5px}
+.det-table th{background:var(--azul2);color:#fff;padding:5px 9px;text-align:right;font-weight:500;white-space:nowrap}
+.det-table th:first-child{text-align:left;width:35%}
+.det-table td{padding:4px 9px;border-bottom:1px solid var(--gris1);text-align:right}
+.det-table td:first-child{text-align:left}
+.det-table .disc{color:var(--rojo);font-weight:600}
+.det-table .tot-row td{font-weight:700;background:var(--azul4)}
+.acta-table{width:100%;border-collapse:collapse;font-size:12px}
+.acta-table th{background:var(--azul);color:#fff;padding:8px 12px;text-align:right;font-size:10.5px;font-weight:600}
+.acta-table th:first-child{text-align:left}
+.acta-table td{padding:7px 12px;border-bottom:1px solid var(--gris1);text-align:right}
+.acta-table td:first-child{text-align:left;font-size:11px}
+.acta-table .tr-total td{font-weight:700;background:var(--azul4)}
+.acta-table .tr-desc td{font-weight:700;background:var(--azul);color:#fff}
+.pct-cell{border-radius:5px;padding:2px 8px;font-weight:700}
+.alert{display:flex;gap:8px;padding:9px 13px;border-radius:7px;font-size:11.5px;margin-bottom:11px}
+.alert-info{background:#EFF6FF;border-left:3px solid #3B82F6;color:#1E40AF}
+.alert-success{background:var(--verde3);border-left:3px solid var(--verde2);color:var(--verde)}
+.alert-error{background:var(--rojo2);border-left:3px solid var(--rojo);color:var(--rojo)}
+.cob-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:7px;margin-top:10px}
+.cob-card{background:var(--azul4);border-radius:8px;padding:9px;text-align:center;border:1px solid var(--azul3)}
+.cc-num{font-size:18px;font-weight:800;color:var(--azul)}
+.cc-label{font-size:9px;color:var(--azul2);font-weight:600;margin-top:1px}
+.chart-box{position:relative;height:230px;margin-top:2px}
+.perm-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:11px}
+.perm-card{background:var(--gris0);border-radius:var(--radius);padding:14px;border:1px solid var(--gris1)}
+.perm-role{font-size:12.5px;font-weight:700;color:var(--azul);margin-bottom:7px}
+.perm-list{list-style:none;font-size:11.5px;color:var(--gris3);display:flex;flex-direction:column;gap:4px}
+.perm-list li::before{content:"✓ ";color:var(--verde2);font-weight:700}
+.perm-list li.no::before{content:"✗ ";color:var(--rojo)}
+.users-table{width:100%;border-collapse:collapse;font-size:12px}
+.users-table th{background:var(--azul);color:#fff;padding:7px 12px;text-align:left;font-size:10.5px;font-weight:600}
+.users-table td{padding:7px 12px;border-bottom:1px solid var(--gris1)}
+.users-table tr:hover td{background:var(--gris0)}
+.pill{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:18px;font-size:11px;font-weight:600}
+.pill-ok{background:var(--verde3);border:1px solid var(--verde2);color:var(--verde)}
+.pill-warn{background:var(--amarillo2);border:1px solid var(--amarillo);color:#7d5a00}
+@keyframes spin{to{transform:rotate(360deg)}}
+.spin{display:inline-block;width:13px;height:13px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite}
+@media(max-width:780px){
+  .split{flex-direction:column;height:auto}
+  .panel-left{width:100%;max-height:260px;border-right:none;border-bottom:1.5px solid var(--gris1)}
+  .stat-row,.form-grid-2,.upload-grid-2,.perm-grid,.ds-grid{grid-template-columns:1fr}
+  .res-header{grid-template-columns:1fr auto}
+  .res-col:nth-child(3),.res-col:nth-child(4){display:none}
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-brand">
+    <span class="brand-icon">📋</span>
+    <div>
+      <div class="brand-name">Evaluador Resolución 3280</div>
+      <div class="brand-sub">DUSAKAWI EPSI · Seguimiento Metas Res. 3280/2018</div>
+    </div>
+  </div>
+  <div class="header-actions">
+    <div class="user-chip">
+      <span style="font-size:13px">👤</span>
+      <span class="uc-name">{{ current_user.nombre }}</span>
+      <span class="role-badge role-{{ current_user.rol }}">{{ current_user.rol|upper }}</span>
+    </div>
+    <div class="icon-btn" title="Limpiar sesión" onclick="limpiarSesion()">🗑</div>
+    <a href="/logout" style="text-decoration:none"><div class="icon-btn" title="Cerrar sesión">🚪</div></a>
+    <button class="btn-hdr btn-hdr-primary" onclick="goEvaluar()">⚡ Nueva Evaluación</button>
+  </div>
+</div>
+
+<div class="nav-tabs">
+  <button class="nav-tab active" onclick="switchTab(event,'tab-dashboard')">📊 Dashboard</button>
+  <button class="nav-tab" onclick="switchTab(event,'tab-evaluacion')">⚡ Evaluación</button>
+  <button class="nav-tab" onclick="switchTab(event,'tab-actas')">📋 Actas <span id="nav-badge-actas" class="nav-badge">0</span></button>
+  {% if current_user.rol == 'admin' %}
+  <button class="nav-tab" onclick="switchTab(event,'tab-admin')">⚙️ Administración</button>
+  {% endif %}
+</div>
+
+<!-- TAB DASHBOARD -->
+<div id="tab-dashboard" class="tab-content active">
+<div class="split">
+  <div class="panel-left">
+    <div class="pl-header">
+      <span>🏥</span><div class="pl-title">Prestadores</div>
+      {% if current_user.rol in ['admin','evaluador'] %}
+      <button class="btn-add" onclick="abrirModal('modal-ips')">+ Nuevo</button>
+      {% endif %}
+    </div>
+    <div class="search-wrap"><input class="search-input" id="search-ips" placeholder="Buscar por nombre o NIT..." oninput="filtrarIPS(this.value)"></div>
+    <div class="ips-list" id="ips-list"><div class="empty-state">Cargando prestadores...</div></div>
+  </div>
+  <div class="panel-right">
+    <div class="ds-grid">
+      <div class="ds-card"><div class="ds-val" id="ds-total-ips">—</div><div class="ds-label">Prestadores activos</div></div>
+      <div class="ds-card"><div class="ds-val" id="ds-total-actas">0</div><div class="ds-label">Actas generadas</div></div>
+      <div class="ds-card"><div class="ds-val" id="ds-total-pct">—</div><div class="ds-label">Cumplimiento promedio</div></div>
+    </div>
+    <div class="pr-card" id="ips-detalle" style="display:none">
+      <div class="pr-card-header">
+        <div class="pr-card-icon">🏥</div>
+        <div><div class="pr-card-title" id="ips-det-nombre">—</div><div class="pr-card-sub" id="ips-det-meta">—</div></div>
+        {% if current_user.rol in ['admin','evaluador'] %}
+        <button class="btn btn-primary" style="margin-left:auto;font-size:12px;padding:6px 14px" onclick="iniciarEvalIPS()">⚡ Evaluar</button>
+        {% endif %}
+      </div>
+      <div class="pr-card-body"><div id="ips-det-actas-list" style="color:var(--gris3);font-size:12.5px">Sin actas previas.</div></div>
+    </div>
+    <div class="pr-card" id="dash-placeholder">
+      <div class="pr-card-body" style="text-align:center;padding:48px 20px;color:var(--gris3)">
+        <div style="font-size:38px;margin-bottom:10px">🏥</div>
+        <div style="font-size:13.5px;font-weight:600;margin-bottom:5px">Selecciona un prestador</div>
+        <div style="font-size:12px">Haz clic en una IPS de la lista para ver sus actas.</div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- TAB EVALUACION -->
+<div id="tab-evaluacion" class="tab-content">
+<div class="split">
+  <div class="panel-left">
+    <div class="pl-header"><span>📂</span><div class="pl-title">RIPS Cargados</div></div>
+    <div style="padding:10px">
+      <div style="display:flex;flex-direction:column;gap:7px">
+        {% for nombre,icon,desc in [('usuarios','👥','Población'),('consultas','🩺','Consultas'),('procedimientos','⚕️','Procedimientos'),('medicamentos','💊','Medicamentos'),('otrosServicios','🔬','Otros servicios')] %}
+        <label style="border:1.5px dashed var(--gris2);border-radius:8px;padding:9px 11px;display:flex;align-items:center;gap:9px;cursor:pointer;transition:.15s;background:var(--gris0)" id="lbl-{{ nombre }}"
+          ondragover="event.preventDefault();this.style.borderColor='var(--azul2)'"
+          ondragleave="this.style.borderColor=''"
+          ondrop="event.preventDefault();subirRIPS(event.dataTransfer.files)">
+          <input type="file" accept=".json" style="display:none" onchange="subirRIPS(this.files,'{{ nombre }}')">
+          <span style="font-size:16px">{{ icon }}</span>
+          <div style="flex:1"><div style="font-size:11px;font-weight:700;color:var(--azul)">{{ nombre }}.json</div>
+          <div style="font-size:10px;color:var(--gris3)" id="sub-{{ nombre }}">{{ desc }}</div></div>
+          <span id="chk-{{ nombre }}" style="font-size:13px;color:var(--gris2)">○</span>
+        </label>
+        {% endfor %}
+      </div>
+      <div class="cob-grid" id="cob-grid"></div>
+    </div>
+  </div>
+  <div class="panel-right">
+    <div class="wizard-steps">
+      <div class="ws active" id="ws1" onclick="goStep(1)"><div class="ws-num">1</div><div class="ws-label">Prestador</div></div>
+      <span class="ws-sep">›</span>
+      <div class="ws" id="ws2" onclick="goStep(2)"><div class="ws-num">2</div><div class="ws-label">Metas</div></div>
+      <span class="ws-sep">›</span>
+      <div class="ws" id="ws3" onclick="goStep(3)"><div class="ws-num">3</div><div class="ws-label">Resultados</div></div>
+      <span class="ws-sep">›</span>
+      <div class="ws" id="ws4" onclick="goStep(4)"><div class="ws-num">4</div><div class="ws-label">Acta Excel</div></div>
+    </div>
+
+    <!-- Step 1 -->
+    <div id="step1" class="step-pane">
+      <div class="pr-card">
+        <div class="pr-card-header"><div class="pr-card-icon">📋</div><div><div class="pr-card-title">Datos del Acta</div><div class="pr-card-sub">Información del prestador y periodo evaluado</div></div></div>
+        <div class="pr-card-body">
+          <div class="form-grid-2">
+            <div class="form-group"><label class="form-label">Nº Acta</label><input id="acta_num" class="form-control" placeholder="PMS-44430-2026-16-1"></div>
+            <div class="form-group"><label class="form-label">Fecha Evaluación</label><input id="fecha_eval" class="form-control" type="date"></div>
+            <div class="form-group"><label class="form-label">Periodo</label><input id="periodo" class="form-control" placeholder="MAR"></div>
+            <div class="form-group"><label class="form-label">Vigencia Contrato</label><input id="vigencia" class="form-control" placeholder="01/03/2026 - 31/12/2026"></div>
+            <div class="form-group"><label class="form-label">Periodo Fin</label><input id="periodo_fin" class="form-control" type="date"></div>
+            <div class="form-group"><label class="form-label">Empresa / IPS</label><input id="empresa" class="form-control" placeholder="IPSI KARAQUITA"></div>
+            <div class="form-group"><label class="form-label">NIT</label><input id="nit" class="form-control"></div>
+            <div class="form-group"><label class="form-label">Régimen</label><select id="regimen" class="form-control"><option>SUBSIDIADO</option><option>CONTRIBUTIVO</option><option>ESPECIAL</option></select></div>
+            <div class="form-group"><label class="form-label">Municipio</label><input id="municipio" class="form-control"></div>
+            <div class="form-group"><label class="form-label">Nº Contrato</label><input id="num_contrato" class="form-control"></div>
+            <div class="form-group"><label class="form-label">Rep. Legal IPS</label><input id="rep_ips" class="form-control"></div>
+            <div class="form-group"><label class="form-label">Rep. Legal EPSI</label><input id="rep_epsi" class="form-control" value="JAVIER CLAVIJO FRANCO"></div>
+            <div class="form-group"><label class="form-label">Coordinador(a)</label><input id="coordinador" class="form-control" value="DIANA CASTILLA BARRAZA"></div>
+            <div class="form-group"><label class="form-label">Evaluador(a)</label><input id="evaluador" class="form-control" value="{{ current_user.nombre }}"></div>
+          </div>
+          <div class="form-group" style="margin-top:10px"><label class="form-label">Observaciones</label><textarea id="observaciones" class="form-control" rows="2"></textarea></div>
+          <div class="btn-row"><button class="btn btn-primary" onclick="goStep(2)">Siguiente → Metas</button></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 2 -->
+    <div id="step2" class="step-pane" style="display:none">
+      <div class="pr-card">
+        <div class="pr-card-header"><div class="pr-card-icon">🎯</div><div><div class="pr-card-title">Metas por Programa</div><div class="pr-card-sub">Nota técnica o ingreso manual</div></div></div>
+        <div class="pr-card-body">
+          <div class="inner-tabs">
+            <button class="it-btn active" onclick="switchInnerTab(event,'it-nt')">📊 Nota Técnica xlsx</button>
+            <button class="it-btn" onclick="switchInnerTab(event,'it-manual')">✏️ Ingreso Manual</button>
+          </div>
+          <div id="it-nt" class="it-pane active">
+            <div class="alert alert-info">Sube la herramienta xlsx (hoja A3 COMPLETO) para extraer metas automáticamente.</div>
+            <label class="upload-big" id="nt-drop"
+              ondragover="event.preventDefault();this.classList.add('drag')"
+              ondragleave="this.classList.remove('drag')"
+              ondrop="event.preventDefault();this.classList.remove('drag');subirNT(event.dataTransfer.files[0])">
+              <input type="file" accept=".xlsx,.xls" onchange="subirNT(this.files[0])">
+              <div style="font-size:30px;margin-bottom:7px">📊</div>
+              <div style="font-size:13px;font-weight:700;color:var(--azul);margin-bottom:3px">Seleccionar herramienta xlsx</div>
+              <div style="font-size:11px;color:var(--gris3)">Formato DUSAKAWI EPSI · Hoja A3 COMPLETO</div>
+            </label>
+            <div id="nt-status" style="margin-top:9px"></div>
+          </div>
+          <div id="it-manual" class="it-pane">
+            <div class="meta-wrap"><table class="meta-table">
+              <thead><tr><th>Programa / Actividad</th><th>Meta</th><th>UPC ($)</th><th>Vr Exigido</th></tr></thead>
+              <tbody id="meta-tbody"><tr><td colspan="4" style="text-align:center;padding:14px;color:var(--gris3)">Cargando...</td></tr></tbody>
+            </table></div>
+          </div>
+          <div class="btn-row">
+            <button class="btn btn-outline" onclick="goStep(1)">← Atrás</button>
+            <button class="btn btn-primary" id="btn-evaluar" onclick="evaluarAhora()">⚡ Evaluar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 3 -->
+    <div id="step3" class="step-pane" style="display:none">
+      <div class="stat-row" id="stat-row" style="display:none">
+        <div class="stat-card"><div class="sc-label">Total Exigido</div><div class="sc-val" id="stat-exigido">$0</div></div>
+        <div class="stat-card"><div class="sc-label">Reconocido</div><div class="sc-val pos" id="stat-reconocido">$0</div></div>
+        <div class="stat-card"><div class="sc-label">Descuento</div><div class="sc-val neg" id="stat-descuento">$0</div></div>
+        <div class="stat-card"><div class="sc-label">% Cumplimiento</div><div class="sc-val" id="stat-pct">—</div></div>
+      </div>
+      <div class="pr-card" id="chart-card" style="display:none">
+        <div class="pr-card-header"><div class="pr-card-icon">📊</div><div><div class="pr-card-title">% Cumplimiento por Programa</div></div></div>
+        <div class="pr-card-body"><div class="chart-box"><canvas id="chart-main"></canvas></div></div>
+      </div>
+      <div class="pr-card" id="detalle-card" style="display:none">
+        <div class="pr-card-header"><div class="pr-card-icon">🔍</div><div><div class="pr-card-title">Detalle por Programa</div><div class="pr-card-sub">Clic para expandir</div></div></div>
+        <div class="pr-card-body" id="detalle-body" style="padding:10px 14px"></div>
+      </div>
+      <div class="pr-card" id="resumen-card" style="display:none">
+        <div class="pr-card-header"><div class="pr-card-icon">📋</div><div><div class="pr-card-title">Resumen para Acta</div></div></div>
+        <div style="overflow-x:auto"><table class="acta-table"><thead><tr><th>Programa</th><th>Vr Exigido</th><th>Vr Reconocido</th><th>Descuento</th><th>% Cumpl.</th></tr></thead><tbody id="acta-summary-body"></tbody></table></div>
+        <div style="padding:11px 16px"><div class="btn-row"><button class="btn btn-outline" onclick="goStep(2)">← Atrás</button><button class="btn btn-primary" onclick="goStep(4)">Generar Acta →</button></div></div>
+      </div>
+      <div class="pr-card" id="res-placeholder"><div class="pr-card-body" style="text-align:center;padding:40px;color:var(--gris3)"><div style="font-size:34px;margin-bottom:9px">⚡</div><div style="font-size:13px;font-weight:600;margin-bottom:4px">Sin resultados</div><div style="font-size:11.5px">Completa los pasos y ejecuta la evaluación.</div></div></div>
+    </div>
+
+    <!-- Step 4 -->
+    <div id="step4" class="step-pane" style="display:none">
+      <div class="pr-card">
+        <div class="pr-card-header"><div class="pr-card-icon">📄</div><div><div class="pr-card-title">Generar Acta de Evaluación</div><div class="pr-card-sub">Descarga el acta en formato Excel</div></div></div>
+        <div class="pr-card-body">
+          <div id="acta-mini-resumen"></div>
+          <div class="btn-row">
+            <button class="btn btn-success" id="btn-descargar" onclick="descargarActa()">⬇ Descargar Acta Excel</button>
+            <button class="btn btn-outline" onclick="goStep(3)">← Resultados</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- TAB ACTAS -->
+<div id="tab-actas" class="tab-content">
+<div class="split">
+  <div class="panel-left">
+    <div class="pl-header"><span>🏥</span><div class="pl-title">Prestadores</div></div>
+    <div class="search-wrap"><input class="search-input" placeholder="Buscar IPS..." oninput="filtrarIPS2(this.value)"></div>
+    <div class="ips-list" id="ips-list2"><div class="empty-state">Cargando...</div></div>
+  </div>
+  <div class="panel-right">
+    <div class="pr-card">
+      <div class="pr-card-header"><div class="pr-card-icon">📋</div><div><div class="pr-card-title">Actas de Evaluación</div><div class="pr-card-sub">Historial por prestador</div></div></div>
+      <div class="pr-card-body" id="actas-body">
+        <div style="text-align:center;padding:40px;color:var(--gris3)"><div style="font-size:34px;margin-bottom:9px">📋</div><div style="font-size:12.5px">Selecciona un prestador para ver sus actas</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- TAB ADMIN -->
+{% if current_user.rol == 'admin' %}
+<div id="tab-admin" class="tab-content">
+<div class="panel-right" style="max-width:860px;margin:0 auto;padding:18px 20px;display:block;overflow-y:auto;height:calc(100vh - 113px)">
+  <div class="pr-card" style="margin-bottom:14px">
+    <div class="pr-card-header"><div class="pr-card-icon">👥</div><div><div class="pr-card-title">Usuarios del Sistema</div><div class="pr-card-sub">Gestión de acceso y roles</div></div>
+    <button class="btn btn-primary" style="margin-left:auto;font-size:12px;padding:6px 14px" onclick="abrirModal('modal-user')">+ Nuevo usuario</button></div>
+    <div style="padding:0">
+      <table class="users-table">
+        <thead><tr><th>Nombre</th><th>Usuario</th><th>Rol</th><th>Estado</th></tr></thead>
+        <tbody id="users-tbody"><tr><td colspan="4" style="text-align:center;padding:18px;color:var(--gris3)">Cargando...</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+  <div class="pr-card">
+    <div class="pr-card-header"><div class="pr-card-icon">🔑</div><div><div class="pr-card-title">Roles y Permisos</div></div></div>
+    <div class="pr-card-body">
+      <div class="perm-grid">
+        <div class="perm-card"><div class="perm-role">👑 Administrador</div><ul class="perm-list"><li>Ver todos los prestadores</li><li>Crear / editar IPS</li><li>Cargar RIPS y evaluar</li><li>Generar actas</li><li>Gestionar usuarios</li></ul></div>
+        <div class="perm-card"><div class="perm-role">⚡ Evaluador</div><ul class="perm-list"><li>Ver prestadores</li><li class="no">Crear / editar IPS</li><li>Cargar RIPS y evaluar</li><li>Generar actas</li><li class="no">Gestionar usuarios</li></ul></div>
+        <div class="perm-card"><div class="perm-role">👁 Visualizador</div><ul class="perm-list"><li>Ver prestadores</li><li class="no">Cargar RIPS</li><li class="no">Evaluar</li><li>Ver actas existentes</li><li class="no">Gestionar usuarios</li></ul></div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+{% endif %}
+
+<!-- MODAL IPS -->
+<div id="modal-ips" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.38);z-index:500;align-items:center;justify-content:center">
+  <div style="background:#fff;border-radius:14px;padding:26px;width:440px;max-width:96vw;box-shadow:0 16px 48px rgba(0,0,0,.18)">
+    <div style="font-size:15px;font-weight:700;color:var(--azul);margin-bottom:18px">🏥 Nuevo Prestador</div>
+    <div class="form-grid-2">
+      <div class="form-group"><label class="form-label">Nombre IPS</label><input id="m-nombre" class="form-control"></div>
+      <div class="form-group"><label class="form-label">NIT</label><input id="m-nit" class="form-control"></div>
+      <div class="form-group"><label class="form-label">Nº Contrato</label><input id="m-contrato" class="form-control"></div>
+      <div class="form-group"><label class="form-label">Régimen</label><select id="m-regimen" class="form-control"><option>SUBSIDIADO</option><option>CONTRIBUTIVO</option></select></div>
+      <div class="form-group"><label class="form-label">Municipio</label><input id="m-municipio" class="form-control"></div>
+      <div class="form-group"><label class="form-label">Rep. Legal</label><input id="m-rep" class="form-control"></div>
+    </div>
+    <div class="btn-row" style="margin-top:18px">
+      <button class="btn btn-primary" onclick="guardarIPS()">💾 Guardar</button>
+      <button class="btn btn-outline" onclick="cerrarModal('modal-ips')">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL USUARIO -->
+<div id="modal-user" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.38);z-index:500;align-items:center;justify-content:center">
+  <div style="background:#fff;border-radius:14px;padding:26px;width:380px;max-width:96vw;box-shadow:0 16px 48px rgba(0,0,0,.18)">
+    <div style="font-size:15px;font-weight:700;color:var(--azul);margin-bottom:18px">👤 Nuevo Usuario</div>
+    <div class="form-group" style="margin-bottom:10px"><label class="form-label">Nombre completo</label><input id="u-nombre" class="form-control"></div>
+    <div class="form-group" style="margin-bottom:10px"><label class="form-label">Usuario</label><input id="u-username" class="form-control"></div>
+    <div class="form-group" style="margin-bottom:10px"><label class="form-label">Contraseña</label><input id="u-password" class="form-control" type="password"></div>
+    <div class="form-group" style="margin-bottom:10px"><label class="form-label">Rol</label>
+      <select id="u-rol" class="form-control"><option value="admin">Administrador</option><option value="evaluador" selected>Evaluador</option><option value="viewer">Visualizador</option></select>
+    </div>
+    <div class="btn-row" style="margin-top:16px">
+      <button class="btn btn-primary" onclick="guardarUsuario()">💾 Guardar</button>
+      <button class="btn btn-outline" onclick="cerrarModal('modal-user')">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const S={config:null,metas:{},resultados:null,ips_activa:null};
+let _ips_list=[];
+
+document.addEventListener("DOMContentLoaded",async()=>{
+  document.getElementById("fecha_eval").value=hoy();
+  document.getElementById("periodo_fin").value=hoy();
+  await cargarConfig();
+  await cargarIPS();
+  await cargarUsuarios();
+  await cargarEstado();
+});
+
+function hoy(){return new Date().toISOString().slice(0,10);}
+
+async function cargarConfig(){
+  const r=await fetch("/api/config");
+  S.config=await r.json();
+  renderMetasManual();
+}
+
+function switchTab(e,id){
+  document.querySelectorAll(".nav-tab").forEach(b=>b.classList.remove("active"));
+  document.querySelectorAll(".tab-content").forEach(p=>p.classList.remove("active"));
+  e.target.closest(".nav-tab").classList.add("active");
+  document.getElementById(id).classList.add("active");
+}
+
+function switchInnerTab(e,id){
+  const c=e.target.closest(".pr-card-body");
+  c.querySelectorAll(".it-btn").forEach(b=>b.classList.remove("active"));
+  e.target.classList.add("active");
+  c.querySelectorAll(".it-pane").forEach(p=>p.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
+}
+
+async function cargarIPS(){
+  const r=await fetch("/api/ips");
+  const d=await r.json();
+  _ips_list=d.ips||[];
+  renderIPS(_ips_list,"ips-list");
+  renderIPS(_ips_list,"ips-list2");
+  document.getElementById("ds-total-ips").textContent=_ips_list.length;
+}
+
+function renderIPS(lista,cid){
+  const el=document.getElementById(cid);
+  if(!lista.length){el.innerHTML='<div class="empty-state">Sin prestadores registrados</div>';return;}
+  el.innerHTML=lista.map(ip=>`
+    <div class="ips-item" onclick="seleccionarIPS('${ip.id}','${cid}',event)">
+      <div class="ips-name">${ip.nombre}</div>
+      <div class="ips-meta">
+        NIT: ${ip.nit||'—'} &nbsp;
+        <span class="reg-tag ${ip.regimen==='SUBSIDIADO'?'reg-sub':'reg-cont'}">${ip.regimen||''}</span>
+        ${ip.municipio||''}
+      </div>
+    </div>`).join("");
+}
+
+function filtrarIPS(q){const f=_ips_list.filter(i=>(i.nombre+i.nit).toLowerCase().includes(q.toLowerCase()));renderIPS(f,"ips-list");}
+function filtrarIPS2(q){const f=_ips_list.filter(i=>(i.nombre+i.nit).toLowerCase().includes(q.toLowerCase()));renderIPS(f,"ips-list2");}
+
+function seleccionarIPS(id,cid,event){
+  document.querySelectorAll(`#${cid} .ips-item`).forEach(e=>e.classList.remove("active"));
+  event.currentTarget.classList.add("active");
+  S.ips_activa=_ips_list.find(i=>i.id==id);
+  if(!S.ips_activa) return;
+  document.getElementById("dash-placeholder").style.display="none";
+  const det=document.getElementById("ips-detalle");
+  det.style.display="block";
+  document.getElementById("ips-det-nombre").textContent=S.ips_activa.nombre;
+  document.getElementById("ips-det-meta").textContent=`NIT: ${S.ips_activa.nit||'—'} · Contrato: ${S.ips_activa.num_contrato||'—'} · ${S.ips_activa.municipio||''}`;
+  document.getElementById("ips-det-actas-list").textContent=(S.ips_activa.num_actas||0)+" actas registradas.";
+}
+
+function iniciarEvalIPS(){
+  if(!S.ips_activa) return;
+  ["empresa","nit","num_contrato","regimen","municipio"].forEach(k=>{
+    const el=document.getElementById(k);
+    if(el&&S.ips_activa[k==="empresa"?"nombre":k]) el.value=S.ips_activa[k==="empresa"?"nombre":k];
+  });
+  document.getElementById("rep_ips").value=S.ips_activa.rep_legal||"";
+  goEvaluar();
+}
+
+function goEvaluar(){
+  document.querySelectorAll(".nav-tab").forEach(b=>b.classList.remove("active"));
+  document.querySelectorAll(".tab-content").forEach(p=>p.classList.remove("active"));
+  document.querySelectorAll(".nav-tab")[1].classList.add("active");
+  document.getElementById("tab-evaluacion").classList.add("active");
+  goStep(1);
+}
+
+function abrirModal(id){document.getElementById(id).style.display="flex";}
+function cerrarModal(id){document.getElementById(id).style.display="none";}
+
+async function guardarIPS(){
+  const body={nombre:v("m-nombre"),nit:v("m-nit"),num_contrato:v("m-contrato"),regimen:v("m-regimen"),municipio:v("m-municipio"),rep_legal:v("m-rep")};
+  await fetch("/api/ips",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
+  cerrarModal("modal-ips");await cargarIPS();
+}
+
+async function guardarUsuario(){
+  const body={nombre:v("u-nombre"),username:v("u-username"),password:v("u-password"),rol:v("u-rol")};
+  const r=await fetch("/api/usuarios",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
+  const d=await r.json();
+  if(d.ok){cerrarModal("modal-user");await cargarUsuarios();}
+  else alert("Error: "+(d.error||"desconocido"));
+}
+
+async function cargarUsuarios(){
+  const r=await fetch("/api/usuarios");if(!r.ok) return;
+  const d=await r.json();
+  const tbody=document.getElementById("users-tbody");if(!tbody) return;
+  tbody.innerHTML=(d.usuarios||[]).map(u=>`<tr>
+    <td>${u.nombre}</td>
+    <td><code style="font-size:11px;background:var(--gris0);padding:2px 6px;border-radius:4px">${u.username}</code></td>
+    <td><span class="role-badge role-${u.rol}">${u.rol.toUpperCase()}</span></td>
+    <td><span class="pill ${u.activo!==false?'pill-ok':'pill-warn'}">${u.activo!==false?'✓ Activo':'Inactivo'}</span></td>
+  </tr>`).join("")||'<tr><td colspan="4" style="text-align:center;color:var(--gris3);padding:14px">Sin usuarios</td></tr>';
+}
+
+function goStep(n){
+  [1,2,3,4].forEach(i=>{
+    const p=document.getElementById(`step${i}`);if(p) p.style.display=i===n?"block":"none";
+    const w=document.getElementById(`ws${i}`);if(w){
+      w.classList.remove("active","done");
+      if(i===n) w.classList.add("active");
+      else if(i<n){w.classList.add("done");w.querySelector(".ws-num").textContent="✓";}
+      else w.querySelector(".ws-num").textContent=i;
+    }
+  });
+}
+
+async function subirRIPS(files,hint){
+  if(!files||!files.length) return;
+  const fd=new FormData();
+  for(const f of files) fd.append("files",f);
+  const r=await fetch("/api/upload-rips",{method:"POST",body:fd});
+  const d=await r.json();
+  d.detalle.forEach(det=>{
+    if(!det.ok) return;
+    const lbl=document.getElementById(`lbl-${det.archivo}`);
+    if(lbl){lbl.style.background="var(--verde3)";lbl.style.borderColor="var(--verde2)";lbl.style.borderStyle="solid";}
+    const sub=document.getElementById(`sub-${det.archivo}`);
+    if(sub) sub.textContent=`✅ ${det.registros.toLocaleString("es-CO")} reg.`;
+    const chk=document.getElementById(`chk-${det.archivo}`);
+    if(chk){chk.textContent="✓";chk.style.color="var(--verde2)";}
+  });
+  if(d.cobertura_poblacion&&Object.keys(d.cobertura_poblacion).length){
+    const grid=document.getElementById("cob-grid");grid.innerHTML="";
+    const LABS={PRIMERA_INFANCIA:"1ra Inf",INFANCIA:"Infancia",ADOLESCENCIA:"Adolesc.",JOVENES:"Jóvenes",ADULTEZ:"Adultez",VEJEZ:"Vejez"};
+    for(const[k,vv] of Object.entries(d.cobertura_poblacion)){
+      const el=document.createElement("div");el.className="cob-card";
+      el.innerHTML=`<div class="cc-num">${vv.toLocaleString("es-CO")}</div><div class="cc-label">${LABS[k]||k}</div>`;
+      grid.appendChild(el);
+    }
+  }
+}
+
+async function subirNT(file){
+  if(!file) return;
+  const st=document.getElementById("nt-status");
+  st.innerHTML='<div class="alert alert-info">⏳ Procesando herramienta...</div>';
+  const fd=new FormData();fd.append("file",file);
+  const r=await fetch("/api/upload-nota-tecnica",{method:"POST",body:fd});
+  const d=await r.json();
+  if(!d.ok){st.innerHTML=`<div class="alert alert-error">❌ ${d.error}</div>`;return;}
+  S.metas=d.metas;
+  document.getElementById("nt-drop").classList.add("loaded");
+  st.innerHTML=`<div class="alert alert-success">✅ ${d.programas.length} programas · metas cargadas</div>`;
+  sincronizarMetasManual(d.metas);
+}
+
+function sincronizarMetasManual(metas){
+  if(!S.config) return;
+  for(const prog of S.config.programas){
+    const pm=metas[prog.id]||{};
+    for(const act_id of prog.actividades){
+      const am=pm[act_id];if(!am) continue;
+      const mEl=document.getElementById(`m_${prog.id}_${act_id}`);
+      const uEl=document.getElementById(`u_${prog.id}_${act_id}`);
+      if(mEl&&am.meta!==undefined) mEl.value=am.meta;
+      if(uEl&&am.upc!==undefined) uEl.value=am.upc;
+      if(mEl) actualizarVr(prog.id,act_id);
+    }
+  }
+}
+
+function renderMetasManual(){
+  if(!S.config) return;
+  const tbody=document.getElementById("meta-tbody");tbody.innerHTML="";
+  for(const prog of S.config.programas){
+    const th=document.createElement("tr");th.className="prog-row";
+    th.innerHTML=`<td colspan="4">📋 ${prog.nombre}</td>`;tbody.appendChild(th);
+    for(const act_id of prog.actividades){
+      const act=S.config.actividades_base[act_id];if(!act) continue;
+      const tr=document.createElement("tr");
+      tr.innerHTML=`<td style="padding-left:14px;font-size:10.5px">${act.descripcion}</td>
+        <td><input type="number" min="0" value="0" id="m_${prog.id}_${act_id}" oninput="actualizarVr('${prog.id}','${act_id}')"></td>
+        <td><input type="number" min="0" step="0.01" value="0" id="u_${prog.id}_${act_id}" oninput="actualizarVr('${prog.id}','${act_id}')"></td>
+        <td id="vr_${prog.id}_${act_id}" style="color:var(--gris3);font-size:10.5px">$0</td>`;
+      tbody.appendChild(tr);
+    }
+  }
+}
+
+function actualizarVr(pi,ai){
+  const m=parseFloat(document.getElementById(`m_${pi}_${ai}`)?.value||0);
+  const u=parseFloat(document.getElementById(`u_${pi}_${ai}`)?.value||0);
+  const el=document.getElementById(`vr_${pi}_${ai}`);
+  if(el) el.textContent=fmt(m*u);
+}
+
+function leerMetasManual(){
+  if(!S.config) return {};
+  const metas={};
+  for(const prog of S.config.programas){
+    metas[prog.id]={};
+    for(const act_id of prog.actividades){
+      const m=parseFloat(document.getElementById(`m_${prog.id}_${act_id}`)?.value||0);
+      const u=parseFloat(document.getElementById(`u_${prog.id}_${act_id}`)?.value||0);
+      metas[prog.id][act_id]={meta:m,upc:u};
+    }
+  }
+  return metas;
+}
+
+async function evaluarAhora(){
+  const aTab=document.querySelector(".it-pane.active")?.id;
+  let metas=S.metas;
+  if(aTab==="it-manual"||!metas||!Object.keys(metas).length) metas=leerMetasManual();
+  const info=leerInfo();
+  await fetch("/api/set-metas",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({metas,info_acta:info})});
+  const btn=document.getElementById("btn-evaluar");
+  btn.innerHTML='<span class="spin"></span> Evaluando...';btn.disabled=true;
+  const r=await fetch("/api/evaluar",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({info_acta:info})});
+  const d=await r.json();
+  btn.innerHTML="⚡ Evaluar";btn.disabled=false;
+  if(!d.ok){alert("Error: "+(d.error||"desconocido"));return;}
+  S.resultados=d;renderResultados(d);goStep(3);
+}
+
+function renderResultados(data){
+  const tot=data.totales||{};
+  document.getElementById("stat-exigido").textContent=fmt(tot.exigido);
+  document.getElementById("stat-reconocido").textContent=fmt(tot.reconocido);
+  document.getElementById("stat-descuento").textContent=fmt(tot.descuento);
+  document.getElementById("stat-pct").textContent=pct(tot.pct||0);
+  document.getElementById("stat-row").style.display="grid";
+  document.getElementById("chart-card").style.display="block";
+  renderChart(data.resultados);
+  document.getElementById("detalle-card").style.display="block";
+  const db=document.getElementById("detalle-body");db.innerHTML="";
+  for(const[,res] of Object.entries(data.resultados)){
+    if(!res.actividades?.length) continue;
+    const p=res.pct_cumplimiento||0;
+    const bc=p>=1?"b-green":p>=.9?"b-yellow":"b-red";
+    const card=document.createElement("div");card.className="res-card";
+    card.innerHTML=`<div class="res-header" onclick="toggle(this)">
+      <div class="res-prog">${res.nombre}</div>
+      <div class="res-col"><div class="rc-label">Exigido</div><div class="rc-val">${fmt(res.total_exigido)}</div></div>
+      <div class="res-col"><div class="rc-label">Reconocido</div><div class="rc-val">${fmt(res.total_reconocido)}</div></div>
+      <div class="res-col"><div class="rc-label">Descuento</div><div class="rc-val ${res.total_descuento>0?'neg':''}">${fmt(res.total_descuento)}</div></div>
+      <div class="badge-pct ${bc}">${pct(p)}</div></div>
+      <div class="res-body"><div class="det-wrap"><table class="det-table">
+        <thead><tr><th>Actividad</th><th>Meta</th><th>Ejecutado</th><th>Conciliado</th><th>Disc.</th><th>Vr Exigido</th><th>Descuento</th><th>Reconocido</th></tr></thead>
+        <tbody>${res.actividades.map(a=>`<tr><td>${a.descripcion}</td><td>${a.meta}</td><td>${a.ejecutado}</td><td>${a.conciliado}</td>
+          <td class="${a.discordancia>0?'disc':''}">${a.discordancia}</td>
+          <td>${fmt(a.valor_meta)}</td><td class="${a.valor_descuento>0?'disc':''}">${fmt(a.valor_descuento)}</td><td>${fmt(a.valor_reconocido)}</td></tr>`).join("")}
+          <tr class="tot-row"><td colspan="5">TOTAL ${res.nombre}</td><td>${fmt(res.total_exigido)}</td><td>${fmt(res.total_descuento)}</td><td>${fmt(res.total_reconocido)}</td></tr>
+        </tbody></table></div></div>`;
+    db.appendChild(card);
+  }
+  document.getElementById("res-placeholder").style.display="none";
+  document.getElementById("resumen-card").style.display="block";
+  const tbody=document.getElementById("acta-summary-body");
+  tbody.innerHTML=(data.resumen||[]).map(p=>{
+    const pp=p.pct||0;
+    const bc=pp>=1?"var(--verde3)":pp>=.9?"var(--amarillo2)":"var(--rojo2)";
+    const tc=pp>=1?"var(--verde)":pp>=.9?"#7d5a00":"var(--rojo)";
+    return `<tr><td>${p.nombre}</td><td>${fmt(p.exigido)}</td><td>${fmt(p.reconocido)}</td>
+      <td class="${p.descuento>0?'neg':''}">${fmt(p.descuento)}</td>
+      <td><span class="pct-cell" style="background:${bc};color:${tc}">${pct(pp)}</span></td></tr>`;
+  }).join("")+`<tr class="tr-total"><td>TOTAL</td><td>${fmt(tot.exigido)}</td><td>${fmt(tot.reconocido)}</td><td>${fmt(tot.descuento)}</td><td>${pct(tot.pct||0)}</td></tr>`;
+  document.getElementById("acta-mini-resumen").innerHTML=`<div style="background:var(--azul4);border-radius:8px;padding:12px;margin-bottom:14px">
+    <div style="font-size:11.5px;font-weight:700;color:var(--azul);margin-bottom:6px">Resumen</div>
+    <div style="display:flex;gap:18px;font-size:12px;flex-wrap:wrap">
+      <div>Exigido: <strong>${fmt(tot.exigido)}</strong></div>
+      <div>Reconocido: <strong>${fmt(tot.reconocido)}</strong></div>
+      <div style="color:var(--rojo)">Descuento: <strong>${fmt(tot.descuento)}</strong></div>
+      <div>Cumplimiento: <strong>${pct(tot.pct||0)}</strong></div>
+    </div></div>`;
+}
+
+function toggle(h){h.nextElementSibling.classList.toggle("open");}
+
+function renderChart(res){
+  const ctx=document.getElementById("chart-main").getContext("2d");
+  if(window._ch) window._ch.destroy();
+  const lbls=[],vals=[],cols=[];
+  for(const[,r] of Object.entries(res)){
+    if(!r.actividades?.length) continue;
+    lbls.push(r.nombre.substring(0,28));
+    const p=(r.pct_cumplimiento||0)*100;
+    vals.push(parseFloat(p.toFixed(2)));
+    cols.push(p>=100?"#70AD47":p>=90?"#F4B942":"#C00000");
+  }
+  window._ch=new Chart(ctx,{type:"bar",
+    data:{labels:lbls,datasets:[{label:"% Cumplimiento",data:vals,backgroundColor:cols,borderRadius:5,maxBarThickness:48}]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`${c.formattedValue}%`}}},
+      scales:{y:{min:0,max:120,ticks:{callback:vv=>`${vv}%`,stepSize:20},grid:{color:"#E8ECF2"}},
+        x:{ticks:{maxRotation:22,font:{size:9}},grid:{display:false}}}}
+  });
+}
+
+async function descargarActa(){
+  const btn=document.getElementById("btn-descargar");
+  btn.innerHTML='<span class="spin"></span> Generando...';btn.disabled=true;
+  const r=await fetch("/api/generar-acta",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({info_acta:leerInfo()})});
+  if(r.ok){
+    const blob=await r.blob();
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement("a");a.href=url;
+    a.download=`ACTA_${v("empresa")}_${v("periodo")}.xlsx`;a.click();
+    URL.revokeObjectURL(url);
+  } else {
+    const d=await r.json().catch(()=>({}));
+    alert("Error: "+(d.error||"No se pudo generar"));
+  }
+  btn.innerHTML="⬇ Descargar Acta Excel";btn.disabled=false;
+}
+
+async function limpiarSesion(){
+  if(!confirm("¿Limpiar datos de evaluación?")) return;
+  await fetch("/api/limpiar",{method:"POST"});location.reload();
+}
+
+async function cargarEstado(){
+  const r=await fetch("/api/estado");const d=await r.json();
+  d.archivos_cargados.forEach(a=>{
+    const lbl=document.getElementById(`lbl-${a}`);
+    if(lbl){lbl.style.background="var(--verde3)";lbl.style.borderColor="var(--verde2)";lbl.style.borderStyle="solid";}
+    const chk=document.getElementById(`chk-${a}`);
+    if(chk){chk.textContent="✓";chk.style.color="var(--verde2)";}
+  });
+}
+
+function leerInfo(){
+  return {acta_num:v("acta_num"),fecha_eval:v("fecha_eval"),periodo:v("periodo"),periodo_fin:v("periodo_fin"),
+    vigencia:v("vigencia"),empresa:v("empresa"),nit:v("nit"),regimen:v("regimen"),municipio:v("municipio"),
+    num_contrato:v("num_contrato"),rep_ips:v("rep_ips"),rep_epsi:v("rep_epsi"),
+    coordinador:v("coordinador"),evaluador:v("evaluador"),observaciones:v("observaciones")};
+}
+function v(id){return document.getElementById(id)?.value||"";}
+function fmt(n){if(n==null)return"$0";return"$"+parseFloat(n).toLocaleString("es-CO",{minimumFractionDigits:2,maximumFractionDigits:2});}
+function pct(n){return(parseFloat(n||0)*100).toFixed(2)+"%";}
+</script>
+</body>
+</html>

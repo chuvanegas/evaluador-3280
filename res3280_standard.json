@@ -1,0 +1,902 @@
+{
+  "version": "2018",
+  "resolucion": "3280",
+  "fecha_emision": "2018-08-02",
+  "titulo": "Resolución 3280 de 2018 - Rutas Integrales de Atención en Salud",
+  "entidad": "Ministerio de Salud y Protección Social",
+  "descripcion": "Estándar de actividades por programa según Resolución 3280/2018 y complementarias (Res. 3100/2019, 4003/2008, 2626/2019, 3202/2016, 3253/2009, 202/2020)",
+
+  "programas": [
+    {
+      "id": "PRIMERA_INFANCIA",
+      "codigo": "PI",
+      "nombre_acta": "INDIVIDUALES PARA NIÑOS Y NIÑAS EN PRIMERA INFANCIA 1M - 5A",
+      "nombre_herramienta": "PRIMERA INFANCIA(0 meses-5 años)",
+      "rango_edad": "0 meses - 5 años",
+      "tipo_seccion": "RUTA_PYMS",
+      "aplica_pai": false,
+      "actividades": [
+        {
+          "tipo": "Consultas Componente Primario",
+          "descripcion": "Atención en salud por medicina general o especialista en pediatría o medicina familiar",
+          "cups": ["890201", "890202"],
+          "periodicidad": "anual",
+          "notas": "Mínimo 1 por año"
+        },
+        {
+          "tipo": "Consultas Componente Primario",
+          "descripcion": "Atención en salud por profesional de enfermería",
+          "cups": ["890301"],
+          "periodicidad": "anual"
+        },
+        {
+          "tipo": "Consultas Componente Primario",
+          "descripcion": "Atención en salud bucal por profesional de odontología",
+          "cups": ["890401"],
+          "periodicidad": "anual"
+        },
+        {
+          "tipo": "Consultas Componente Primario",
+          "descripcion": "Atención por profesional de enfermería, medicina general o nutrición para la promoción y apoyo de la lactancia materna",
+          "cups": ["890501"],
+          "periodicidad": "anual"
+        },
+        {
+          "tipo": "Procedimientos Componente Primario",
+          "descripcion": "Tamizaje para hemoglobina",
+          "cups": ["903824"],
+          "periodicidad": "anual"
+        },
+        {
+          "tipo": "Procedimientos Componente Primario",
+          "descripcion": "Aplicación de barniz de flúor",
+          "cups": ["890102"],
+          "periodicidad": "semestral"
+        },
+        {
+          "tipo": "Procedimientos Componente Primario",
+          "descripcion": "Profilaxis y remoción de placa bacteriana (por persona)",
+          "cups": ["890103"],
+          "periodicidad": "semestral"
+        },
+        {
+          "tipo": "Procedimientos Componente Primario",
+          "descripcion": "Aplicación de sellantes (por persona)",
+          "cups": ["890104"],
+          "periodicidad": "anual"
+        },
+        {
+          "tipo": "Procedimientos Componente Primario",
+          "descripcion": "Fortificación casera con micronutrientes en polvo",
+          "cups": ["893506"],
+          "periodicidad": "anual"
+        },
+        {
+          "tipo": "Procedimientos Componente Primario",
+          "descripcion": "Suplementación con micronutrientes (vitamina A)",
+          "cups": ["893501"],
+          "periodicidad": "semestral"
+        },
+        {
+          "tipo": "Procedimientos Componente Primario",
+          "descripcion": "Suplementación con hierro",
+          "cups": ["893502"],
+          "periodicidad": "anual"
+        },
+        {
+          "tipo": "Procedimientos Componente Primario",
+          "descripcion": "Desparasitación Antihelmíntica con Albendazol dosis única 400mg vía oral",
+          "cups": ["893503"],
+          "periodicidad": "semestral"
+        },
+        {
+          "tipo": "Educacion en salud",
+          "descripcion": "Educación individual (padres o cuidadores)",
+          "cups": ["893601"],
+          "periodicidad": "anual"
+        },
+        {
+          "tipo": "Educacion en salud",
+          "descripcion": "Educación dirigida a la familia",
+          "cups": ["893602"],
+          "periodicidad": "anual"
+        },
+        {
+          "tipo": "Educacion en salud",
+          "descripcion": "Educación grupal",
+          "cups": ["893603"],
+          "periodicidad": "trimestral"
+        }
+      ]
+    },
+
+    {
+      "id": "INFANCIA",
+      "codigo": "INF",
+      "nombre_acta": "INDIVIDUALES PARA NIÑOS Y NIÑAS EN INFANCIA 6 - 11 AÑOS",
+      "nombre_herramienta": "INFANCIA(6-11 años)",
+      "rango_edad": "6 - 11 años",
+      "tipo_seccion": "RUTA_PYMS",
+      "aplica_pai": false,
+      "actividades": [
+        {
+          "tipo": "Consultas Componente Primario",
+          "descripcion": "Atención en salud por medicina general o especialista en pediatría o medicina familiar",
+          "cups": ["890201", "890202"],
+          "periodicidad": "anual"
+        },
+        {
+          "tipo": "Consultas Componente Primario",
+          "descripcion": "Atención en salud por profesional de enfermería",
+          "cups": ["890301"],
+          "periodicidad": "anual"
+        },
+        {
+          "tipo": "Consultas Componente Primario",
+          "descripcion": "Atención en salud bucal por profesional de odontología o higienista oral",
+          "cups": ["890401"],
+          "periodicidad": "anual"
+        },
+        {
+          "tipo": "Procedimientos componente primario",
+          "descripcion": "Hemoglobina",
+          "cups": ["903882"],
+          "periodicidad": "anual"
+        },
+        {
+          "tipo": "Procedimientos componente primario",
+          "descripcion": "Hematocrito",
+          "cups": ["903883"],
+          "periodicidad": "anual"
+        },
+        {
+          "tipo": "Procedimientos componente primario",
+          "descripcion": "Aplicación de barniz de flúor",
+          "cups": ["890102"],
+          "periodicidad": "semestral"
+        },
+        {
+          "tipo": "Procedimientos componente primario",
+          "descripcion": "Profilaxis y remoción de placa bacteriana (por persona)",
+          "cups": ["890103"],
+          "periodicidad": "semestral"
+        },
+        {
+          "tipo": "Procedimientos componente primario",
+          "descripcion": "Aplicación de sellantes (por persona)",
+          "cups": ["890104"],
+          "periodicidad": "anual"
+        },
+        {
+          "tipo": "Educacion en salud",
+          "descripcion": "Educación individual",
+          "cups": ["893601"],
+          "periodicidad": "anual"
+        },
+        {
+          "tipo": "Educacion en salud",
+          "descripcion": "Educación dirigida a la familia",
+          "cups": ["893602"],
+          "periodicidad": "anual"
+        },
+        {
+          "tipo": "Educacion en salud",
+          "descripcion": "Educación grupal",
+          "cups": ["893603"],
+          "periodicidad": "trimestral"
+        }
+      ]
+    },
+
+    {
+      "id": "ADOLESCENCIA",
+      "codigo": "ADO",
+      "nombre_acta": "INDIVIDUALES PARA LOS ADOLESCENTES 12 - 17 AÑOS",
+      "nombre_herramienta": "ADOLESCENCIA(12-17 años)",
+      "rango_edad": "12 - 17 años",
+      "tipo_seccion": "RUTA_PYMS",
+      "aplica_pai": false,
+      "actividades": [
+        {
+          "tipo": "Consultas Componente Primario",
+          "descripcion": "Atención en salud por medicina general o especialista en pediatría o medicina familiar",
+          "cups": ["890201"],
+          "periodicidad": "anual"
+        },
+        {
+          "tipo": "Consultas Componente Primario",
+          "descripcion": "Atención en salud por profesional de enfermería",
+          "cups": ["890301"],
+          "periodicidad": "anual"
+        },
+        {
+          "tipo": "Consultas Componente Primario",
+          "descripcion": "Atención en salud bucal por profesional de odontología o higienista oral",
+          "cups": ["890401"],
+          "periodicidad": "anual"
+        },
+        {
+          "tipo": "Consultas Componente Primario",
+          "descripcion": "Prueba rápida treponémica",
+          "cups": ["903885"],
+          "periodicidad": "anual"
+        },
+        {
+          "tipo": "Consultas Componente Primario",
+          "descripcion": "Prueba rápida para VIH (incluye confirmatoria)",
+          "cups": ["903886"],
+          "periodicidad": "anual"
+        },
+        {
+          "tipo": "Consultas Componente Primario",
+          "descripcion": "Asesoría pre test VIH",
+          "cups": ["903887"],
+          "periodicidad": "anual"
+        },
+        {
+          "tipo": "Consultas Componente Primario",
+          "descripcion": "Asesoría pos test VIH",
+          "cups": ["903888"],
+          "periodicidad": "anual"
+        },
+        {
+          "tipo": "Consultas Componente Primario",
+          "descripcion": "Hemoglobina",
+          "cups": ["903882"],
+          "periodicidad": "anual"
+        },
+        {
+          "tipo": "Consultas Componente Primario",
+          "descripcion": "Hematocrito",
+          "cups": ["903883"],
+          "periodicidad": "anual"
+        },
+        {
+          "tipo": "Consultas Componente Primario",
+          "descripcion": "Prueba de embarazo",
+          "cups": ["903889"],
+          "periodicidad": "anual"
+        },
+        {
+          "tipo": "Consultas Componente Primario",
+          "descripcion": "Atención en salud por medicina general, medicina familiar o enfermería para la asesoría en anticoncepción",
+          "cups": ["890203"],
+          "periodicidad": "anual"
+        },
+        {
+          "tipo": "Consultas Componente Primario",
+          "descripcion": "Atención en salud por medicina general, medicina familiar o enfermería para la asesoría en anticoncepción - Control",
+          "cups": ["890204"],
+          "periodicidad": "anual"
+        },
+        {
+          "tipo": "Medicamentos",
+          "descripcion": "Suministro de anticoncepción oral ciclo o inyectable mensual",
+          "cups": ["M01"],
+          "periodicidad": "mensual"
+        },
+        {
+          "tipo": "Medicamentos",
+          "descripcion": "Suministro de preservativos",
+          "cups": ["M02"],
+          "periodicidad": "mensual"
+        },
+        {
+          "tipo": "Procedimientos Componente Primario",
+          "descripcion": "Insercion de anticonceptivos subdermicos",
+          "cups": ["360301"],
+          "periodicidad": "según indicación"
+        },
+        {
+          "tipo": "Procedimientos Componente Primario",
+          "descripcion": "Insercion de dispositivo intrauterino + anticonceptivo (DIU) SOD",
+          "cups": ["360302"],
+          "periodicidad": "según indicación"
+        },
+        {
+          "tipo": "Procedimientos Componente Primario",
+          "descripcion": "Aplicación de barniz de flúor",
+          "cups": ["890102"],
+          "periodicidad": "semestral"
+        },
+        {
+          "tipo": "Procedimientos Componente Primario",
+          "descripcion": "Profilaxis y remoción de placa bacteriana (por persona)",
+          "cups": ["890103"],
+          "periodicidad": "semestral"
+        },
+        {
+          "tipo": "Procedimientos Componente Primario",
+          "descripcion": "Detartraje supragingival (por persona)",
+          "cups": ["890105"],
+          "periodicidad": "anual"
+        },
+        {
+          "tipo": "Procedimientos Componente Primario",
+          "descripcion": "Aplicación de sellantes (por persona)",
+          "cups": ["890104"],
+          "periodicidad": "anual"
+        },
+        {
+          "tipo": "Educacion en salud",
+          "descripcion": "Educación individual",
+          "cups": ["893601"],
+          "periodicidad": "anual"
+        },
+        {
+          "tipo": "Educacion en salud",
+          "descripcion": "Educación dirigida a la familia",
+          "cups": ["893602"],
+          "periodicidad": "anual"
+        },
+        {
+          "tipo": "Educacion en salud",
+          "descripcion": "Educación grupal",
+          "cups": ["893603"],
+          "periodicidad": "trimestral"
+        }
+      ]
+    },
+
+    {
+      "id": "JOVENES",
+      "codigo": "JOV",
+      "nombre_acta": "INDIVIDUALES PARA LOS JOVENES 18 - 28 AÑOS",
+      "nombre_herramienta": "JOVENES (18-28)",
+      "rango_edad": "18 - 28 años",
+      "tipo_seccion": "RUTA_PYMS",
+      "aplica_pai": false,
+      "actividades": [
+        {
+          "tipo": "Consultas Componente Primario",
+          "descripcion": "Atención en salud por medicina general o medicina familiar",
+          "cups": ["890201"],
+          "periodicidad": "anual"
+        },
+        {
+          "tipo": "Consultas Componente Primario",
+          "descripcion": "Atención en salud bucal por profesional de odontología o higienista oral",
+          "cups": ["890401"],
+          "periodicidad": "anual"
+        },
+        {
+          "tipo": "Procedimientos Componente Primario",
+          "descripcion": "Glicemia basal",
+          "cups": ["903901"],
+          "periodicidad": "anual"
+        },
+        {
+          "tipo": "Procedimientos Componente Primario",
+          "descripcion": "Colesterol total",
+          "cups": ["903902"],
+          "periodicidad": "anual"
+        },
+        {
+          "tipo": "Procedimientos Componente Primario",
+          "descripcion": "Colesterol HDL",
+          "cups": ["903903"],
+          "periodicidad": "anual"
+        },
+        {
+          "tipo": "Procedimientos Componente Primario",
+          "descripcion": "Colesterol LDL",
+          "cups": ["903904"],
+          "periodicidad": "anual"
+        },
+        {
+          "tipo": "Procedimientos Componente Primario",
+          "descripcion": "Triglicéridos",
+          "cups": ["903905"],
+          "periodicidad": "anual"
+        },
+        {
+          "tipo": "Procedimientos Componente Primario",
+          "descripcion": "Creatinina",
+          "cups": ["903906"],
+          "periodicidad": "anual"
+        },
+        {
+          "tipo": "Procedimientos Componente Primario",
+          "descripcion": "Prueba rápida treponémica",
+          "cups": ["903885"],
+          "periodicidad": "anual"
+        },
+        {
+          "tipo": "Procedimientos Componente Primario",
+          "descripcion": "Prueba rápida para VIH (incluye confirmatoria)",
+          "cups": ["903886"],
+          "periodicidad": "anual"
+        },
+        {
+          "tipo": "Procedimientos Componente Primario",
+          "descripcion": "Asesoría pre test VIH",
+          "cups": ["903887"],
+          "periodicidad": "anual"
+        },
+        {
+          "tipo": "Procedimientos Componente Primario",
+          "descripcion": "Asesoría pos test VIH",
+          "cups": ["903888"],
+          "periodicidad": "anual"
+        },
+        {
+          "tipo": "Procedimientos Componente Primario",
+          "descripcion": "Hemoglobina",
+          "cups": ["903882"],
+          "periodicidad": "anual"
+        },
+        {
+          "tipo": "Procedimientos Componente Primario",
+          "descripcion": "Hematocrito",
+          "cups": ["903883"],
+          "periodicidad": "anual"
+        },
+        {
+          "tipo": "Procedimientos Componente Primario",
+          "descripcion": "Prueba de embarazo",
+          "cups": ["903889"],
+          "periodicidad": "anual"
+        },
+        {
+          "tipo": "Procedimientos Componente Primario",
+          "descripcion": "Atención en salud por medicina general, medicina familiar o enfermería para la asesoría en anticoncepción",
+          "cups": ["890203"],
+          "periodicidad": "anual"
+        },
+        {
+          "tipo": "Procedimientos Componente Primario",
+          "descripcion": "Atención en salud por medicina general, medicina familiar o enfermería para la asesoría en anticoncepción - Control",
+          "cups": ["890204"],
+          "periodicidad": "anual"
+        },
+        {
+          "tipo": "Medicamentos",
+          "descripcion": "Suministro de anticoncepción oral ciclo o inyectable mensual",
+          "cups": ["M01"],
+          "periodicidad": "mensual"
+        },
+        {
+          "tipo": "Medicamentos",
+          "descripcion": "Suministro de preservativos",
+          "cups": ["M02"],
+          "periodicidad": "mensual"
+        },
+        {
+          "tipo": "Procedimientos Componente Primario",
+          "descripcion": "Aplicación de barniz de flúor",
+          "cups": ["890102"],
+          "periodicidad": "semestral"
+        },
+        {
+          "tipo": "Procedimientos Componente Primario",
+          "descripcion": "Profilaxis y remoción de placa bacteriana (por persona)",
+          "cups": ["890103"],
+          "periodicidad": "semestral"
+        },
+        {
+          "tipo": "Procedimientos Componente Primario",
+          "descripcion": "Detartraje supragingival (por persona)",
+          "cups": ["890105"],
+          "periodicidad": "anual"
+        },
+        {
+          "tipo": "Procedimientos Componente Primario",
+          "descripcion": "Aplicación de sellantes (por persona)",
+          "cups": ["890104"],
+          "periodicidad": "anual"
+        },
+        {
+          "tipo": "Educacion en salud",
+          "descripcion": "Educación individual",
+          "cups": ["893601"],
+          "periodicidad": "anual"
+        },
+        {
+          "tipo": "Educacion en salud",
+          "descripcion": "Educación dirigida a la familia",
+          "cups": ["893602"],
+          "periodicidad": "anual"
+        },
+        {
+          "tipo": "Educacion en salud",
+          "descripcion": "Educación grupal",
+          "cups": ["893603"],
+          "periodicidad": "trimestral"
+        }
+      ]
+    },
+
+    {
+      "id": "ADULTEZ",
+      "codigo": "ADU",
+      "nombre_acta": "INDIVIDUALES PARA LOS ADULTOS 29 - 59 AÑOS",
+      "nombre_herramienta": "ADULTEZ (29-59 años)",
+      "rango_edad": "29 - 59 años",
+      "tipo_seccion": "RUTA_PYMS",
+      "aplica_pai": false,
+      "actividades": [
+        {
+          "tipo": "Consultas Componente Primario",
+          "descripcion": "Atención en salud por medicina general o medicina familiar",
+          "cups": ["890201"],
+          "periodicidad": "anual"
+        },
+        {
+          "tipo": "Consultas Componente Primario",
+          "descripcion": "Atención en salud bucal por profesional de odontología o higienista oral",
+          "cups": ["890401"],
+          "periodicidad": "anual"
+        },
+        {
+          "tipo": "Procedimientos Componente Primario",
+          "descripcion": "Glicemia basal",
+          "cups": ["903901"],
+          "periodicidad": "anual"
+        },
+        {
+          "tipo": "Procedimientos Componente Primario",
+          "descripcion": "Colesterol total",
+          "cups": ["903902"],
+          "periodicidad": "anual"
+        },
+        {
+          "tipo": "Procedimientos Componente Primario",
+          "descripcion": "Colesterol HDL",
+          "cups": ["903903"],
+          "periodicidad": "anual"
+        },
+        {
+          "tipo": "Procedimientos Componente Primario",
+          "descripcion": "Colesterol LDL",
+          "cups": ["903904"],
+          "periodicidad": "anual"
+        },
+        {
+          "tipo": "Procedimientos Componente Primario",
+          "descripcion": "Triglicéridos",
+          "cups": ["903905"],
+          "periodicidad": "anual"
+        },
+        {
+          "tipo": "Procedimientos Componente Primario",
+          "descripcion": "Creatinina",
+          "cups": ["903906"],
+          "periodicidad": "anual"
+        },
+        {
+          "tipo": "Procedimientos Componente Primario",
+          "descripcion": "Prueba rápida treponémica",
+          "cups": ["903885"],
+          "periodicidad": "anual"
+        },
+        {
+          "tipo": "Procedimientos Componente Primario",
+          "descripcion": "Prueba rápida para VIH (incluye confirmatoria)",
+          "cups": ["903886"],
+          "periodicidad": "anual"
+        },
+        {
+          "tipo": "Procedimientos Componente Primario",
+          "descripcion": "Asesoría pre test VIH",
+          "cups": ["903887"],
+          "periodicidad": "anual"
+        },
+        {
+          "tipo": "Procedimientos Componente Primario",
+          "descripcion": "Asesoría pos test VIH",
+          "cups": ["903888"],
+          "periodicidad": "anual"
+        },
+        {
+          "tipo": "Procedimientos Componente Primario",
+          "descripcion": "Citología cérvico-uterina",
+          "cups": ["910101"],
+          "periodicidad": "trienal",
+          "notas": "Mujeres de 25 a 69 años"
+        },
+        {
+          "tipo": "Procedimientos Componente Primario",
+          "descripcion": "Toma de mamografía bilateral",
+          "cups": ["380401"],
+          "periodicidad": "bianual",
+          "notas": "Mujeres de 50 a 69 años"
+        },
+        {
+          "tipo": "Procedimientos Componente Primario",
+          "descripcion": "Aplicación de barniz de flúor",
+          "cups": ["890102"],
+          "periodicidad": "semestral"
+        },
+        {
+          "tipo": "Procedimientos Componente Primario",
+          "descripcion": "Profilaxis y remoción de placa bacteriana (por persona)",
+          "cups": ["890103"],
+          "periodicidad": "semestral"
+        },
+        {
+          "tipo": "Procedimientos Componente Primario",
+          "descripcion": "Detartraje supragingival (por persona)",
+          "cups": ["890105"],
+          "periodicidad": "anual"
+        },
+        {
+          "tipo": "Educacion en salud",
+          "descripcion": "Educación individual",
+          "cups": ["893601"],
+          "periodicidad": "anual"
+        },
+        {
+          "tipo": "Educacion en salud",
+          "descripcion": "Educación dirigida a la familia",
+          "cups": ["893602"],
+          "periodicidad": "anual"
+        },
+        {
+          "tipo": "Educacion en salud",
+          "descripcion": "Educación grupal",
+          "cups": ["893603"],
+          "periodicidad": "trimestral"
+        }
+      ]
+    },
+
+    {
+      "id": "VEJEZ",
+      "codigo": "VEJ",
+      "nombre_acta": "INDIVIDUALES PARA LOS ADULTOS MAYORES 60 A 80 Y MAS",
+      "nombre_herramienta": "VEJEZ (60-80 y mas años)",
+      "rango_edad": "60 años y más",
+      "tipo_seccion": "RUTA_PYMS",
+      "aplica_pai": false,
+      "actividades": [
+        {
+          "tipo": "Consultas Componente Primario",
+          "descripcion": "Atención en salud por medicina general o medicina familiar",
+          "cups": ["890201"],
+          "periodicidad": "anual"
+        },
+        {
+          "tipo": "Consultas Componente Primario",
+          "descripcion": "Atención en salud por profesional de enfermería",
+          "cups": ["890301"],
+          "periodicidad": "anual"
+        },
+        {
+          "tipo": "Consultas Componente Primario",
+          "descripcion": "Atención en salud bucal por profesional de odontología o higienista oral",
+          "cups": ["890401"],
+          "periodicidad": "anual"
+        },
+        {
+          "tipo": "Procedimientos Componente Primario",
+          "descripcion": "Glicemia basal",
+          "cups": ["903901"],
+          "periodicidad": "anual"
+        },
+        {
+          "tipo": "Procedimientos Componente Primario",
+          "descripcion": "Colesterol total",
+          "cups": ["903902"],
+          "periodicidad": "anual"
+        },
+        {
+          "tipo": "Procedimientos Componente Primario",
+          "descripcion": "Colesterol HDL",
+          "cups": ["903903"],
+          "periodicidad": "anual"
+        },
+        {
+          "tipo": "Procedimientos Componente Primario",
+          "descripcion": "Colesterol LDL",
+          "cups": ["903904"],
+          "periodicidad": "anual"
+        },
+        {
+          "tipo": "Procedimientos Componente Primario",
+          "descripcion": "Triglicéridos",
+          "cups": ["903905"],
+          "periodicidad": "anual"
+        },
+        {
+          "tipo": "Procedimientos Componente Primario",
+          "descripcion": "Creatinina",
+          "cups": ["903906"],
+          "periodicidad": "anual"
+        },
+        {
+          "tipo": "Procedimientos Componente Primario",
+          "descripcion": "Citología cérvico-uterina",
+          "cups": ["910101"],
+          "periodicidad": "trienal",
+          "notas": "Mujeres de 25 a 69 años"
+        },
+        {
+          "tipo": "Procedimientos Componente Primario",
+          "descripcion": "Toma de mamografía bilateral",
+          "cups": ["380401"],
+          "periodicidad": "bianual",
+          "notas": "Mujeres de 50 a 69 años"
+        },
+        {
+          "tipo": "Procedimientos Componente Primario",
+          "descripcion": "Aplicación de barniz de flúor",
+          "cups": ["890102"],
+          "periodicidad": "semestral"
+        },
+        {
+          "tipo": "Procedimientos Componente Primario",
+          "descripcion": "Profilaxis y remoción de placa bacteriana (por persona)",
+          "cups": ["890103"],
+          "periodicidad": "semestral"
+        },
+        {
+          "tipo": "Procedimientos Componente Primario",
+          "descripcion": "Detartraje supragingival (por persona)",
+          "cups": ["890105"],
+          "periodicidad": "anual"
+        },
+        {
+          "tipo": "Educacion en salud",
+          "descripcion": "Educación individual",
+          "cups": ["893601"],
+          "periodicidad": "anual"
+        },
+        {
+          "tipo": "Educacion en salud",
+          "descripcion": "Educación dirigida a la familia",
+          "cups": ["893602"],
+          "periodicidad": "anual"
+        },
+        {
+          "tipo": "Educacion en salud",
+          "descripcion": "Educación grupal",
+          "cups": ["893603"],
+          "periodicidad": "trimestral"
+        }
+      ]
+    },
+
+    {
+      "id": "PAI",
+      "codigo": "PAI",
+      "nombre_acta": "PAI",
+      "nombre_herramienta": "VACUNACION",
+      "rango_edad": "Todos",
+      "tipo_seccion": "PAI",
+      "aplica_pai": true,
+      "fuente_herramienta": "LMA",
+      "notas": "Programa Ampliado de Inmunizaciones - No genera descuento",
+      "actividades": [
+        {
+          "tipo": "Vacunación",
+          "descripcion": "Vacunación según esquema PAI vigente",
+          "cups": ["VAC"],
+          "periodicidad": "según esquema"
+        }
+      ]
+    },
+
+    {
+      "id": "MATERNO_PERINATAL",
+      "codigo": "MAT",
+      "nombre_acta": "MATERNO PERINATAL",
+      "nombre_herramienta": "RUTA MATERNO PERINATAL",
+      "rango_edad": "Gestantes y recién nacidos",
+      "tipo_seccion": "RUTA_MATERNO",
+      "aplica_pai": false,
+      "actividades": [
+        {
+          "tipo": "Atención Preconcepcional",
+          "descripcion": "Consulta de planificación familiar y anticoncepción",
+          "cups": ["890601"],
+          "periodicidad": "anual"
+        },
+        {
+          "tipo": "Atención Cuidado Prenatal",
+          "descripcion": "Consulta de control prenatal",
+          "cups": ["890701"],
+          "periodicidad": "por gestación"
+        },
+        {
+          "tipo": "Atención Cuidado Prenatal",
+          "descripcion": "Ecografía obstétrica",
+          "cups": ["841701"],
+          "periodicidad": "por gestación"
+        },
+        {
+          "tipo": "Atención Cuidado Prenatal",
+          "descripcion": "Prueba de VIH en gestante",
+          "cups": ["903886"],
+          "periodicidad": "por gestación"
+        },
+        {
+          "tipo": "Atención del Parto y Recién Nacido",
+          "descripcion": "Atención del parto",
+          "cups": ["730101"],
+          "periodicidad": "por parto"
+        }
+      ]
+    },
+
+    {
+      "id": "POSPARTO",
+      "codigo": "POS",
+      "nombre_acta": "ATENCION POSPARTO",
+      "nombre_herramienta": "ATENCION DEL PARTO Y RECIEN NACIDO",
+      "rango_edad": "Postparto",
+      "tipo_seccion": "RUTA_MATERNO",
+      "aplica_pai": false,
+      "actividades": [
+        {
+          "tipo": "Atención Posparto",
+          "descripcion": "Control posparto",
+          "cups": ["890801"],
+          "periodicidad": "por parto"
+        }
+      ]
+    },
+
+    {
+      "id": "DEMANDA_INDUCIDA",
+      "codigo": "DI",
+      "nombre_acta": "DEMANDA INDUCIDA",
+      "nombre_herramienta": "RUTA INTEGRAL DEMANDA INDUCIDA",
+      "rango_edad": "Todos",
+      "tipo_seccion": "DEMANDA_INDUCIDA",
+      "aplica_pai": false,
+      "notas": "Suma de todos los subprogramas de DI: Primera Infancia DI, Infancia DI, Adolescencia DI, Juventud DI, Adultez DI, Vejez DI, CCU DI, HTA-DM DI, Grupo Familiar DI, Materno DI, Salud Mental DI",
+      "actividades": [
+        {
+          "tipo": "Demanda Inducida",
+          "descripcion": "Acciones de demanda inducida por ciclo vital",
+          "cups": ["DI"],
+          "periodicidad": "mensual"
+        }
+      ]
+    },
+
+    {
+      "id": "RCV",
+      "codigo": "RCV",
+      "nombre_acta": "RUTA RIESGO CARDIOVASCULAR BAJA",
+      "nombre_herramienta": "RUTA CEREBROVASCULAR Y METABOLICA DM+HTA",
+      "rango_edad": "Adultos con riesgo cardiovascular",
+      "tipo_seccion": "RUTA_RCV",
+      "aplica_pai": false,
+      "notas": "Incluye HTA, DM, Riesgo Cardiovascular bajo/moderado/alto. Descuento aplica cuando % cumplimiento < 100%",
+      "actividades": [
+        {
+          "tipo": "Consultas RCV",
+          "descripcion": "Consulta de medicina para seguimiento de HTA/DM",
+          "cups": ["890901"],
+          "periodicidad": "trimestral"
+        },
+        {
+          "tipo": "Laboratorios RCV",
+          "descripcion": "Perfil lipídico",
+          "cups": ["903910"],
+          "periodicidad": "semestral"
+        }
+      ]
+    }
+  ],
+
+  "umbrales_cumplimiento": {
+    "excelente": 1.0,
+    "aceptable": 0.95,
+    "regular": 0.85,
+    "deficiente": 0.0,
+    "notas": "Programas que no alcanzan el 100% generan descuento proporcional. PAI no genera descuento."
+  },
+
+  "normatividad_referencia": [
+    "Resolución 3280 de 2018 - Rutas Integrales de Atención en Salud RIAS",
+    "Decreto 780 de 2016",
+    "Resolución 3100 de 2019",
+    "Resolución 4003 de 2008",
+    "Resolución 2626 de 2019",
+    "Resolución 3202 de 2016",
+    "Resolución 3253 de 2009",
+    "Resolución 202 de 2020"
+  ]
+}

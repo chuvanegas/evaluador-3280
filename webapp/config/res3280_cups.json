@@ -1,0 +1,578 @@
+{
+  "version": "1.0",
+  "resolucion": "3280/2018",
+
+  "field_mappings": {
+    "usuarios": {
+      "tipo_doc": "tipoDocumentoIdentificacion",
+      "num_doc":  "numDocumentoIdentificacion",
+      "fecha_nacimiento": "fechaNacimiento"
+    },
+    "consultas": {
+      "tipo_doc":  "tipoDocumentoIdentificacion",
+      "num_doc":   "numDocumentoIdentificacion",
+      "cups":      "codConsulta",
+      "finalidad": "finalidadTecnologiaSalud",
+      "fecha":     "fechaInicioAtencion"
+    },
+    "procedimientos": {
+      "tipo_doc":  "tipoDocumentoIdentificacion",
+      "num_doc":   "numDocumentoIdentificacion",
+      "cups":      "codProcedimiento",
+      "finalidad": "finalidadTecnologiaSalud",
+      "fecha":     "fechaInicioAtencion"
+    },
+    "medicamentos": {
+      "tipo_doc":  "tipoDocumentoIdentificacion",
+      "num_doc":   "numDocumentoIdentificacion",
+      "nombre":    "nomTecnologiaSalud",
+      "codigo":    "codTecnologiaSalud",
+      "fecha":     "fechaDispensacionMedicamento"
+    },
+    "otrosServicios": {
+      "tipo_doc":  "tipoDocumentoIdentificacion",
+      "num_doc":   "numDocumentoIdentificacion",
+      "cups":      "codServicio",
+      "fecha":     "fechaInicioAtencion"
+    }
+  },
+
+  "cursos_de_vida": [
+    {"id": "PRIMERA_INFANCIA", "label": "PRIMERA INFANCIA", "edad_min": 0,  "edad_max": 5,  "patron": "PRIMERA INFANCIA"},
+    {"id": "INFANCIA",         "label": "INFANCIA",         "edad_min": 6,  "edad_max": 11, "patron": "INFANCIA"},
+    {"id": "ADOLESCENCIA",     "label": "ADOLESCENCIA",     "edad_min": 12, "edad_max": 17, "patron": "ADOLESCENCIA"},
+    {"id": "JOVENES",          "label": "JOVENES",          "edad_min": 18, "edad_max": 28, "patron": "JOVEN"},
+    {"id": "ADULTEZ",          "label": "ADULTEZ",          "edad_min": 29, "edad_max": 59, "patron": "ADULTEZ"},
+    {"id": "VEJEZ",            "label": "VEJEZ",            "edad_min": 60, "edad_max": 200,"patron": "VEJEZ"}
+  ],
+
+  "finalidades": {
+    "11": "Promoción y mantenimiento de la salud",
+    "12": "Prevención de la enfermedad - protección específica",
+    "13": "Detección temprana de enfermedad general",
+    "14": "Protección específica - salud oral / crecimiento",
+    "15": "Atención de enfermedad de interés en salud pública",
+    "16": "Diagnóstico",
+    "17": "Tratamiento",
+    "18": "Rehabilitación y superación de discapacidad"
+  },
+
+  "actividades_base": {
+
+    "consulta_medicina_general": {
+      "descripcion": "Atención en salud por medicina general o especialista en pediatría o medicina familiar",
+      "archivo": "consultas",
+      "cups": ["890201","890283","890263","890301"],
+      "finalidad": ["11"],
+      "deduplicar": true,
+      "aplica_a": ["PRIMERA_INFANCIA","INFANCIA","ADOLESCENCIA","JOVENES","ADULTEZ","VEJEZ"]
+    },
+
+    "consulta_enfermeria": {
+      "descripcion": "Atención en salud por profesional de enfermería",
+      "archivo": "consultas",
+      "cups": ["890205","890305"],
+      "finalidad": ["11"],
+      "deduplicar": true,
+      "aplica_a": ["PRIMERA_INFANCIA","INFANCIA","VEJEZ"]
+    },
+
+    "consulta_odontologia": {
+      "descripcion": "Atención en salud bucal por profesional de odontología o higienista oral",
+      "archivo": "consultas",
+      "cups": ["890203","890303"],
+      "finalidad": ["11"],
+      "deduplicar": true,
+      "aplica_a": ["PRIMERA_INFANCIA","INFANCIA","ADOLESCENCIA","JOVENES","ADULTEZ","VEJEZ"]
+    },
+
+    "consulta_lactancia": {
+      "descripcion": "Atención para promoción y apoyo de la lactancia materna",
+      "archivo": "procedimientos",
+      "cups": ["I10605","H10605"],
+      "finalidad": [],
+      "deduplicar": true,
+      "aplica_a": ["PRIMERA_INFANCIA"]
+    },
+
+    "proc_tamizaje_hemoglobina": {
+      "descripcion": "Tamizaje para hemoglobina",
+      "archivo": "procedimientos",
+      "cups": ["902213","903824"],
+      "finalidad": [],
+      "deduplicar": true,
+      "aplica_a": ["PRIMERA_INFANCIA"]
+    },
+
+    "proc_hemoglobina": {
+      "descripcion": "Hemoglobina",
+      "archivo": "procedimientos",
+      "cups": ["903882","902213"],
+      "finalidad": [],
+      "deduplicar": true,
+      "aplica_a": ["INFANCIA","ADOLESCENCIA","JOVENES"]
+    },
+
+    "proc_hematocrito": {
+      "descripcion": "Hematocrito",
+      "archivo": "procedimientos",
+      "cups": ["903883","902214"],
+      "finalidad": [],
+      "deduplicar": true,
+      "aplica_a": ["INFANCIA","ADOLESCENCIA","JOVENES"]
+    },
+
+    "proc_barniz_fluor": {
+      "descripcion": "Aplicación de barniz de flúor",
+      "archivo": "procedimientos",
+      "cups": ["997106"],
+      "finalidad": ["14"],
+      "deduplicar": true,
+      "aplica_a": ["PRIMERA_INFANCIA","INFANCIA","ADOLESCENCIA","JOVENES","ADULTEZ","VEJEZ"]
+    },
+
+    "proc_profilaxis": {
+      "descripcion": "Profilaxis y remoción de placa bacteriana (por persona)",
+      "archivo": "procedimientos",
+      "cups": ["997001","997002"],
+      "finalidad": ["14"],
+      "deduplicar": true,
+      "aplica_a": ["PRIMERA_INFANCIA","INFANCIA","ADOLESCENCIA","JOVENES","ADULTEZ","VEJEZ"]
+    },
+
+    "proc_detartraje": {
+      "descripcion": "Detartraje supragingival (por persona)",
+      "archivo": "procedimientos",
+      "cups": ["997003"],
+      "finalidad": ["14"],
+      "deduplicar": true,
+      "aplica_a": ["ADOLESCENCIA","JOVENES","ADULTEZ","VEJEZ"]
+    },
+
+    "proc_sellantes": {
+      "descripcion": "Aplicación de sellantes (por persona)",
+      "archivo": "procedimientos",
+      "cups": ["997107"],
+      "finalidad": ["14"],
+      "deduplicar": true,
+      "aplica_a": ["PRIMERA_INFANCIA","INFANCIA","ADOLESCENCIA","JOVENES"]
+    },
+
+    "proc_fortificacion_micronutrientes": {
+      "descripcion": "Fortificación casera con micronutrientes en polvo",
+      "archivo": "otrosServicios",
+      "cups": ["PYM01RIA"],
+      "finalidad": [],
+      "deduplicar": true,
+      "aplica_a": ["PRIMERA_INFANCIA"]
+    },
+
+    "med_vitamina_a": {
+      "descripcion": "Suplementación con micronutrientes (vitamina A)",
+      "archivo": "medicamentos",
+      "cups": [],
+      "busqueda_nombre": ["VITAMINA A","RETINOL"],
+      "finalidad": [],
+      "deduplicar": true,
+      "aplica_a": ["PRIMERA_INFANCIA"]
+    },
+
+    "med_hierro": {
+      "descripcion": "Suplementación con hierro",
+      "archivo": "medicamentos",
+      "cups": [],
+      "busqueda_nombre": ["FERROSO","HIERRO"],
+      "finalidad": [],
+      "deduplicar": true,
+      "aplica_a": ["PRIMERA_INFANCIA"]
+    },
+
+    "med_desparasitacion": {
+      "descripcion": "Desparasitación Antihelmíntica con Albendazol dosis única 400mg",
+      "archivo": "medicamentos",
+      "cups": [],
+      "busqueda_nombre": ["ALBENDAZOL","PIRANTEL","PAMOATO","OXANTEL"],
+      "finalidad": [],
+      "deduplicar": true,
+      "aplica_a": ["PRIMERA_INFANCIA"]
+    },
+
+    "edu_individual": {
+      "descripcion": "Educación individual (padres o cuidadores)",
+      "archivo": "procedimientos",
+      "cups": ["990201","990202","990203","990204","990205","990206"],
+      "finalidad": [],
+      "deduplicar": false,
+      "aplica_a": ["PRIMERA_INFANCIA","INFANCIA","ADOLESCENCIA","JOVENES","ADULTEZ","VEJEZ"]
+    },
+
+    "edu_familia": {
+      "descripcion": "Educación dirigida a la familia",
+      "archivo": "procedimientos",
+      "cups": ["990201","990202","990203","990204","990205","990206"],
+      "finalidad": [],
+      "deduplicar": false,
+      "aplica_a": ["PRIMERA_INFANCIA","INFANCIA","ADOLESCENCIA","JOVENES","ADULTEZ","VEJEZ"],
+      "nota": "Mismos CUPS que edu_individual - se diferencia por el contexto de la sesión"
+    },
+
+    "edu_grupal": {
+      "descripcion": "Educación grupal",
+      "archivo": "procedimientos",
+      "cups": ["990101","990102","990103","990104","990105","990106"],
+      "finalidad": [],
+      "deduplicar": false,
+      "aplica_a": ["PRIMERA_INFANCIA","INFANCIA","ADOLESCENCIA","JOVENES","ADULTEZ","VEJEZ"]
+    },
+
+    "proc_prueba_treponema": {
+      "descripcion": "Prueba rápida treponémica",
+      "archivo": "procedimientos",
+      "cups": ["903885","906212"],
+      "finalidad": [],
+      "deduplicar": true,
+      "aplica_a": ["ADOLESCENCIA","JOVENES","ADULTEZ","VEJEZ"]
+    },
+
+    "proc_prueba_vih": {
+      "descripcion": "Prueba rápida para VIH (incluye confirmatoria)",
+      "archivo": "procedimientos",
+      "cups": ["903886","906211","906213"],
+      "finalidad": [],
+      "deduplicar": true,
+      "aplica_a": ["ADOLESCENCIA","JOVENES","ADULTEZ","VEJEZ"]
+    },
+
+    "proc_asesoria_pre_vih": {
+      "descripcion": "Asesoría pre test VIH",
+      "archivo": "procedimientos",
+      "cups": ["903887","890271"],
+      "finalidad": [],
+      "deduplicar": true,
+      "aplica_a": ["ADOLESCENCIA","JOVENES","ADULTEZ","VEJEZ"]
+    },
+
+    "proc_asesoria_pos_vih": {
+      "descripcion": "Asesoría pos test VIH",
+      "archivo": "procedimientos",
+      "cups": ["903888","890272"],
+      "finalidad": [],
+      "deduplicar": true,
+      "aplica_a": ["ADOLESCENCIA","JOVENES","ADULTEZ","VEJEZ"]
+    },
+
+    "proc_prueba_embarazo": {
+      "descripcion": "Prueba de embarazo",
+      "archivo": "procedimientos",
+      "cups": ["903889","906201"],
+      "finalidad": [],
+      "deduplicar": true,
+      "aplica_a": ["ADOLESCENCIA","JOVENES"]
+    },
+
+    "consulta_anticoncepcion": {
+      "descripcion": "Asesoría en anticoncepción",
+      "archivo": "consultas",
+      "cups": ["890203","890273"],
+      "finalidad": ["11"],
+      "deduplicar": true,
+      "aplica_a": ["ADOLESCENCIA","JOVENES","ADULTEZ"]
+    },
+
+    "consulta_anticoncepcion_control": {
+      "descripcion": "Asesoría en anticoncepción - Control",
+      "archivo": "consultas",
+      "cups": ["890274"],
+      "finalidad": ["11"],
+      "deduplicar": true,
+      "aplica_a": ["ADOLESCENCIA","JOVENES","ADULTEZ"]
+    },
+
+    "med_anticoncepcion_oral": {
+      "descripcion": "Suministro de anticoncepción oral ciclo o inyectable mensual",
+      "archivo": "medicamentos",
+      "cups": [],
+      "busqueda_nombre": ["ANTICONCEPTIVO","MESTRANOL","ETINILESTRADIOL","LEVONORGESTREL","DESOGESTREL","GESTODENO"],
+      "finalidad": [],
+      "deduplicar": false,
+      "aplica_a": ["ADOLESCENCIA","JOVENES","ADULTEZ"]
+    },
+
+    "med_preservativos": {
+      "descripcion": "Suministro de preservativos",
+      "archivo": "medicamentos",
+      "cups": [],
+      "busqueda_nombre": ["PRESERVATIVO","CONDON","CONDÓN"],
+      "finalidad": [],
+      "deduplicar": false,
+      "aplica_a": ["ADOLESCENCIA","JOVENES","ADULTEZ"]
+    },
+
+    "proc_anticoncepcion_subdermico": {
+      "descripcion": "Inserción de anticonceptivos subdérmicos",
+      "archivo": "procedimientos",
+      "cups": ["360301","360305"],
+      "finalidad": [],
+      "deduplicar": true,
+      "aplica_a": ["ADOLESCENCIA","JOVENES","ADULTEZ"]
+    },
+
+    "proc_diu": {
+      "descripcion": "Inserción de dispositivo intrauterino (DIU)",
+      "archivo": "procedimientos",
+      "cups": ["360302","360303"],
+      "finalidad": [],
+      "deduplicar": true,
+      "aplica_a": ["ADOLESCENCIA","JOVENES","ADULTEZ"]
+    },
+
+    "proc_glicemia": {
+      "descripcion": "Glicemia basal",
+      "archivo": "procedimientos",
+      "cups": ["903901","904332"],
+      "finalidad": [],
+      "deduplicar": true,
+      "aplica_a": ["JOVENES","ADULTEZ","VEJEZ"]
+    },
+
+    "proc_colesterol_total": {
+      "descripcion": "Colesterol total",
+      "archivo": "procedimientos",
+      "cups": ["903902","904305"],
+      "finalidad": [],
+      "deduplicar": true,
+      "aplica_a": ["JOVENES","ADULTEZ","VEJEZ"]
+    },
+
+    "proc_colesterol_hdl": {
+      "descripcion": "Colesterol HDL",
+      "archivo": "procedimientos",
+      "cups": ["903903","904307"],
+      "finalidad": [],
+      "deduplicar": true,
+      "aplica_a": ["JOVENES","ADULTEZ","VEJEZ"]
+    },
+
+    "proc_colesterol_ldl": {
+      "descripcion": "Colesterol LDL",
+      "archivo": "procedimientos",
+      "cups": ["903904","904308"],
+      "finalidad": [],
+      "deduplicar": true,
+      "aplica_a": ["JOVENES","ADULTEZ","VEJEZ"]
+    },
+
+    "proc_trigliceridos": {
+      "descripcion": "Triglicéridos",
+      "archivo": "procedimientos",
+      "cups": ["903905","904340"],
+      "finalidad": [],
+      "deduplicar": true,
+      "aplica_a": ["JOVENES","ADULTEZ","VEJEZ"]
+    },
+
+    "proc_creatinina": {
+      "descripcion": "Creatinina",
+      "archivo": "procedimientos",
+      "cups": ["903906","904319"],
+      "finalidad": [],
+      "deduplicar": true,
+      "aplica_a": ["JOVENES","ADULTEZ","VEJEZ"]
+    },
+
+    "proc_citologia": {
+      "descripcion": "Citología cérvico-uterina",
+      "archivo": "procedimientos",
+      "cups": ["910101","910102"],
+      "finalidad": [],
+      "deduplicar": true,
+      "aplica_a": ["ADULTEZ","VEJEZ"],
+      "nota": "Mujeres 25-69 años, sexo F"
+    },
+
+    "proc_mamografia": {
+      "descripcion": "Toma de mamografía bilateral",
+      "archivo": "procedimientos",
+      "cups": ["380401","380402"],
+      "finalidad": [],
+      "deduplicar": true,
+      "aplica_a": ["ADULTEZ","VEJEZ"],
+      "nota": "Mujeres 50-69 años"
+    }
+  },
+
+  "programas": [
+    {
+      "id": "PRIMERA_INFANCIA",
+      "nombre": "PRIMERA INFANCIA (0 meses - 5 años)",
+      "nombre_acta": "INDIVIDUALES PARA NIÑOS Y NIÑAS EN PRIMERA INFANCIA 1M - 5A",
+      "edad_min": 0, "edad_max": 5,
+      "actividades": [
+        "consulta_medicina_general",
+        "consulta_enfermeria",
+        "consulta_odontologia",
+        "consulta_lactancia",
+        "proc_tamizaje_hemoglobina",
+        "proc_barniz_fluor",
+        "proc_profilaxis",
+        "proc_sellantes",
+        "proc_fortificacion_micronutrientes",
+        "med_vitamina_a",
+        "med_hierro",
+        "med_desparasitacion",
+        "edu_individual",
+        "edu_familia",
+        "edu_grupal"
+      ]
+    },
+    {
+      "id": "INFANCIA",
+      "nombre": "INFANCIA (6 - 11 años)",
+      "nombre_acta": "INDIVIDUALES PARA NIÑOS Y NIÑAS EN INFANCIA 6 - 11 AÑOS",
+      "edad_min": 6, "edad_max": 11,
+      "actividades": [
+        "consulta_medicina_general",
+        "consulta_enfermeria",
+        "consulta_odontologia",
+        "proc_hemoglobina",
+        "proc_hematocrito",
+        "proc_barniz_fluor",
+        "proc_profilaxis",
+        "proc_sellantes",
+        "edu_individual",
+        "edu_familia",
+        "edu_grupal"
+      ]
+    },
+    {
+      "id": "ADOLESCENCIA",
+      "nombre": "ADOLESCENCIA (12 - 17 años)",
+      "nombre_acta": "INDIVIDUALES PARA LOS ADOLESCENTES 12 - 17 AÑOS",
+      "edad_min": 12, "edad_max": 17,
+      "actividades": [
+        "consulta_medicina_general",
+        "consulta_enfermeria",
+        "consulta_odontologia",
+        "proc_prueba_treponema",
+        "proc_prueba_vih",
+        "proc_asesoria_pre_vih",
+        "proc_asesoria_pos_vih",
+        "proc_hemoglobina",
+        "proc_hematocrito",
+        "proc_prueba_embarazo",
+        "consulta_anticoncepcion",
+        "consulta_anticoncepcion_control",
+        "med_anticoncepcion_oral",
+        "med_preservativos",
+        "proc_anticoncepcion_subdermico",
+        "proc_diu",
+        "proc_barniz_fluor",
+        "proc_profilaxis",
+        "proc_detartraje",
+        "proc_sellantes",
+        "edu_individual",
+        "edu_familia",
+        "edu_grupal"
+      ]
+    },
+    {
+      "id": "JOVENES",
+      "nombre": "JOVENES (18 - 28 años)",
+      "nombre_acta": "INDIVIDUALES PARA LOS JOVENES 18 - 28 AÑOS",
+      "edad_min": 18, "edad_max": 28,
+      "actividades": [
+        "consulta_medicina_general",
+        "consulta_odontologia",
+        "proc_glicemia",
+        "proc_colesterol_total",
+        "proc_colesterol_hdl",
+        "proc_colesterol_ldl",
+        "proc_trigliceridos",
+        "proc_creatinina",
+        "proc_prueba_treponema",
+        "proc_prueba_vih",
+        "proc_asesoria_pre_vih",
+        "proc_asesoria_pos_vih",
+        "proc_hemoglobina",
+        "proc_hematocrito",
+        "proc_prueba_embarazo",
+        "consulta_anticoncepcion",
+        "consulta_anticoncepcion_control",
+        "med_anticoncepcion_oral",
+        "med_preservativos",
+        "proc_anticoncepcion_subdermico",
+        "proc_diu",
+        "proc_barniz_fluor",
+        "proc_profilaxis",
+        "proc_detartraje",
+        "proc_sellantes",
+        "edu_individual",
+        "edu_familia",
+        "edu_grupal"
+      ]
+    },
+    {
+      "id": "ADULTEZ",
+      "nombre": "ADULTEZ (29 - 59 años)",
+      "nombre_acta": "INDIVIDUALES PARA LOS ADULTOS 29 - 59 AÑOS",
+      "edad_min": 29, "edad_max": 59,
+      "actividades": [
+        "consulta_medicina_general",
+        "consulta_odontologia",
+        "proc_glicemia",
+        "proc_colesterol_total",
+        "proc_colesterol_hdl",
+        "proc_colesterol_ldl",
+        "proc_trigliceridos",
+        "proc_creatinina",
+        "proc_prueba_treponema",
+        "proc_prueba_vih",
+        "proc_asesoria_pre_vih",
+        "proc_asesoria_pos_vih",
+        "proc_citologia",
+        "proc_mamografia",
+        "consulta_anticoncepcion",
+        "consulta_anticoncepcion_control",
+        "med_anticoncepcion_oral",
+        "med_preservativos",
+        "proc_anticoncepcion_subdermico",
+        "proc_diu",
+        "proc_barniz_fluor",
+        "proc_profilaxis",
+        "proc_detartraje",
+        "edu_individual",
+        "edu_familia",
+        "edu_grupal"
+      ]
+    },
+    {
+      "id": "VEJEZ",
+      "nombre": "VEJEZ (60 años y más)",
+      "nombre_acta": "INDIVIDUALES PARA LOS ADULTOS MAYORES 60 A 80 Y MAS",
+      "edad_min": 60, "edad_max": 200,
+      "actividades": [
+        "consulta_medicina_general",
+        "consulta_enfermeria",
+        "consulta_odontologia",
+        "proc_glicemia",
+        "proc_colesterol_total",
+        "proc_colesterol_hdl",
+        "proc_colesterol_ldl",
+        "proc_trigliceridos",
+        "proc_creatinina",
+        "proc_prueba_treponema",
+        "proc_prueba_vih",
+        "proc_asesoria_pre_vih",
+        "proc_asesoria_pos_vih",
+        "proc_citologia",
+        "proc_mamografia",
+        "proc_barniz_fluor",
+        "proc_profilaxis",
+        "proc_detartraje",
+        "edu_individual",
+        "edu_familia",
+        "edu_grupal"
+      ]
+    }
+  ]
+}
