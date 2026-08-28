@@ -522,6 +522,74 @@ def estado():
                     "tiene_resultados": bool(sd.get("resultados")),
                     "registros": {k: len(v) for k,v in sd["archivos"].items()}})
 
+def _load_config_mutable():
+    with open(CONFIG_PATH, encoding="utf-8") as f:
+        return json.load(f)
+
+def _save_config(cfg):
+    with open(CONFIG_PATH, "w", encoding="utf-8") as f:
+        json.dump(cfg, f, ensure_ascii=False, indent=2)
+
+@app.route("/api/config/actividad", methods=["POST"])
+@login_required
+def update_actividad():
+    user = _get_current_user()
+    if user.rol not in ["admin", "evaluador"]:
+        return jsonify({"error": "Sin permisos"}), 403
+    body = request.get_json() or {}
+    act_id = body.get("act_id")
+    if not act_id:
+        return jsonify({"error": "act_id requerido"}), 400
+    prog_id = body.get("prog_id")  # required only for new activities
+    cfg = _load_config_mutable()
+    is_new = act_id not in cfg.get("actividades_base", {})
+    if is_new:
+        if not prog_id:
+            return jsonify({"error": "prog_id requerido para nueva actividad"}), 400
+        if prog_id not in [p["id"] for p in cfg.get("programas", [])]:
+            return jsonify({"error": f"Programa '{prog_id}' no existe"}), 400
+        cfg.setdefault("actividades_base", {})[act_id] = {
+            "cups": [], "finalidad": [], "aplica_a": [], "archivo": "consultas", "descripcion": act_id
+        }
+        # Add act_id to the program's activity list
+        for p in cfg.get("programas", []):
+            if p["id"] == prog_id:
+                p.setdefault("actividades", [])
+                if act_id not in p["actividades"]:
+                    p["actividades"].append(act_id)
+    act = cfg["actividades_base"][act_id]
+    if "cups" in body:        act["cups"]        = body["cups"]
+    if "finalidad" in body:   act["finalidad"]   = body["finalidad"]
+    if "aplica_a" in body:    act["aplica_a"]    = body["aplica_a"]
+    if "archivo" in body:     act["archivo"]     = body["archivo"]
+    if "descripcion" in body: act["descripcion"] = body["descripcion"]
+    _save_config(cfg)
+    return jsonify({"ok": True, "created": is_new})
+
+@app.route("/api/config/cursos-vida", methods=["POST"])
+@login_required
+def update_cursos_vida():
+    user = _get_current_user()
+    if user.rol != "admin":
+        return jsonify({"error": "Sin permisos"}), 403
+    body = request.get_json() or {}
+    cfg = _load_config_mutable()
+    cfg["cursos_de_vida"] = body.get("cursos_de_vida", cfg["cursos_de_vida"])
+    _save_config(cfg)
+    return jsonify({"ok": True})
+
+@app.route("/api/config/finalidades", methods=["POST"])
+@login_required
+def update_finalidades():
+    user = _get_current_user()
+    if user.rol != "admin":
+        return jsonify({"error": "Sin permisos"}), 403
+    body = request.get_json() or {}
+    cfg = _load_config_mutable()
+    cfg["finalidades"] = body.get("finalidades", cfg.get("finalidades", {}))
+    _save_config(cfg)
+    return jsonify({"ok": True})
+
 @app.route("/api/limpiar", methods=["POST"])
 @login_required
 def limpiar():

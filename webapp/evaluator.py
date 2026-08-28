@@ -58,24 +58,64 @@ class RIPSEvaluator:
     def __init__(self, periodo_ref=None):
         self.cfg = _load_config()
         self.periodo_ref = periodo_ref or datetime.date.today()
-        self._usuarios = {}   # clave: (tipo_doc, num_doc) → {edad, grupo}
-        self._archivos = {}   # nombre → lista de dicts
+        self._usuarios = {}      # clave: (tipo_doc, num_doc) → {edad, grupo}
+        self._archivos = {}      # nombre → lista de dicts
+        self._raw_usuarios = []  # datos crudos hasta que se calculen los grupos
 
     # ── Carga de datos ─────────────────────────────────────────────────────────
     def cargar_usuarios(self, data: list):
-        """data: lista de dicts (JSON de usuarios)"""
-        fm = self.cfg["field_mappings"]["usuarios"]
+        """Guarda los usuarios crudos; los grupos se calculan después de cargar todos los archivos."""
+        self._raw_usuarios = data
+
+    def _calcular_grupos(self):
+        """
+        Calcula el grupo de vida de cada paciente usando la fecha más reciente
+        en que aparece en CUALQUIER archivo RIPS — igual que la fórmula Excel:
+          f = MAX(MAX.SI.CONJUNTO(consultas!E, consultas!C, numDoc), ...)
+          edad = SIFECHA(fechaNac, f, "Y")
+          grupo = SI.CONJUNTO(edad<=5,"PRIMERA INFANCIA", ...)
+        """
+        fm  = self.cfg["field_mappings"]["usuarios"]
         cvs = self.cfg["cursos_de_vida"]
+
+        # Campos de fecha y numDoc por archivo
+        FECHA_FIELD = {
+            "consultas":      "fechaInicioAtencion",
+            "procedimientos": "fechaInicioAtencion",
+            "medicamentos":   "fechaDispensacionMedicamento",
+            "otrosServicios": "fechaInicioAtencion",
+        }
+
+        # Paso 1: max_fecha por numDoc (sin tipo_doc, igual que Excel columna C)
+        max_fecha_by_num: dict = {}
+        for archivo, registros in self._archivos.items():
+            fecha_key = FECHA_FIELD.get(archivo, "fechaInicioAtencion")
+            for r in registros:
+                num_doc = str(r.get("numDocumentoIdentificacion", "") or "").strip()
+                if not num_doc:
+                    continue
+                fecha_str = str(r.get(fecha_key, "") or "")[:10]
+                try:
+                    fecha = datetime.datetime.strptime(fecha_str, "%Y-%m-%d").date()
+                    if num_doc not in max_fecha_by_num or fecha > max_fecha_by_num[num_doc]:
+                        max_fecha_by_num[num_doc] = fecha
+                except Exception:
+                    pass
+
+        # Paso 2: asignar grupo usando la fecha real de atención
         self._usuarios = {}
-        for u in data:
+        for u in self._raw_usuarios:
             k = _paciente_key(u, fm)
-            fn_str = u.get(fm["fecha_nacimiento"])
-            edad   = _calcular_edad(fn_str, self.periodo_ref)
-            grupo  = _grupo_edad(edad, cvs)
+            fn_str  = u.get(fm["fecha_nacimiento"])
+            num_doc = str(u.get(fm["num_doc"], "") or "").strip()
+            # Fecha de referencia = última atención encontrada o periodo_ref como fallback
+            ref_date = max_fecha_by_num.get(num_doc, self.periodo_ref)
+            edad  = _calcular_edad(fn_str, ref_date)
+            grupo = _grupo_edad(edad, cvs)
             self._usuarios[k] = {
                 "edad":  edad,
                 "grupo": grupo,
-                "sexo":  str(u.get("codSexo","")).strip().upper()
+                "sexo":  str(u.get("codSexo", "")).strip().upper()
             }
 
     def cargar_archivo(self, nombre: str, data: list):
@@ -183,6 +223,9 @@ class RIPSEvaluator:
         metas: {programa_id: {actividad_id: int, ...}, ...}
         Retorna resultados completos por programa y actividad
         """
+        # Calcular grupos de vida con las fechas reales de atención (igual que Excel)
+        self._calcular_grupos()
+
         cfg_actividades = self.cfg["actividades_base"]
         resultados = {}
 

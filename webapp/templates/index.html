@@ -463,12 +463,23 @@ textarea.form-control{resize:vertical;min-height:56px}
     <div class="pr-card">
       <div class="pr-card-header">
         <div class="pr-card-icon">📋</div>
-        <div><div class="pr-card-title">CUPS por Programa y Actividad</div><div class="pr-card-sub">Codificación parametrizada según Res. 3280/2018</div></div>
+        <div><div class="pr-card-title">CUPS por Programa y Actividad</div><div class="pr-card-sub">Codificación parametrizada según Res. 3280/2018 — haz clic en ✏️ para editar</div></div>
+        <div style="margin-left:auto;display:flex;gap:7px;align-items:center">
+          <input class="search-input" id="cups-search" placeholder="Buscar CUPS o actividad..." oninput="filtrarCUPS(this.value)" style="width:200px;padding:6px 10px 6px 28px">
+          <button class="btn btn-primary" style="font-size:11px;padding:5px 11px;white-space:nowrap" onclick="abrirNuevaActividad()">+ Nueva actividad</button>
+        </div>
       </div>
       <div style="padding:0;overflow-x:auto">
         <table class="users-table" id="cups-table">
-          <thead><tr><th style="width:110px">CUPS</th><th>Descripción</th><th style="width:200px">Programa</th><th style="width:170px">Actividad</th><th style="width:90px">Finalidad</th></tr></thead>
-          <tbody id="cups-tbody"><tr><td colspan="5" style="text-align:center;padding:24px;color:var(--gris3)">Cargando...</td></tr></tbody>
+          <thead><tr>
+            <th style="width:100px">CUPS</th>
+            <th>Descripción / Actividad</th>
+            <th style="width:90px">Tipo</th>
+            <th style="width:130px">Finalidades</th>
+            <th style="width:160px">Cursos de Vida</th>
+            <th style="width:42px"></th>
+          </tr></thead>
+          <tbody id="cups-tbody"><tr><td colspan="6" style="text-align:center;padding:24px;color:var(--gris3)">Cargando...</td></tr></tbody>
         </table>
       </div>
     </div>
@@ -478,19 +489,37 @@ textarea.form-control{resize:vertical;min-height:56px}
   <div id="mant-tipos" class="mant-pane" style="display:none;flex:1;overflow-y:auto;padding:18px 22px">
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
       <div class="pr-card">
-        <div class="pr-card-header"><div class="pr-card-icon">👶</div><div><div class="pr-card-title">Cursos de Vida</div><div class="pr-card-sub">Grupos etáreos según Res. 3280</div></div></div>
+        <div class="pr-card-header">
+          <div class="pr-card-icon">👶</div>
+          <div><div class="pr-card-title">Cursos de Vida</div><div class="pr-card-sub">Grupos etáreos según Res. 3280 — editable</div></div>
+          {% if current_user.rol == 'admin' %}
+          <div style="margin-left:auto;display:flex;gap:6px">
+            <button class="btn btn-outline" style="font-size:11px;padding:5px 11px" onclick="agregarCurso()">+ Agregar</button>
+            <button class="btn btn-primary" style="font-size:11px;padding:5px 11px" onclick="guardarCursosVida()">💾 Guardar</button>
+          </div>
+          {% endif %}
+        </div>
         <div style="padding:0;overflow-x:auto">
           <table class="users-table" id="cv-table">
-            <thead><tr><th>Curso de Vida</th><th>Edad mín.</th><th>Edad máx.</th></tr></thead>
-            <tbody id="cv-tbody"><tr><td colspan="3" style="text-align:center;padding:14px;color:var(--gris3)">Cargando...</td></tr></tbody>
+            <thead><tr><th>Curso de Vida</th><th style="width:90px">Edad mín.</th><th style="width:90px">Edad máx.</th><th style="width:36px"></th></tr></thead>
+            <tbody id="cv-tbody"><tr><td colspan="4" style="text-align:center;padding:14px;color:var(--gris3)">Cargando...</td></tr></tbody>
           </table>
         </div>
       </div>
       <div class="pr-card">
-        <div class="pr-card-header"><div class="pr-card-icon">🎯</div><div><div class="pr-card-title">Finalidades</div><div class="pr-card-sub">Códigos de finalidad tecnología salud</div></div></div>
+        <div class="pr-card-header">
+          <div class="pr-card-icon">🎯</div>
+          <div><div class="pr-card-title">Finalidades</div><div class="pr-card-sub">Códigos de finalidad — editable</div></div>
+          {% if current_user.rol == 'admin' %}
+          <div style="margin-left:auto;display:flex;gap:6px">
+            <button class="btn btn-outline" style="font-size:11px;padding:5px 11px" onclick="agregarFinalidad()">+ Agregar</button>
+            <button class="btn btn-primary" style="font-size:11px;padding:5px 11px" onclick="guardarFinalidades()">💾 Guardar</button>
+          </div>
+          {% endif %}
+        </div>
         <div style="padding:0;overflow-x:auto">
           <table class="users-table" id="fin-table">
-            <thead><tr><th style="width:70px">Código</th><th>Descripción</th><th style="width:80px">Tipo</th></tr></thead>
+            <thead><tr><th style="width:80px">Código</th><th>Descripción</th><th style="width:36px"></th></tr></thead>
             <tbody id="fin-tbody"><tr><td colspan="3" style="text-align:center;padding:14px;color:var(--gris3)">Cargando...</td></tr></tbody>
           </table>
         </div>
@@ -567,6 +596,66 @@ textarea.form-control{resize:vertical;min-height:56px}
     <div class="btn-row" style="margin-top:16px">
       <button class="btn btn-primary" onclick="guardarUsuario()">💾 Guardar</button>
       <button class="btn btn-outline" onclick="cerrarModal('modal-user')">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL EDITAR ACTIVIDAD CUPS -->
+<div id="modal-cups" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.42);z-index:600;align-items:center;justify-content:center">
+  <div style="background:#fff;border-radius:14px;padding:26px;width:540px;max-width:96vw;max-height:90vh;overflow-y:auto;box-shadow:0 16px 48px rgba(0,0,0,.22)">
+    <div style="font-size:15px;font-weight:700;color:var(--azul);margin-bottom:4px" id="cups-modal-title">✏️ Editar Actividad</div>
+    <div style="font-size:11px;color:var(--gris3);margin-bottom:18px" id="cups-modal-act-id"></div>
+
+    <!-- Solo visible en modo creación -->
+    <div id="cups-new-fields" style="display:none">
+      <div class="form-group" style="margin-bottom:12px">
+        <label class="form-label">ID de actividad <span style="color:var(--gris3);font-weight:400">(sin espacios, ej: consulta_nutricion)</span></label>
+        <input id="cups-edit-act-id" class="form-control" placeholder="nombre_actividad_nueva">
+      </div>
+      <div class="form-group" style="margin-bottom:12px">
+        <label class="form-label">Programa</label>
+        <select id="cups-edit-prog" class="form-control"></select>
+      </div>
+    </div>
+
+    <div class="form-group" style="margin-bottom:12px">
+      <label class="form-label">Descripción</label>
+      <input id="cups-edit-desc" class="form-control" placeholder="Descripción de la actividad">
+    </div>
+
+    <div class="form-group" style="margin-bottom:12px">
+      <label class="form-label">Tipo de archivo RIPS</label>
+      <select id="cups-edit-archivo" class="form-control">
+        <option value="consultas">Consultas</option>
+        <option value="procedimientos">Procedimientos</option>
+        <option value="medicamentos">Medicamentos</option>
+        <option value="otrosServicios">Otros Servicios</option>
+      </select>
+    </div>
+
+    <div class="form-group" style="margin-bottom:12px">
+      <label class="form-label">Códigos CUPS <span style="color:var(--gris3);font-weight:400">(separados por coma)</span></label>
+      <textarea id="cups-edit-cups" class="form-control" rows="3" placeholder="890201, 890283, 890263"></textarea>
+    </div>
+
+    <div class="form-group" style="margin-bottom:12px">
+      <label class="form-label">Finalidades <span style="color:var(--gris3);font-weight:400">(códigos separados por coma)</span></label>
+      <input id="cups-edit-finalidad" class="form-control" placeholder="11, 12">
+      <div style="margin-top:6px;display:flex;flex-wrap:wrap;gap:5px" id="cups-fin-chips"></div>
+    </div>
+
+    <div class="form-group" style="margin-bottom:18px">
+      <label class="form-label">Aplica a (cursos de vida) <span style="color:var(--gris3);font-weight:400">(separados por coma)</span></label>
+      <input id="cups-edit-aplica" class="form-control" placeholder="PRIMERA_INFANCIA, INFANCIA, ...">
+    </div>
+
+    <div style="font-size:10.5px;color:var(--gris3);margin-bottom:14px;background:var(--azul4);padding:8px 11px;border-radius:6px">
+      ℹ️ Cursos válidos: PRIMERA_INFANCIA · INFANCIA · ADOLESCENCIA · JOVENES · ADULTEZ · VEJEZ
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="guardarActividad()">💾 Guardar cambios</button>
+      <button class="btn btn-outline" onclick="cerrarModal('modal-cups')">Cancelar</button>
     </div>
   </div>
 </div>
@@ -999,43 +1088,232 @@ function llenarModalIPS(id){
   document.getElementById("m-rep").value=ip.rep_legal||"";
 }
 
+const TIPO_LABELS={"consultas":"🩺 Consulta","procedimientos":"⚕️ Proced.","medicamentos":"💊 Medic.","otrosServicios":"🔬 Otros"};
+const TIPO_COLORS={"consultas":"#EFF6FF","procedimientos":"#F0FDF4","medicamentos":"#FFF7ED","otrosServicios":"#F5F3FF"};
+const TIPO_TC={"consultas":"#1E40AF","procedimientos":"#166534","medicamentos":"#9A3412","otrosServicios":"#6B21A8"};
+let _cupsRows=[];  // cache para filtrado
+
 function renderMantConfig(cfg){
-  // Cursos de vida
+  // ── Cursos de vida (editables) ──────────────────────────────────────────
   const cvtb=document.getElementById("cv-tbody");
-  if(cvtb) cvtb.innerHTML=(cfg.cursos_de_vida||[]).map(cv=>`
-    <tr><td><strong>${cv.label}</strong></td><td style="text-align:center">${cv.edad_min} años</td><td style="text-align:center">${cv.edad_max===200?"60+":" "+cv.edad_max+" años"}</td></tr>`).join("");
-  // Finalidades
+  if(cvtb) cvtb.innerHTML=(cfg.cursos_de_vida||[]).map((cv,i)=>`
+    <tr>
+      <td><input type="text" value="${cv.label}" class="cv-label form-control" style="padding:4px 8px;font-size:12px;font-weight:600"></td>
+      <td><input type="number" min="0" max="200" value="${cv.edad_min}" id="cv_min_${i}" class="form-control" style="padding:4px 8px;font-size:12px;width:70px"></td>
+      <td><input type="number" min="0" max="200" value="${cv.edad_max===200?200:cv.edad_max}" id="cv_max_${i}" class="form-control" style="padding:4px 8px;font-size:12px;width:70px"></td>
+      <td><button onclick="this.closest('tr').remove()" style="background:none;border:none;cursor:pointer;font-size:13px;color:var(--gris3)" title="Eliminar">🗑</button></td>
+    </tr>`).join("");
+
+  // ── Finalidades (editables) ─────────────────────────────────────────────
   const fintb=document.getElementById("fin-tbody");
-  if(fintb) fintb.innerHTML=Object.entries(cfg.finalidades||{}).map(([cod,desc])=>`
-    <tr><td><code style="font-size:11px;background:var(--azul4);padding:1px 5px;border-radius:4px">${cod}</code></td>
-    <td style="font-size:11px">${typeof desc==="object"?desc.descripcion||JSON.stringify(desc):desc}</td>
-    <td style="font-size:10px;color:var(--gris3)">${typeof desc==="object"&&desc.tipo?desc.tipo:""}</td></tr>`).join("");
-  // Programas
+  if(fintb) fintb.innerHTML=Object.entries(cfg.finalidades||{}).map(([cod,desc])=>{
+    const texto=typeof desc==="object"?desc.descripcion||"":String(desc);
+    return `<tr data-fin-row>
+      <td><input type="text" value="${cod}" class="fin-cod form-control" style="padding:4px 8px;font-size:11.5px;font-weight:700;width:70px"></td>
+      <td><input type="text" value="${texto}" class="fin-desc form-control" style="padding:4px 8px;font-size:11.5px"></td>
+      <td><button onclick="this.closest('tr').remove()" style="background:none;border:none;cursor:pointer;font-size:13px;color:var(--gris3)" title="Eliminar">🗑</button></td>
+    </tr>`;}).join("");
+
+  // ── Programas (badges) ──────────────────────────────────────────────────
   const pw=document.getElementById("progs-wrap");
   if(pw) pw.innerHTML=(cfg.programas||[]).map(p=>`
-    <div style="background:var(--azul4);border:1px solid var(--azul3);border-radius:8px;padding:8px 13px;font-size:11.5px">
+    <div style="background:var(--azul4);border:1px solid var(--azul3);border-radius:8px;padding:9px 14px;font-size:11.5px;min-width:160px">
       <div style="font-weight:700;color:var(--azul);margin-bottom:2px">${p.nombre||p.id}</div>
       <div style="font-size:10px;color:var(--gris3)">${(p.actividades||[]).length} actividades</div>
     </div>`).join("");
-  // CUPS por actividad
+
+  // ── CUPS por actividad (agrupado por actividad, no por CUPS individual) ─
   const cupstb=document.getElementById("cups-tbody");
   if(!cupstb) return;
-  const rows=[];
+  _cupsRows=[];
+  // Agrupar: una fila por actividad, listando todos sus CUPS
+  const actVistas=new Set();
   for(const prog of (cfg.programas||[])){
     for(const act_id of (prog.actividades||[])){
+      if(actVistas.has(act_id)){continue;}
+      actVistas.add(act_id);
       const act=cfg.actividades_base?.[act_id];if(!act) continue;
-      for(const cups of (act.cups||[])){
-        rows.push(`<tr>
-          <td><code style="font-size:11px;background:var(--azul4);padding:2px 6px;border-radius:4px;font-weight:700">${cups}</code></td>
-          <td style="font-size:11px">${act.descripcion||act_id}</td>
-          <td style="font-size:10.5px;color:var(--azul)">${prog.nombre||prog.id}</td>
-          <td style="font-size:10.5px;color:var(--gris3)">${act_id}</td>
-          <td style="font-size:10.5px;text-align:center">${(act.finalidades||[]).join(", ")||"—"}</td>
-        </tr>`);
-      }
+      const cups=(act.cups||[]);
+      const fins=(act.finalidad||act.finalidades||[]);
+      const aplica=(act.aplica_a||[prog.id]);
+      const archivo=act.archivo||"consultas";
+      _cupsRows.push({act_id,act,prog,cups,fins,aplica,archivo});
     }
   }
-  cupstb.innerHTML=rows.length?rows.join(""):'<tr><td colspan="5" style="text-align:center;padding:18px;color:var(--gris3)">No hay CUPS configurados</td></tr>';
+  renderCUPSRows(_cupsRows, cfg);
+}
+
+function renderCUPSRows(rows, cfg){
+  const cupstb=document.getElementById("cups-tbody");if(!cupstb) return;
+  const finMap=cfg?cfg.finalidades||S.config?.finalidades||{}:S.config?.finalidades||{};
+  if(!rows.length){
+    cupstb.innerHTML='<tr><td colspan="6" style="text-align:center;padding:18px;color:var(--gris3)">No hay actividades configuradas</td></tr>';
+    return;
+  }
+  cupstb.innerHTML=rows.map(({act_id,act,prog,cups,fins,aplica,archivo})=>{
+    const tipoBg=TIPO_COLORS[archivo]||"#f9f9f9";
+    const tipoTc=TIPO_TC[archivo]||"#333";
+    const tipoLabel=TIPO_LABELS[archivo]||archivo;
+    const cupsHtml=cups.map(c=>`<code style="background:var(--azul4);padding:1px 5px;border-radius:4px;font-size:10.5px;font-weight:700;margin:1px">${c}</code>`).join(" ");
+    const finHtml=fins.map(f=>`<span style="background:#EDE9FE;color:#6D28D9;padding:1px 6px;border-radius:10px;font-size:10px;font-weight:600;margin:1px">${f}${finMap[f]?" · "+String(finMap[f]).substring(0,20):""}...</span>`).join(" ")||'<span style="color:var(--gris3);font-size:10.5px">—</span>';
+    const cvHtml=aplica.map(c=>`<span style="font-size:9px;background:var(--gris1);padding:1px 5px;border-radius:8px;margin:1px">${c.replace("_"," ")}</span>`).join(" ");
+    return `<tr>
+      <td style="font-size:10.5px;line-height:1.6">${cupsHtml||'<span style="color:var(--gris3)">—</span>'}</td>
+      <td>
+        <div style="font-size:11.5px;font-weight:600;color:var(--text)">${act.descripcion||act_id}</div>
+        <div style="font-size:10px;color:var(--azul2);margin-top:2px">${prog.nombre||prog.id}</div>
+      </td>
+      <td><span style="background:${tipoBg};color:${tipoTc};padding:2px 8px;border-radius:10px;font-size:10.5px;font-weight:600;white-space:nowrap">${tipoLabel}</span></td>
+      <td style="font-size:10.5px;line-height:1.8">${finHtml}</td>
+      <td style="font-size:9.5px;line-height:1.8">${cvHtml}</td>
+      <td><button style="background:none;border:none;cursor:pointer;font-size:14px;padding:2px 5px" title="Editar" onclick="abrirEditCUPS('${act_id}')">✏️</button></td>
+    </tr>`;
+  }).join("");
+}
+
+function filtrarCUPS(q){
+  if(!q){renderCUPSRows(_cupsRows,S.config);return;}
+  const lq=q.toLowerCase();
+  const f=_cupsRows.filter(r=>
+    r.cups.some(c=>c.toLowerCase().includes(lq))||
+    (r.act.descripcion||"").toLowerCase().includes(lq)||
+    (r.prog.nombre||"").toLowerCase().includes(lq)||
+    r.archivo.includes(lq)
+  );
+  renderCUPSRows(f,S.config);
+}
+
+function abrirEditCUPS(act_id){
+  const row=_cupsRows.find(r=>r.act_id===act_id);if(!row) return;
+  const {act,fins,aplica,archivo}=row;
+  document.getElementById("cups-modal-title").textContent="✏️ Editar Actividad";
+  document.getElementById("cups-modal-act-id").textContent=act_id;
+  document.getElementById("cups-new-fields").style.display="none";
+  document.getElementById("cups-edit-desc").value=act.descripcion||"";
+  document.getElementById("cups-edit-archivo").value=archivo;
+  document.getElementById("cups-edit-cups").value=(act.cups||[]).join(", ");
+  document.getElementById("cups-edit-finalidad").value=fins.join(", ");
+  document.getElementById("cups-edit-aplica").value=aplica.join(", ");
+  // chips de finalidades disponibles
+  const finMap=S.config?.finalidades||{};
+  document.getElementById("cups-fin-chips").innerHTML=Object.entries(finMap).map(([cod,desc])=>{
+    const sel=fins.includes(cod);
+    return `<span onclick="toggleFinChip('${cod}',this)" style="cursor:pointer;padding:2px 9px;border-radius:12px;font-size:10.5px;font-weight:600;border:1.5px solid ${sel?"#6D28D9":"var(--gris2)"};background:${sel?"#EDE9FE":"#fff"};color:${sel?"#6D28D9":"var(--gris3)"}">${cod} – ${typeof desc==="string"?desc.substring(0,30):""}</span>`;
+  }).join("");
+  document.getElementById("cups-edit-cups")._actId=act_id;
+  abrirModal("modal-cups");
+}
+
+function toggleFinChip(cod,el){
+  let fins=document.getElementById("cups-edit-finalidad").value.split(",").map(s=>s.trim()).filter(Boolean);
+  if(fins.includes(cod)){fins=fins.filter(f=>f!==cod);el.style.border="1.5px solid var(--gris2)";el.style.background="#fff";el.style.color="var(--gris3)";}
+  else{fins.push(cod);el.style.border="1.5px solid #6D28D9";el.style.background="#EDE9FE";el.style.color="#6D28D9";}
+  document.getElementById("cups-edit-finalidad").value=fins.join(", ");
+}
+
+async function guardarActividad(){
+  let act_id=document.getElementById("cups-edit-cups")._actId;
+  const isNew=!act_id;
+  if(isNew){
+    act_id=(document.getElementById("cups-edit-act-id")?.value||"").trim().replace(/\s+/g,"_");
+    if(!act_id){alert("Ingresa un ID de actividad");return;}
+  }
+  const cups=document.getElementById("cups-edit-cups").value.split(",").map(s=>s.trim()).filter(Boolean);
+  const finalidad=document.getElementById("cups-edit-finalidad").value.split(",").map(s=>s.trim()).filter(Boolean);
+  const aplica_a=document.getElementById("cups-edit-aplica").value.split(",").map(s=>s.trim()).filter(Boolean);
+  const archivo=document.getElementById("cups-edit-archivo").value;
+  const descripcion=document.getElementById("cups-edit-desc").value.trim();
+  const prog_id=isNew?document.getElementById("cups-edit-prog")?.value:undefined;
+  const body={act_id,cups,finalidad,aplica_a,archivo,descripcion};
+  if(prog_id) body.prog_id=prog_id;
+  const r=await fetch("/api/config/actividad",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
+  const d=await r.json();
+  if(d.ok){
+    S.config=null;_mantLoaded=false;
+    document.getElementById("cups-new-fields").style.display="none";
+    cerrarModal("modal-cups");
+    cargarMant();
+    alert(d.created?"✅ Actividad creada correctamente":"✅ Actividad guardada correctamente");
+  } else alert("Error: "+(d.error||"desconocido"));
+}
+
+async function guardarCursosVida(){
+  const tbody=document.getElementById("cv-tbody");
+  const rows=[...tbody.querySelectorAll("tr")];
+  const updated=[];
+  rows.forEach(tr=>{
+    const label=(tr.querySelector(".cv-label")?.value||"").trim();
+    const nums=[...tr.querySelectorAll("input[type=number]")];
+    const edad_min=parseInt(nums[0]?.value??0);
+    const edad_max=parseInt(nums[1]?.value??200);
+    if(label) updated.push({label, key:label.toUpperCase().replace(/\s+/g,"_"), edad_min, edad_max});
+  });
+  const r=await fetch("/api/config/cursos-vida",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({cursos_de_vida:updated})});
+  const d=await r.json();
+  if(d.ok){S.config=null;_mantLoaded=false;cargarMant();alert("✅ Cursos de vida guardados");}
+  else alert("Error: "+(d.error||"desconocido"));
+}
+
+async function guardarFinalidades(){
+  const fins={};
+  const fintb=document.getElementById("fin-tbody");
+  fintb.querySelectorAll("tr[data-fin-row]").forEach(tr=>{
+    const cod=(tr.querySelector(".fin-cod")?.value||"").trim();
+    const desc=(tr.querySelector(".fin-desc")?.value||"").trim();
+    if(cod) fins[cod]=desc;
+  });
+  const r=await fetch("/api/config/finalidades",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({finalidades:fins})});
+  const d=await r.json();
+  if(d.ok){S.config=null;_mantLoaded=false;cargarMant();alert("✅ Finalidades guardadas");}
+  else alert("Error: "+(d.error||"desconocido"));
+}
+
+function agregarFinalidad(){
+  const tbody=document.getElementById("fin-tbody");
+  const tr=document.createElement("tr");
+  tr.setAttribute("data-fin-row","");
+  tr.innerHTML=`
+    <td><input type="text" value="" class="fin-cod form-control" style="padding:4px 8px;font-size:11.5px;font-weight:700;width:70px" placeholder="Cód."></td>
+    <td><input type="text" value="" class="fin-desc form-control" style="padding:4px 8px;font-size:11.5px" placeholder="Descripción de la finalidad"></td>
+    <td><button onclick="this.closest('tr').remove()" style="background:none;border:none;cursor:pointer;font-size:13px;color:var(--gris3)" title="Eliminar">🗑</button></td>`;
+  tbody.appendChild(tr);
+  tr.querySelector(".fin-cod").focus();
+}
+
+function agregarCurso(){
+  const tbody=document.getElementById("cv-tbody");
+  const i=tbody.querySelectorAll("tr").length;
+  const tr=document.createElement("tr");
+  tr.setAttribute("data-cv-new","");
+  tr.innerHTML=`
+    <td><input type="text" class="cv-label form-control" style="padding:4px 8px;font-size:12px" placeholder="Nombre curso (ej: ADULTO MAYOR)"></td>
+    <td><input type="number" min="0" max="200" value="0" id="cv_min_${i}" class="form-control" style="padding:4px 8px;font-size:12px;width:70px"></td>
+    <td><input type="number" min="0" max="200" value="99" id="cv_max_${i}" class="form-control" style="padding:4px 8px;font-size:12px;width:70px"></td>
+    <td><button onclick="this.closest('tr').remove()" style="background:none;border:none;cursor:pointer;font-size:13px;color:var(--gris3)">🗑</button></td>`;
+  tbody.appendChild(tr);
+  tr.querySelector(".cv-label").focus();
+}
+
+function abrirNuevaActividad(){
+  const progs=S.config?.programas||[];
+  document.getElementById("cups-modal-title").textContent="➕ Nueva Actividad";
+  document.getElementById("cups-modal-act-id").textContent="";
+  document.getElementById("cups-edit-desc").value="";
+  document.getElementById("cups-edit-archivo").value="consultas";
+  document.getElementById("cups-edit-cups").value="";
+  document.getElementById("cups-edit-finalidad").value="";
+  document.getElementById("cups-edit-aplica").value="";
+  document.getElementById("cups-edit-cups")._actId=null;  // null = nuevo
+  // Mostrar campos de creación
+  document.getElementById("cups-new-fields").style.display="block";
+  document.getElementById("cups-edit-act-id").value="";
+  const sel=document.getElementById("cups-edit-prog");
+  sel.innerHTML=progs.map(p=>`<option value="${p.id}">${p.nombre||p.id}</option>`).join("");
+  // Chips de finalidades
+  const finMap=S.config?.finalidades||{};
+  document.getElementById("cups-fin-chips").innerHTML=Object.entries(finMap).map(([cod,desc])=>`
+    <span onclick="toggleFinChip('${cod}',this)" style="cursor:pointer;padding:2px 9px;border-radius:12px;font-size:10.5px;font-weight:600;border:1.5px solid var(--gris2);background:#fff;color:var(--gris3)">${cod} – ${typeof desc==="string"?desc.substring(0,30):""}</span>`).join("");
+  abrirModal("modal-cups");
 }
 
 async function limpiarSesion(){
