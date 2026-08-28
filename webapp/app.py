@@ -368,12 +368,16 @@ def generar_acta():
     total_d = sum(p["descuento"]  for p in programas_acta)
     datos_acta = {"programas": programas_acta, "total_exigido": total_e,
                   "total_reconocido": total_r, "total_descuento": total_d}
-    import sys
-    sys.path.insert(0, str(BASE_DIR.parent))
     try:
+        import sys as _sys
+        _sys.path.insert(0, str(BASE_DIR.parent))
         from evaluador_3280 import generar_acta_excel
     except ImportError:
-        return jsonify({"error": "No se encontró el módulo generador de actas"}), 500
+        # Fallback: generador básico sin openpyxl extra (solo en Vercel sin el módulo padre)
+        try:
+            from acta_simple import generar_acta_excel
+        except ImportError:
+            return jsonify({"error": "Módulo generador no disponible en este entorno"}), 500
     out_path = _get_session_dir() / "ACTA_EVALUACION.xlsx"
     generar_acta_excel(datos_acta, info, str(out_path))
     # Incrementar contador de actas del IPS
