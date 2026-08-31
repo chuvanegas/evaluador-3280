@@ -1015,15 +1015,18 @@ function renderMetasTabla(){
       const act=S.config.actividades_base[aid];
       const saved=(_metas_ips[p.id]||{})[aid];
       const metaVal=saved?.meta??saved??0;
-      return `<tr style="border-bottom:1px solid var(--gris1)">
+      return `<tr data-meta-act="${aid}" style="border-bottom:1px solid var(--gris1)">
         <td style="padding:4px 8px;font-size:10.5px">${act.descripcion}</td>
         <td style="padding:4px 8px;text-align:center">
           <input type="number" min="0" value="${metaVal}" id="mm_${p.id}_${aid}"
             oninput="recalcUPC('${p.id}')"
             style="width:70px;padding:3px 6px;font-size:10.5px;border:1px solid var(--gris1);border-radius:4px;text-align:center">
         </td>
-        <td id="upc_m_${p.id}_${aid}" style="padding:4px 8px;text-align:right;font-size:10.5px;color:var(--gris3);white-space:nowrap">$0</td>
-        <td id="vrm_${p.id}_${aid}" style="padding:4px 8px;text-align:right;font-size:10.5px;font-weight:600;white-space:nowrap">$0</td>
+        <td id="upc_m_${p.id}_${aid}" style="padding:4px 8px;text-align:right;font-size:10.5px;color:var(--gris3);white-space:nowrap">$0,00</td>
+        <td id="vrm_${p.id}_${aid}" style="padding:4px 8px;text-align:right;font-size:10.5px;font-weight:600;white-space:nowrap">$0,00</td>
+        <td style="padding:2px 4px;text-align:center">
+          <button onclick="quitarActividadMeta('${p.id}','${aid}')" title="Quitar" style="background:none;border:none;cursor:pointer;font-size:12px;color:var(--gris3);padding:2px">🗑</button>
+        </td>
       </tr>`;
     }).join("");
     return `<div style="margin-bottom:14px">
@@ -1043,9 +1046,12 @@ function renderMetasTabla(){
               <th style="padding:4px 8px;text-align:center;border-bottom:1px solid var(--gris1);white-space:nowrap">Meta</th>
               <th style="padding:4px 8px;text-align:right;border-bottom:1px solid var(--gris1);white-space:nowrap">UPC ($)</th>
               <th style="padding:4px 8px;text-align:right;border-bottom:1px solid var(--gris1);white-space:nowrap">Valor Meta ($)</th>
+              <th style="padding:4px 8px;border-bottom:1px solid var(--gris1);text-align:center">
+                <button onclick="agregarActividadMeta('${p.id}')" title="Agregar actividad" style="background:var(--azul);color:#fff;border:none;border-radius:4px;padding:2px 7px;font-size:10px;cursor:pointer;white-space:nowrap">+ Act.</button>
+              </th>
             </tr>
           </thead>
-          <tbody>${rows}</tbody>
+          <tbody id="tbody-${p.id}">${rows}</tbody>
           <tfoot>
             <tr style="background:var(--gris0);font-weight:700;border-top:2px solid var(--gris2)">
               <td style="padding:4px 8px;font-size:10.5px">TOTAL</td>
@@ -1085,22 +1091,81 @@ function recalcUPC(pid){
   const total=_sumMetasProg(pid);
   const upc=total>0?lma/total:0;
   const dispEl=document.getElementById(`upc-disp-${pid}`);
-  if(dispEl) dispEl.textContent="$"+fmt(upc);
+  if(dispEl) dispEl.textContent=fmt(upc);
   let totMeta=0,totVr=0;
-  for(const aid of p.actividades||[]){
-    const mEl=document.getElementById(`mm_${pid}_${aid}`);
+  // Iterar sobre TODAS las filas dinámicas del programa (pueden tener actividades extra)
+  const tbody=document.getElementById(`tbody-${pid}`);
+  const rows=tbody?tbody.querySelectorAll("tr[data-meta-act]"):[];
+  rows.forEach(row=>{
+    const aid=row.dataset.metaAct;
+    const mEl=row.querySelector(`input[type=number]`);
     const meta=parseFloat(mEl?.value||0);
     const vr=meta*upc;
     const upcEl=document.getElementById(`upc_m_${pid}_${aid}`);
     const vrEl=document.getElementById(`vrm_${pid}_${aid}`);
-    if(upcEl) upcEl.textContent="$"+fmt(upc);
-    if(vrEl) vrEl.textContent="$"+fmt(vr);
+    if(upcEl) upcEl.textContent=fmt(upc);
+    if(vrEl) vrEl.textContent=fmt(vr);
     totMeta+=meta;totVr+=vr;
+  });
+  // Fallback: también recalcular actividades del config (si tbody no existe aún)
+  if(!rows.length){
+    for(const aid of p.actividades||[]){
+      const mEl=document.getElementById(`mm_${pid}_${aid}`);
+      const meta=parseFloat(mEl?.value||0);
+      const vr=meta*upc;
+      const upcEl=document.getElementById(`upc_m_${pid}_${aid}`);
+      const vrEl=document.getElementById(`vrm_${pid}_${aid}`);
+      if(upcEl) upcEl.textContent=fmt(upc);
+      if(vrEl) vrEl.textContent=fmt(vr);
+      totMeta+=meta;totVr+=vr;
+    }
   }
   const totMetaEl=document.getElementById(`tot-meta-${pid}`);
   const totVrEl=document.getElementById(`tot-vr-${pid}`);
   if(totMetaEl) totMetaEl.textContent=totMeta;
-  if(totVrEl) totVrEl.textContent="$"+fmt(totVr);
+  if(totVrEl) totVrEl.textContent=fmt(totVr);
+}
+
+function agregarActividadMeta(pid){
+  const desc=prompt("Descripción de la nueva actividad:");
+  if(!desc||!desc.trim()) return;
+  const aid="custom_"+(Date.now()%1000000);
+  const tbody=document.getElementById(`tbody-${pid}`);
+  if(!tbody) return;
+  const tr=document.createElement("tr");
+  tr.setAttribute("data-meta-act",aid);
+  tr.style.borderBottom="1px solid var(--gris1)";
+  tr.innerHTML=`
+    <td style="padding:4px 8px;font-size:10.5px">${desc.trim()}</td>
+    <td style="padding:4px 8px;text-align:center">
+      <input type="number" min="0" value="0" id="mm_${pid}_${aid}"
+        oninput="recalcUPC('${pid}')"
+        style="width:70px;padding:3px 6px;font-size:10.5px;border:1px solid var(--gris1);border-radius:4px;text-align:center">
+    </td>
+    <td id="upc_m_${pid}_${aid}" style="padding:4px 8px;text-align:right;font-size:10.5px;color:var(--gris3);white-space:nowrap">$0,00</td>
+    <td id="vrm_${pid}_${aid}" style="padding:4px 8px;text-align:right;font-size:10.5px;font-weight:600;white-space:nowrap">$0,00</td>
+    <td style="padding:2px 4px;text-align:center">
+      <button onclick="quitarActividadMeta('${pid}','${aid}')" title="Quitar" style="background:none;border:none;cursor:pointer;font-size:12px;color:var(--gris3);padding:2px">🗑</button>
+    </td>`;
+  tbody.appendChild(tr);
+  // Agregar también al config local para que leerMetasModal lo recoja
+  const p=S.config?.programas?.find(pr=>pr.id===pid);
+  if(p){
+    if(!p.actividades) p.actividades=[];
+    p.actividades.push(aid);
+    if(!S.config.actividades_base[aid]) S.config.actividades_base[aid]={descripcion:desc.trim(),archivo:"procedimientos",cups:[],finalidad:[],deduplicar:false,aplica_a:[]};
+  }
+}
+
+function quitarActividadMeta(pid,aid){
+  const tbody=document.getElementById(`tbody-${pid}`);
+  if(!tbody) return;
+  const row=tbody.querySelector(`tr[data-meta-act="${aid}"]`);
+  if(row) row.remove();
+  // Remover del config local
+  const p=S.config?.programas?.find(pr=>pr.id===pid);
+  if(p) p.actividades=(p.actividades||[]).filter(a=>a!==aid);
+  recalcUPC(pid);
 }
 
 function leerMetasModal(){
