@@ -199,6 +199,7 @@ def create_ips():
         "rep_legal": body.get("rep_legal",""),
         "regimen": body.get("regimen","SUBSIDIADO"),
         "tipo_contrato": body.get("tipo_contrato","ASISTENCIAL"),
+        "lma": body.get("lma", {}),
         "metas": body.get("metas", {}),
         "num_actas": 0,
         "creado_por": user.username,
@@ -218,7 +219,7 @@ def update_ips(ips_id):
     ips_list = _load_ips()
     for ips in ips_list:
         if ips["id"] == ips_id:
-            for k in ["nombre","nit","departamento","municipio","num_contrato","vigencia_inicio","vigencia_fin","rep_legal","regimen","tipo_contrato","metas"]:
+            for k in ["nombre","nit","departamento","municipio","num_contrato","vigencia_inicio","vigencia_fin","rep_legal","regimen","tipo_contrato","lma","metas"]:
                 if k in body: ips[k] = body[k]
             _save_ips(ips_list)
             return jsonify({"ok": True})

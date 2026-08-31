@@ -1,5 +1,5 @@
 {
-  "version": "1.0",
+  "version": "1.1",
   "resolucion": "3280/2018",
 
   "field_mappings": {
@@ -74,7 +74,7 @@
       "cups": ["890205","890305"],
       "finalidad": ["11"],
       "deduplicar": true,
-      "aplica_a": ["PRIMERA_INFANCIA","INFANCIA","VEJEZ"]
+      "aplica_a": ["PRIMERA_INFANCIA","INFANCIA","ADOLESCENCIA","VEJEZ"]
     },
 
     "consulta_odontologia": {
@@ -87,7 +87,7 @@
     },
 
     "consulta_lactancia": {
-      "descripcion": "Atención para promoción y apoyo de la lactancia materna",
+      "descripcion": "Atención por profesional de enfermería, medicina general o nutrición para la promoción y apoyo de la lactancia materna",
       "archivo": "procedimientos",
       "cups": ["I10605","H10605"],
       "finalidad": [],
@@ -110,7 +110,7 @@
       "cups": ["903882","902213"],
       "finalidad": [],
       "deduplicar": true,
-      "aplica_a": ["INFANCIA","ADOLESCENCIA","JOVENES"]
+      "aplica_a": ["INFANCIA","ADOLESCENCIA"]
     },
 
     "proc_hematocrito": {
@@ -119,7 +119,7 @@
       "cups": ["903883","902214"],
       "finalidad": [],
       "deduplicar": true,
-      "aplica_a": ["INFANCIA","ADOLESCENCIA","JOVENES"]
+      "aplica_a": ["INFANCIA","ADOLESCENCIA"]
     },
 
     "proc_barniz_fluor": {
@@ -128,7 +128,7 @@
       "cups": ["997106"],
       "finalidad": ["14"],
       "deduplicar": true,
-      "aplica_a": ["PRIMERA_INFANCIA","INFANCIA","ADOLESCENCIA","JOVENES","ADULTEZ","VEJEZ"]
+      "aplica_a": ["PRIMERA_INFANCIA","INFANCIA","ADOLESCENCIA"]
     },
 
     "proc_profilaxis": {
@@ -155,7 +155,7 @@
       "cups": ["997107"],
       "finalidad": ["14"],
       "deduplicar": true,
-      "aplica_a": ["PRIMERA_INFANCIA","INFANCIA","ADOLESCENCIA","JOVENES"]
+      "aplica_a": ["PRIMERA_INFANCIA","INFANCIA","ADOLESCENCIA"]
     },
 
     "proc_fortificacion_micronutrientes": {
@@ -188,7 +188,7 @@
     },
 
     "med_desparasitacion": {
-      "descripcion": "Desparasitación Antihelmíntica con Albendazol dosis única 400mg",
+      "descripcion": "Desparasitación Antihelmíntica con Albendazol dosis única 400mg vía oral",
       "archivo": "medicamentos",
       "cups": [],
       "busqueda_nombre": ["ALBENDAZOL","PIRANTEL","PAMOATO","OXANTEL"],
@@ -198,7 +198,7 @@
     },
 
     "edu_individual": {
-      "descripcion": "Educación individual (padres o cuidadores)",
+      "descripcion": "Educación individual",
       "archivo": "procedimientos",
       "cups": ["990201","990202","990203","990204","990205","990206"],
       "finalidad": [],
@@ -212,8 +212,7 @@
       "cups": ["990201","990202","990203","990204","990205","990206"],
       "finalidad": [],
       "deduplicar": false,
-      "aplica_a": ["PRIMERA_INFANCIA","INFANCIA","ADOLESCENCIA","JOVENES","ADULTEZ","VEJEZ"],
-      "nota": "Mismos CUPS que edu_individual - se diferencia por el contexto de la sesión"
+      "aplica_a": ["PRIMERA_INFANCIA","INFANCIA","ADOLESCENCIA","JOVENES","ADULTEZ","VEJEZ"]
     },
 
     "edu_grupal": {
@@ -267,29 +266,29 @@
       "cups": ["903889","906201"],
       "finalidad": [],
       "deduplicar": true,
-      "aplica_a": ["ADOLESCENCIA","JOVENES"]
+      "aplica_a": ["ADOLESCENCIA","JOVENES","ADULTEZ"]
     },
 
     "consulta_anticoncepcion": {
-      "descripcion": "Asesoría en anticoncepción",
+      "descripcion": "Atención en salud por medicina general, medicina familiar o enfermería para la asesoría en anticoncepción",
       "archivo": "consultas",
       "cups": ["890203","890273"],
       "finalidad": ["11"],
       "deduplicar": true,
-      "aplica_a": ["ADOLESCENCIA","JOVENES","ADULTEZ"]
+      "aplica_a": ["ADOLESCENCIA","JOVENES","ADULTEZ","VEJEZ"]
     },
 
     "consulta_anticoncepcion_control": {
-      "descripcion": "Asesoría en anticoncepción - Control",
+      "descripcion": "Atención en salud por medicina general, medicina familiar o enfermería para la asesoría en anticoncepción - Control",
       "archivo": "consultas",
       "cups": ["890274"],
       "finalidad": ["11"],
       "deduplicar": true,
-      "aplica_a": ["ADOLESCENCIA","JOVENES","ADULTEZ"]
+      "aplica_a": ["ADOLESCENCIA","JOVENES","ADULTEZ","VEJEZ"]
     },
 
     "med_anticoncepcion_oral": {
-      "descripcion": "Suministro de anticoncepción oral ciclo o inyectable mensual",
+      "descripcion": "Suministro de anticoncepción oral ciclo e inyectable",
       "archivo": "medicamentos",
       "cups": [],
       "busqueda_nombre": ["ANTICONCEPTIVO","MESTRANOL","ETINILESTRADIOL","LEVONORGESTREL","DESOGESTREL","GESTODENO"],
@@ -305,7 +304,7 @@
       "busqueda_nombre": ["PRESERVATIVO","CONDON","CONDÓN"],
       "finalidad": [],
       "deduplicar": false,
-      "aplica_a": ["ADOLESCENCIA","JOVENES","ADULTEZ"]
+      "aplica_a": ["ADOLESCENCIA","JOVENES","ADULTEZ","VEJEZ"]
     },
 
     "proc_anticoncepcion_subdermico": {
@@ -318,7 +317,7 @@
     },
 
     "proc_diu": {
-      "descripcion": "Inserción de dispositivo intrauterino (DIU)",
+      "descripcion": "Inserción de dispositivo intrauterino + anticonceptivo (DIU) SOD",
       "archivo": "procedimientos",
       "cups": ["360302","360303"],
       "finalidad": [],
@@ -380,24 +379,94 @@
       "aplica_a": ["JOVENES","ADULTEZ","VEJEZ"]
     },
 
+    "proc_uroanalis": {
+      "descripcion": "Uroanálisis",
+      "archivo": "procedimientos",
+      "cups": ["903910","904351"],
+      "finalidad": [],
+      "deduplicar": true,
+      "aplica_a": ["JOVENES","ADULTEZ","VEJEZ"]
+    },
+
+    "proc_hep_b": {
+      "descripcion": "Prueba rápida para Hepatitis B",
+      "archivo": "procedimientos",
+      "cups": ["906214","906215"],
+      "finalidad": [],
+      "deduplicar": true,
+      "aplica_a": ["JOVENES","ADULTEZ","VEJEZ"]
+    },
+
+    "proc_hep_c": {
+      "descripcion": "Prueba rápida para Hepatitis C",
+      "archivo": "procedimientos",
+      "cups": ["906216","906217"],
+      "finalidad": [],
+      "deduplicar": true,
+      "aplica_a": ["JOVENES","ADULTEZ","VEJEZ"]
+    },
+
     "proc_citologia": {
-      "descripcion": "Citología cérvico-uterina",
+      "descripcion": "Tamizaje de cáncer de cuello uterino (citología)",
       "archivo": "procedimientos",
       "cups": ["910101","910102"],
       "finalidad": [],
       "deduplicar": true,
-      "aplica_a": ["ADULTEZ","VEJEZ"],
-      "nota": "Mujeres 25-69 años, sexo F"
+      "aplica_a": ["JOVENES","ADULTEZ","VEJEZ"]
+    },
+
+    "proc_adn_vph": {
+      "descripcion": "Tamizaje de cáncer de cuello uterino (ADN VPH)",
+      "archivo": "procedimientos",
+      "cups": ["910103","910104"],
+      "finalidad": [],
+      "deduplicar": true,
+      "aplica_a": ["ADULTEZ","VEJEZ"]
+    },
+
+    "proc_inspeccion_visual": {
+      "descripcion": "Tamizaje de inspección visual",
+      "archivo": "procedimientos",
+      "cups": ["910105"],
+      "finalidad": [],
+      "deduplicar": true,
+      "aplica_a": ["ADULTEZ"]
     },
 
     "proc_mamografia": {
-      "descripcion": "Toma de mamografía bilateral",
+      "descripcion": "Tamizaje para cáncer de mama (valoración clínica de la mama)",
       "archivo": "procedimientos",
       "cups": ["380401","380402"],
       "finalidad": [],
       "deduplicar": true,
-      "aplica_a": ["ADULTEZ","VEJEZ"],
-      "nota": "Mujeres 50-69 años"
+      "aplica_a": ["ADULTEZ","VEJEZ"]
+    },
+
+    "proc_psa": {
+      "descripcion": "Tamizaje para cáncer de próstata (PSA)",
+      "archivo": "procedimientos",
+      "cups": ["903908","904345"],
+      "finalidad": [],
+      "deduplicar": true,
+      "aplica_a": ["ADULTEZ","VEJEZ"]
+    },
+
+    "proc_tacto_rectal": {
+      "descripcion": "Tamizaje para cáncer de próstata (Tacto rectal)",
+      "archivo": "procedimientos",
+      "cups": ["890291"],
+      "finalidad": [],
+      "deduplicar": true,
+      "aplica_a": ["ADULTEZ","VEJEZ"]
+    },
+
+    "proc_sangre_oculta": {
+      "descripcion": "Tamizaje para cáncer de colon (Sangre oculta en materia fecal por inmunoquímica)",
+      "archivo": "procedimientos",
+      "cups": ["903909","904346"],
+      "finalidad": [],
+      "deduplicar": true,
+      "aplica_a": ["ADULTEZ","VEJEZ"]
     }
   },
 
@@ -489,23 +558,23 @@
         "proc_colesterol_ldl",
         "proc_trigliceridos",
         "proc_creatinina",
+        "proc_uroanalis",
         "proc_prueba_treponema",
         "proc_prueba_vih",
         "proc_asesoria_pre_vih",
         "proc_asesoria_pos_vih",
-        "proc_hemoglobina",
-        "proc_hematocrito",
+        "proc_hep_b",
+        "proc_hep_c",
         "proc_prueba_embarazo",
+        "proc_citologia",
         "consulta_anticoncepcion",
         "consulta_anticoncepcion_control",
         "med_anticoncepcion_oral",
         "med_preservativos",
         "proc_anticoncepcion_subdermico",
         "proc_diu",
-        "proc_barniz_fluor",
         "proc_profilaxis",
         "proc_detartraje",
-        "proc_sellantes",
         "edu_individual",
         "edu_familia",
         "edu_grupal"
@@ -519,25 +588,33 @@
       "actividades": [
         "consulta_medicina_general",
         "consulta_odontologia",
+        "proc_adn_vph",
+        "proc_inspeccion_visual",
+        "proc_citologia",
+        "proc_mamografia",
+        "proc_psa",
+        "proc_tacto_rectal",
+        "proc_sangre_oculta",
         "proc_glicemia",
         "proc_colesterol_total",
         "proc_colesterol_hdl",
         "proc_colesterol_ldl",
         "proc_trigliceridos",
         "proc_creatinina",
+        "proc_uroanalis",
         "proc_prueba_treponema",
         "proc_prueba_vih",
         "proc_asesoria_pre_vih",
         "proc_asesoria_pos_vih",
-        "proc_citologia",
-        "proc_mamografia",
+        "proc_hep_b",
+        "proc_hep_c",
+        "proc_prueba_embarazo",
         "consulta_anticoncepcion",
         "consulta_anticoncepcion_control",
         "med_anticoncepcion_oral",
         "med_preservativos",
         "proc_anticoncepcion_subdermico",
         "proc_diu",
-        "proc_barniz_fluor",
         "proc_profilaxis",
         "proc_detartraje",
         "edu_individual",
@@ -554,19 +631,28 @@
         "consulta_medicina_general",
         "consulta_enfermeria",
         "consulta_odontologia",
+        "proc_adn_vph",
+        "proc_citologia",
+        "proc_mamografia",
+        "proc_psa",
+        "proc_tacto_rectal",
+        "proc_sangre_oculta",
         "proc_glicemia",
         "proc_colesterol_total",
         "proc_colesterol_hdl",
         "proc_colesterol_ldl",
         "proc_trigliceridos",
         "proc_creatinina",
+        "proc_uroanalis",
         "proc_prueba_treponema",
         "proc_prueba_vih",
         "proc_asesoria_pre_vih",
         "proc_asesoria_pos_vih",
-        "proc_citologia",
-        "proc_mamografia",
-        "proc_barniz_fluor",
+        "proc_hep_b",
+        "proc_hep_c",
+        "consulta_anticoncepcion",
+        "consulta_anticoncepcion_control",
+        "med_preservativos",
         "proc_profilaxis",
         "proc_detartraje",
         "edu_individual",

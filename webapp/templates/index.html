@@ -346,7 +346,7 @@ textarea.form-control{resize:vertical;min-height:56px}
           </div>
           <div id="it-manual" class="it-pane">
             <div class="meta-wrap"><table class="meta-table">
-              <thead><tr><th>Programa / Actividad</th><th>Meta</th><th>UPC ($)</th><th>Vr Exigido</th></tr></thead>
+              <thead><tr><th>Programa / Actividad</th><th>Meta</th><th>UPC</th><th>Vr Meta</th></tr></thead>
               <tbody id="meta-tbody"><tr><td colspan="4" style="text-align:center;padding:14px;color:var(--gris3)">Cargando...</td></tr></tbody>
             </table></div>
           </div>
@@ -748,10 +748,10 @@ textarea.form-control{resize:vertical;min-height:56px}
         </div>
         <!-- Resumen de metas cargadas -->
         <div id="m-metas-resumen" style="display:none;background:var(--verde3);border:1px solid var(--verde2);border-radius:8px;padding:10px 14px;font-size:11.5px;margin-bottom:10px"></div>
-        <!-- Grid manual de metas -->
+        <!-- Tabla manual de metas -->
         <div id="m-metas-manual" style="display:none">
-          <div style="font-size:11px;color:var(--gris3);margin-bottom:8px">Ingresa la meta mensual por programa (número de atenciones esperadas)</div>
-          <div id="m-metas-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:8px"></div>
+          <div style="font-size:11px;color:var(--gris3);margin-bottom:8px">Ingresa el valor LMA y las metas por actividad — el UPC se calcula automáticamente.</div>
+          <div id="m-metas-tablas"></div>
         </div>
       </div>
     </div>
@@ -943,35 +943,33 @@ function abrirModal(id){document.getElementById(id).style.display="flex";}
 function cerrarModal(id){document.getElementById(id).style.display="none";}
 
 let _metas_ips={};  // metas temporales en el modal
+let _lma_ips={};    // valores LMA por curso de vida
 let _ips_edit_id=null;
 
 async function guardarIPS(){
   if(!v("m-nombre").trim()){alert("El nombre del prestador es requerido");return;}
+  // Recoger metas y LMA de la tabla si está visible
+  if(document.getElementById("m-metas-manual").style.display!=="none"){
+    const {metas,lma}=leerMetasModal();
+    _metas_ips=metas;_lma_ips=lma;
+  }
   const body={
     nombre:v("m-nombre"),nit:v("m-nit"),departamento:v("m-depto"),
     municipio:v("m-municipio"),num_contrato:v("m-contrato"),
     vigencia_inicio:v("m-vig-ini"),vigencia_fin:v("m-vig-fin"),
     rep_legal:v("m-rep"),regimen:v("m-regimen"),
-    tipo_contrato:v("m-tipo-contrato"),metas:_metas_ips
+    tipo_contrato:v("m-tipo-contrato"),
+    lma:_lma_ips, metas:_metas_ips
   };
-  // Recoger metas manuales si están visibles
-  if(document.getElementById("m-metas-manual").style.display!=="none"){
-    document.querySelectorAll(".meta-prog-input").forEach(inp=>{
-      const prog=inp.dataset.prog;
-      const val=parseInt(inp.value)||0;
-      if(val>0) _metas_ips[prog]=val;
-    });
-    body.metas=_metas_ips;
-  }
   const url=_ips_edit_id?`/api/ips/${_ips_edit_id}`:`/api/ips`;
   const method=_ips_edit_id?"PUT":"POST";
   await fetch(url,{method,headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
-  _metas_ips={};_ips_edit_id=null;
+  _metas_ips={};_lma_ips={};_ips_edit_id=null;
   cerrarModal("modal-ips");await cargarIPS();
 }
 
 function abrirNuevoIPS(){
-  _ips_edit_id=null;_metas_ips={};
+  _ips_edit_id=null;_metas_ips={};_lma_ips={};
   document.getElementById("m-modal-title").textContent="Nuevo Prestador";
   ["m-nombre","m-nit","m-depto","m-municipio","m-contrato","m-vig-ini","m-vig-fin","m-rep"].forEach(id=>{
     const el=document.getElementById(id);if(el) el.value="";
@@ -980,23 +978,122 @@ function abrirNuevoIPS(){
   document.getElementById("m-tipo-contrato").value="ASISTENCIAL";
   document.getElementById("m-metas-resumen").style.display="none";
   document.getElementById("m-metas-manual").style.display="none";
-  renderMetasGrid();
   abrirModal("modal-ips");
 }
 
 function toggleMetasManual(){
   const el=document.getElementById("m-metas-manual");
   el.style.display=el.style.display==="none"?"block":"none";
-  if(el.style.display==="block") renderMetasGrid();
+  if(el.style.display==="block") renderMetasTabla();
 }
 
-function renderMetasGrid(){
-  const progs=S.config?.programas||[];
-  document.getElementById("m-metas-grid").innerHTML=progs.map(p=>`
-    <div style="background:var(--gris0);border-radius:8px;padding:9px 12px">
-      <div style="font-size:10.5px;font-weight:600;color:var(--azul);margin-bottom:5px">${p.nombre||p.id}</div>
-      <input type="number" min="0" value="${_metas_ips[p.id]||""}" class="form-control meta-prog-input" data-prog="${p.id}" placeholder="0" style="padding:5px 8px;font-size:12px">
-    </div>`).join("");
+function renderMetasTabla(){
+  if(!S.config) return;
+  const progs=S.config.programas||[];
+  const container=document.getElementById("m-metas-tablas");
+  container.innerHTML=progs.map(p=>{
+    const lma=_lma_ips[p.id]||0;
+    const acts=(p.actividades||[]).filter(aid=>S.config.actividades_base[aid]);
+    const rows=acts.map(aid=>{
+      const act=S.config.actividades_base[aid];
+      const saved=(_metas_ips[p.id]||{})[aid];
+      const metaVal=saved?.meta??saved??0;
+      return `<tr style="border-bottom:1px solid var(--gris1)">
+        <td style="padding:4px 8px;font-size:10.5px">${act.descripcion}</td>
+        <td style="padding:4px 8px;text-align:center">
+          <input type="number" min="0" value="${metaVal}" id="mm_${p.id}_${aid}"
+            oninput="recalcUPC('${p.id}')"
+            style="width:70px;padding:3px 6px;font-size:10.5px;border:1px solid var(--gris1);border-radius:4px;text-align:center">
+        </td>
+        <td id="upc_m_${p.id}_${aid}" style="padding:4px 8px;text-align:right;font-size:10.5px;color:var(--gris3);white-space:nowrap">$0</td>
+        <td id="vrm_${p.id}_${aid}" style="padding:4px 8px;text-align:right;font-size:10.5px;font-weight:600;white-space:nowrap">$0</td>
+      </tr>`;
+    }).join("");
+    return `<div style="margin-bottom:18px">
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px;padding:6px 10px;background:var(--azul);border-radius:8px 8px 0 0">
+        <span style="font-size:11px;font-weight:700;color:#fff;flex:1">${p.nombre||p.id}</span>
+        <label style="font-size:10px;color:rgba(255,255,255,.75)">LMA ($)</label>
+        <input type="number" min="0" step="1" value="${lma}" class="lma-input" data-prog="${p.id}"
+          oninput="recalcUPC('${p.id}')"
+          style="width:130px;padding:3px 8px;font-size:11px;border:1px solid rgba(255,255,255,.4);border-radius:6px;background:rgba(255,255,255,.15);color:#fff">
+        <span style="font-size:10px;color:rgba(255,255,255,.85);white-space:nowrap">UPC: <strong id="upc-disp-${p.id}">$0</strong></span>
+      </div>
+      <div style="overflow-x:auto;max-height:280px;overflow-y:auto;border:1px solid var(--gris1);border-top:none;border-radius:0 0 8px 8px">
+        <table style="width:100%;border-collapse:collapse;font-size:10.5px">
+          <thead style="position:sticky;top:0;background:var(--gris0);z-index:1">
+            <tr>
+              <th style="text-align:left;padding:5px 8px;font-weight:600;border-bottom:1px solid var(--gris1)">Descripción</th>
+              <th style="padding:5px 8px;text-align:center;border-bottom:1px solid var(--gris1);white-space:nowrap">Meta</th>
+              <th style="padding:5px 8px;text-align:right;border-bottom:1px solid var(--gris1);white-space:nowrap">UPC ($)</th>
+              <th style="padding:5px 8px;text-align:right;border-bottom:1px solid var(--gris1);white-space:nowrap">Valor Meta ($)</th>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+          <tfoot>
+            <tr style="background:var(--gris0);font-weight:700;border-top:2px solid var(--gris2)">
+              <td style="padding:5px 8px;font-size:10.5px">TOTAL</td>
+              <td id="tot-meta-${p.id}" style="padding:5px 8px;text-align:center;font-size:10.5px">0</td>
+              <td></td>
+              <td id="tot-vr-${p.id}" style="padding:5px 8px;text-align:right;font-size:10.5px">$0</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>`;
+  }).join("");
+  progs.forEach(p=>recalcUPC(p.id));
+}
+
+function _sumMetasProg(pid){
+  const p=S.config?.programas?.find(pr=>pr.id===pid);
+  if(!p) return 0;
+  return (p.actividades||[]).reduce((s,aid)=>{
+    const el=document.getElementById(`mm_${pid}_${aid}`);
+    return s+(el?parseFloat(el.value||0):0);
+  },0);
+}
+
+function recalcUPC(pid){
+  const p=S.config?.programas?.find(pr=>pr.id===pid);if(!p) return;
+  const lmaEl=document.querySelector(`.lma-input[data-prog="${pid}"]`);
+  const lma=parseFloat(lmaEl?.value||0);
+  const total=_sumMetasProg(pid);
+  const upc=total>0?lma/total:0;
+  const dispEl=document.getElementById(`upc-disp-${pid}`);
+  if(dispEl) dispEl.textContent="$"+fmt(upc);
+  let totMeta=0,totVr=0;
+  for(const aid of p.actividades||[]){
+    const mEl=document.getElementById(`mm_${pid}_${aid}`);
+    const meta=parseFloat(mEl?.value||0);
+    const vr=meta*upc;
+    const upcEl=document.getElementById(`upc_m_${pid}_${aid}`);
+    const vrEl=document.getElementById(`vrm_${pid}_${aid}`);
+    if(upcEl) upcEl.textContent="$"+fmt(upc);
+    if(vrEl) vrEl.textContent="$"+fmt(vr);
+    totMeta+=meta;totVr+=vr;
+  }
+  const totMetaEl=document.getElementById(`tot-meta-${pid}`);
+  const totVrEl=document.getElementById(`tot-vr-${pid}`);
+  if(totMetaEl) totMetaEl.textContent=totMeta;
+  if(totVrEl) totVrEl.textContent="$"+fmt(totVr);
+}
+
+function leerMetasModal(){
+  if(!S.config) return {metas:{},lma:{}};
+  const metas={},lma={};
+  for(const p of S.config.programas||[]){
+    metas[p.id]={};
+    const lmaEl=document.querySelector(`.lma-input[data-prog="${p.id}"]`);
+    lma[p.id]=parseFloat(lmaEl?.value||0);
+    const total=_sumMetasProg(p.id);
+    const upc=total>0?lma[p.id]/total:0;
+    for(const aid of p.actividades||[]){
+      const mEl=document.getElementById(`mm_${p.id}_${aid}`);
+      const meta=parseFloat(mEl?.value||0);
+      if(meta>0||upc>0) metas[p.id][aid]={meta,upc};
+    }
+  }
+  return {metas,lma};
 }
 
 async function cargarMetasArchivo(input){
@@ -1008,7 +1105,7 @@ async function cargarMetasArchivo(input){
     const d=await r.json();
     if(d.ok){
       _metas_ips=d.metas||{};
-      mostrarResumenMetas(_metas_ips);
+      mostrarResumenMetasIPS(_metas_ips,_lma_ips);
       alert("✅ Metas cargadas desde archivo");
     } else alert("Error: "+(d.error||"formato no soportado"));
   } else {
@@ -1108,37 +1205,73 @@ function sincronizarMetasManual(metas){
     for(const act_id of prog.actividades){
       const am=pm[act_id];if(!am) continue;
       const mEl=document.getElementById(`m_${prog.id}_${act_id}`);
-      const uEl=document.getElementById(`u_${prog.id}_${act_id}`);
-      if(mEl&&am.meta!==undefined) mEl.value=am.meta;
-      if(uEl&&am.upc!==undefined) uEl.value=am.upc;
-      if(mEl) actualizarVr(prog.id,act_id);
+      const metaVal=am?.meta??am??0;
+      if(mEl&&metaVal!==undefined) mEl.value=metaVal;
     }
+    recalcUpcWizard(prog.id);
   }
 }
 
 function renderMetasManual(){
   if(!S.config) return;
   const tbody=document.getElementById("meta-tbody");tbody.innerHTML="";
+  const lmaIps=S.ips_activa?.lma||{};
   for(const prog of S.config.programas){
+    const lma=lmaIps[prog.id]||0;
     const th=document.createElement("tr");th.className="prog-row";
-    th.innerHTML=`<td colspan="4">📋 ${prog.nombre}</td>`;tbody.appendChild(th);
+    th.innerHTML=`<td colspan="4" style="padding:6px 10px">
+      📋 ${prog.nombre}
+      <span style="float:right;font-size:10px;font-weight:400;opacity:.85">
+        LMA: <input type="number" min="0" step="1" value="${lma}" id="lma_${prog.id}"
+          oninput="recalcUpcWizard('${prog.id}')"
+          style="width:110px;padding:2px 6px;border:1px solid rgba(255,255,255,.4);border-radius:4px;background:rgba(255,255,255,.15);color:inherit;font-size:10px">
+        &nbsp;UPC: <strong id="upcw-disp-${prog.id}">$${fmt(lma&&_sumMetasWizard(prog.id)?lma/_sumMetasWizard(prog.id):0)}</strong>
+      </span>
+    </td>`;tbody.appendChild(th);
     for(const act_id of prog.actividades){
       const act=S.config.actividades_base[act_id];if(!act) continue;
       const tr=document.createElement("tr");
       tr.innerHTML=`<td style="padding-left:14px;font-size:10.5px">${act.descripcion}</td>
-        <td><input type="number" min="0" value="0" id="m_${prog.id}_${act_id}" oninput="actualizarVr('${prog.id}','${act_id}')"></td>
-        <td><input type="number" min="0" step="0.01" value="0" id="u_${prog.id}_${act_id}" oninput="actualizarVr('${prog.id}','${act_id}')"></td>
+        <td><input type="number" min="0" value="0" id="m_${prog.id}_${act_id}" oninput="recalcUpcWizard('${prog.id}')"></td>
+        <td id="u_w_${prog.id}_${act_id}" style="font-size:10px;color:var(--gris3);text-align:right;padding-right:4px">$0</td>
         <td id="vr_${prog.id}_${act_id}" style="color:var(--gris3);font-size:10.5px">$0</td>`;
       tbody.appendChild(tr);
     }
   }
+  // Cargar metas del IPS activo si existen
+  if(S.ips_activa?.metas) sincronizarMetasManual(S.ips_activa.metas);
+  S.config.programas.forEach(p=>recalcUpcWizard(p.id));
+}
+
+function _sumMetasWizard(pid){
+  const p=S.config?.programas?.find(pr=>pr.id===pid);if(!p) return 0;
+  return (p.actividades||[]).reduce((s,aid)=>{
+    const el=document.getElementById(`m_${pid}_${aid}`);
+    return s+(el?parseFloat(el.value||0):0);
+  },0);
+}
+
+function recalcUpcWizard(pid){
+  const p=S.config?.programas?.find(pr=>pr.id===pid);if(!p) return;
+  const lmaEl=document.getElementById(`lma_${pid}`);
+  const lma=parseFloat(lmaEl?.value||0);
+  const total=_sumMetasWizard(pid);
+  const upc=total>0?lma/total:0;
+  const dispEl=document.getElementById(`upcw-disp-${pid}`);
+  if(dispEl) dispEl.textContent="$"+fmt(upc);
+  for(const aid of p.actividades||[]){
+    const mEl=document.getElementById(`m_${pid}_${aid}`);
+    const meta=parseFloat(mEl?.value||0);
+    const vr=meta*upc;
+    const upcEl=document.getElementById(`u_w_${pid}_${aid}`);
+    const vrEl=document.getElementById(`vr_${pid}_${aid}`);
+    if(upcEl) upcEl.textContent="$"+fmt(upc);
+    if(vrEl) vrEl.textContent="$"+fmt(vr);
+  }
 }
 
 function actualizarVr(pi,ai){
-  const m=parseFloat(document.getElementById(`m_${pi}_${ai}`)?.value||0);
-  const u=parseFloat(document.getElementById(`u_${pi}_${ai}`)?.value||0);
-  const el=document.getElementById(`vr_${pi}_${ai}`);
-  if(el) el.textContent=fmt(m*u);
+  recalcUpcWizard(pi);
 }
 
 function leerMetasManual(){
@@ -1146,10 +1279,13 @@ function leerMetasManual(){
   const metas={};
   for(const prog of S.config.programas){
     metas[prog.id]={};
+    const lmaEl=document.getElementById(`lma_${prog.id}`);
+    const lma=parseFloat(lmaEl?.value||0);
+    const total=_sumMetasWizard(prog.id);
+    const upc=total>0?lma/total:0;
     for(const act_id of prog.actividades){
       const m=parseFloat(document.getElementById(`m_${prog.id}_${act_id}`)?.value||0);
-      const u=parseFloat(document.getElementById(`u_${prog.id}_${act_id}`)?.value||0);
-      metas[prog.id][act_id]={meta:m,upc:u};
+      metas[prog.id][act_id]={meta:m,upc};
     }
   }
   return metas;
@@ -1349,6 +1485,7 @@ function llenarModalIPS(id){
   const ip=_ips_list.find(i=>i.id==id);if(!ip) return;
   _ips_edit_id=id;
   _metas_ips=ip.metas||{};
+  _lma_ips=ip.lma||{};
   document.getElementById("m-modal-title").textContent="Editar Prestador";
   document.getElementById("m-nombre").value=ip.nombre||"";
   document.getElementById("m-nit").value=ip.nit||"";
@@ -1361,9 +1498,23 @@ function llenarModalIPS(id){
   document.getElementById("m-regimen").value=ip.regimen||"SUBSIDIADO";
   document.getElementById("m-tipo-contrato").value=ip.tipo_contrato||"ASISTENCIAL";
   document.getElementById("m-metas-manual").style.display="none";
-  if(Object.keys(_metas_ips).length) mostrarResumenMetas(_metas_ips);
+  // Mostrar resumen si hay metas
+  const hayMetas=Object.values(_metas_ips).some(prog=>Object.values(prog||{}).some(v=>(v?.meta||v||0)>0));
+  if(hayMetas) mostrarResumenMetasIPS(_metas_ips,_lma_ips);
   else document.getElementById("m-metas-resumen").style.display="none";
-  renderMetasGrid();
+}
+
+function mostrarResumenMetasIPS(metas,lma){
+  const progs=S.config?.programas||[];
+  const html=progs.map(p=>{
+    const total=Object.values(metas[p.id]||{}).reduce((s,v)=>s+(v?.meta??v??0),0);
+    const lmaV=lma[p.id]||0;
+    const upc=total>0?lmaV/total:0;
+    if(!total&&!lmaV) return "";
+    return `<span style="margin-right:12px;white-space:nowrap"><strong>${p.id.replace("_"," ")}:</strong> ${total} atenc. · UPC $${fmt(upc)}</span>`;
+  }).filter(Boolean).join("");
+  document.getElementById("m-metas-resumen").innerHTML="✅ Metas: "+html;
+  document.getElementById("m-metas-resumen").style.display="block";
 }
 
 const TIPO_LABELS={"consultas":"🩺 Consulta","procedimientos":"⚕️ Proced.","medicamentos":"💊 Medic.","otrosServicios":"🔬 Otros"};
