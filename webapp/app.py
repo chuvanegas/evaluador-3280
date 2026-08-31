@@ -32,8 +32,9 @@ app.config["MAX_CONTENT_LENGTH"] = 200 * 1024 * 1024  # 200 MB
 _sessions = {}
 
 # ── Persistencia simple (JSON) – en v0.2 migrar a Supabase ────────────────
-USERS_FILE = DATA_PATH / "users.json"
-IPS_FILE   = DATA_PATH / "ips.json"
+USERS_FILE  = DATA_PATH / "users.json"
+IPS_FILE    = DATA_PATH / "ips.json"
+ACTAS_FILE  = DATA_PATH / "actas.json"
 
 def _hash(pwd): return hashlib.sha256(pwd.encode()).hexdigest()
 
@@ -64,6 +65,16 @@ def _load_ips():
 def _save_ips(ips):
     with open(IPS_FILE, "w", encoding="utf-8") as f:
         json.dump(ips, f, ensure_ascii=False, indent=2)
+
+def _load_actas():
+    if ACTAS_FILE.exists():
+        with open(ACTAS_FILE, encoding="utf-8") as f:
+            return json.load(f)
+    return []
+
+def _save_actas(actas):
+    with open(ACTAS_FILE, "w", encoding="utf-8") as f:
+        json.dump(actas, f, ensure_ascii=False, indent=2)
 
 # ── Auth helpers ───────────────────────────────────────────────────────────
 class SimpleUser:
@@ -507,6 +518,92 @@ def evaluar():
     return jsonify({"ok": True, "resultados": resultados, "resumen": resumen,
                     "totales": {"exigido": total_e, "reconocido": total_r, "descuento": total_d,
                                 "pct": total_r/total_e if total_e else 1.0}})
+
+@app.route("/api/actas", methods=["GET"])
+@login_required
+def get_actas():
+    actas = _load_actas()
+    ips_id = request.args.get("ips_id")
+    if ips_id:
+        actas = [a for a in actas if a.get("ips_id") == ips_id]
+    return jsonify({"actas": actas})
+
+@app.route("/api/actas", methods=["POST"])
+@login_required
+def create_acta():
+    user = _get_current_user()
+    if user.rol not in ["admin", "evaluador"]:
+        return jsonify({"error": "Sin permisos"}), 403
+    body = request.get_json() or {}
+    sd = _session_data()
+    resultados = sd.get("resultados") or {}
+    actas = _load_actas()
+    new_acta = {
+        "id": str(uuid.uuid4())[:8],
+        "ips_id": body.get("ips_id", ""),
+        "acta_num": body.get("acta_num", ""),
+        "fecha_eval": body.get("fecha_eval", ""),
+        "periodo_evaluado": body.get("periodo_evaluado", ""),
+        "vigencia_contrato": body.get("vigencia_contrato", ""),
+        "empresa": body.get("empresa", ""),
+        "nit": body.get("nit", ""),
+        "regimen": body.get("regimen", "SUBSIDIADO"),
+        "municipio": body.get("municipio", ""),
+        "lugar": body.get("lugar", "VALLEDUPAR"),
+        "num_contrato": body.get("num_contrato", ""),
+        "coordinador": body.get("coordinador", ""),
+        "funcionarios": body.get("funcionarios", []),
+        "puntos_a_tratar": body.get("puntos_a_tratar", ""),
+        "objetivo": body.get("objetivo", ""),
+        "desarrollo_conclusiones": body.get("desarrollo_conclusiones", ""),
+        "parrafo_despues_grafico": body.get("parrafo_despues_grafico", ""),
+        "observaciones": body.get("observaciones", ""),
+        "resultados": resultados,
+        "creado_por": user.username,
+        "creado_en": datetime.datetime.now().isoformat(),
+    }
+    actas.append(new_acta)
+    _save_actas(actas)
+    return jsonify({"ok": True, "acta": new_acta})
+
+@app.route("/api/actas/<acta_id>", methods=["GET"])
+@login_required
+def get_acta(acta_id):
+    actas = _load_actas()
+    a = next((a for a in actas if a["id"] == acta_id), None)
+    if not a:
+        return jsonify({"error": "No encontrada"}), 404
+    return jsonify({"acta": a})
+
+@app.route("/api/actas/<acta_id>", methods=["PUT"])
+@login_required
+def update_acta(acta_id):
+    user = _get_current_user()
+    if user.rol not in ["admin", "evaluador"]:
+        return jsonify({"error": "Sin permisos"}), 403
+    body = request.get_json() or {}
+    actas = _load_actas()
+    for a in actas:
+        if a["id"] == acta_id:
+            for k in ["acta_num","fecha_eval","periodo_evaluado","vigencia_contrato","empresa","nit",
+                      "regimen","municipio","lugar","num_contrato","coordinador","funcionarios",
+                      "puntos_a_tratar","objetivo","desarrollo_conclusiones","parrafo_despues_grafico","observaciones"]:
+                if k in body: a[k] = body[k]
+            a["modificado_en"] = datetime.datetime.now().isoformat()
+            _save_actas(actas)
+            return jsonify({"ok": True})
+    return jsonify({"error": "No encontrada"}), 404
+
+@app.route("/api/actas/<acta_id>", methods=["DELETE"])
+@login_required
+def delete_acta(acta_id):
+    user = _get_current_user()
+    if user.rol != "admin":
+        return jsonify({"error": "Sin permisos"}), 403
+    actas = _load_actas()
+    actas = [a for a in actas if a["id"] != acta_id]
+    _save_actas(actas)
+    return jsonify({"ok": True})
 
 @app.route("/api/generar-acta", methods=["POST"])
 @login_required

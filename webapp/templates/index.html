@@ -149,6 +149,9 @@ textarea.form-control{resize:vertical;min-height:56px}
 .det-table td:first-child{text-align:left}
 .det-table .disc{color:var(--rojo);font-weight:600}
 .det-table .tot-row td{font-weight:700;background:var(--azul4)}
+.acta-vtab{padding:6px 16px;border:1.5px solid var(--gris2);border-radius:7px;background:#fff;font-family:inherit;font-size:12px;font-weight:600;color:var(--gris3);cursor:pointer;transition:.15s}
+.acta-vtab.active{background:var(--azul);color:#fff;border-color:var(--azul)}
+.acta-vtab:hover:not(.active){background:var(--gris0)}
 .acta-table{width:100%;border-collapse:collapse;font-size:12px}
 .acta-table th{background:var(--azul);color:#fff;padding:8px 12px;text-align:right;font-size:10.5px;font-weight:600}
 .acta-table th:first-child{text-align:left}
@@ -215,7 +218,7 @@ textarea.form-control{resize:vertical;min-height:56px}
 <div class="nav-tabs">
   <button class="nav-tab active" onclick="switchTab(event,'tab-dashboard')">📊 Dashboard</button>
   <button class="nav-tab" onclick="switchTab(event,'tab-evaluacion')">⚡ Evaluación</button>
-  <button class="nav-tab" onclick="switchTab(event,'tab-actas')">📋 Actas <span id="nav-badge-actas" class="nav-badge">0</span></button>
+  <button class="nav-tab" onclick="switchTab(event,'tab-actas');cargarActasTab()">📋 Actas <span id="nav-badge-actas" class="nav-badge">0</span></button>
   {% if current_user.rol in ['admin','evaluador'] %}
   <button class="nav-tab" onclick="switchTab(event,'tab-mant');cargarMant()">🔧 Mantenimiento</button>
   {% endif %}
@@ -397,22 +400,137 @@ textarea.form-control{resize:vertical;min-height:56px}
 </div>
 
 <!-- TAB ACTAS -->
-<div id="tab-actas" class="tab-content">
-<div class="split">
-  <div class="panel-left">
-    <div class="pl-header"><span>🏥</span><div class="pl-title">Prestadores</div></div>
-    <div class="search-wrap"><input class="search-input" placeholder="Buscar IPS..." oninput="filtrarIPS2(this.value)"></div>
-    <div class="ips-list" id="ips-list2"><div class="empty-state">Cargando...</div></div>
+<div id="tab-actas" class="tab-content" style="flex-direction:column;overflow:hidden">
+
+<!-- Vista lista de actas -->
+<div id="actas-list-view" style="flex:1;overflow-y:auto;padding:20px 24px">
+  <div style="display:flex;align-items:center;gap:14px;margin-bottom:18px">
+    <div style="font-size:16px;font-weight:800;color:var(--azul);display:flex;align-items:center;gap:8px">📋 Actas de Evaluación</div>
+    <div style="margin-left:auto;display:flex;gap:8px">
+      <button class="btn btn-primary" style="padding:7px 16px" onclick="abrirNuevaActa()">+ Nueva Acta</button>
+    </div>
   </div>
-  <div class="panel-right">
-    <div class="pr-card">
-      <div class="pr-card-header"><div class="pr-card-icon">📋</div><div><div class="pr-card-title">Actas de Evaluación</div><div class="pr-card-sub">Historial por prestador</div></div></div>
-      <div class="pr-card-body" id="actas-body">
-        <div style="text-align:center;padding:40px;color:var(--gris3)"><div style="font-size:34px;margin-bottom:9px">📋</div><div style="font-size:12.5px">Selecciona un prestador para ver sus actas</div></div>
-      </div>
+  <!-- Filtros -->
+  <div style="display:flex;gap:10px;margin-bottom:14px">
+    <input class="search-input" id="actas-search" placeholder="Buscar por nº acta, empresa, municipio..." oninput="filtrarActas(this.value)" style="flex:1;max-width:380px;padding:7px 10px 7px 30px">
+    <select id="actas-filtro-ips" class="form-control" style="width:200px;padding:6px 10px;font-size:12px" onchange="filtrarActas(document.getElementById('actas-search').value)">
+      <option value="">— Todas las IPS —</option>
+    </select>
+  </div>
+  <!-- Tabla de actas -->
+  <div class="pr-card">
+    <div style="overflow-x:auto">
+      <table class="users-table" id="actas-table">
+        <thead><tr>
+          <th>Acta Nº</th>
+          <th>Empresa / IPS</th>
+          <th>Municipio</th>
+          <th style="width:110px">Período Evaluado</th>
+          <th style="width:100px">Fecha Eval.</th>
+          <th style="width:70px">Régimen</th>
+          <th style="width:90px">Creada por</th>
+          <th style="width:50px"></th>
+        </tr></thead>
+        <tbody id="actas-tbody"><tr><td colspan="8" style="text-align:center;padding:36px;color:var(--gris3)">Cargando actas...</td></tr></tbody>
+      </table>
     </div>
   </div>
 </div>
+
+<!-- Vista detalle de acta -->
+<div id="actas-detail-view" style="display:none;flex:1;overflow:hidden;flex-direction:column">
+  <!-- Sub-header -->
+  <div style="background:#fff;border-bottom:1.5px solid var(--gris1);padding:10px 22px;display:flex;align-items:center;gap:12px;flex-shrink:0">
+    <button onclick="volverListaActas()" style="background:none;border:none;cursor:pointer;color:var(--azul2);font-size:12.5px;font-weight:600;display:flex;align-items:center;gap:4px">‹ Volver a lista</button>
+    <div style="font-size:13.5px;font-weight:700;color:var(--azul)" id="acta-detail-num">Acta Nº —</div>
+    <div style="display:flex;gap:4px;margin-left:8px">
+      <button id="acta-tab-form" class="acta-vtab active" onclick="switchActaView('form')">Formulario</button>
+      <button id="acta-tab-prev" class="acta-vtab" onclick="switchActaView('preview')">Vista Previa</button>
+    </div>
+    <div style="margin-left:auto;display:flex;gap:7px">
+      <button class="btn btn-outline" style="font-size:11.5px;padding:5px 13px;color:#166534;border-color:#166534" onclick="exportarActaExcel()">📊 Excel</button>
+      <button class="btn btn-outline" style="font-size:11.5px;padding:5px 13px" onclick="imprimirActa()">🖨 Imprimir / PDF</button>
+      <button class="btn btn-primary" style="font-size:11.5px;padding:5px 16px" onclick="guardarActaDetalle()">💾 Guardar</button>
+    </div>
+  </div>
+  <!-- Aviso -->
+  <div style="background:#FFFBEB;border-bottom:1px solid #FCD34D;padding:8px 22px;font-size:11.5px;color:#92400E;flex-shrink:0">
+    ⚠️ <strong>Recuerde:</strong> esta acta <strong>NO se guardará automáticamente.</strong> Si cierra sin presionar <em>Guardar</em>, los cambios se perderán.
+  </div>
+
+  <!-- Contenido formulario -->
+  <div id="acta-form-pane" style="flex:1;overflow-y:auto;padding:20px 28px">
+    <div style="max-width:860px">
+      <!-- Fila 1 -->
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:12px;margin-bottom:14px">
+        <div class="form-group"><label class="form-label">Acta Nº</label><input id="af-num" class="form-control"></div>
+        <div class="form-group"><label class="form-label">Fecha de Evaluación</label><input id="af-fecha" type="date" class="form-control"></div>
+        <div class="form-group"><label class="form-label">Período Evaluado</label><input id="af-periodo" class="form-control" placeholder="Abril 2026, Mayo 2026..."></div>
+        <div class="form-group"><label class="form-label">Vigencia del Contrato</label><input id="af-vigencia" class="form-control" placeholder="01/01/2025-31/12/2025"></div>
+      </div>
+      <!-- Empresa + NIT -->
+      <div style="display:grid;grid-template-columns:3fr 1fr;gap:12px;margin-bottom:14px">
+        <div class="form-group"><label class="form-label">Empresa / IPS</label><input id="af-empresa" class="form-control"></div>
+        <div class="form-group"><label class="form-label">NIT</label><input id="af-nit" class="form-control"></div>
+      </div>
+      <!-- Régimen, Municipio, Lugar -->
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:14px">
+        <div class="form-group"><label class="form-label">Régimen</label><select id="af-regimen" class="form-control"><option>SUBSIDIADO</option><option>CONTRIBUTIVO</option></select></div>
+        <div class="form-group"><label class="form-label">Municipio</label><input id="af-municipio" class="form-control"></div>
+        <div class="form-group"><label class="form-label">Lugar</label><input id="af-lugar" class="form-control" placeholder="VALLEDUPAR"></div>
+      </div>
+      <!-- Contrato + Coordinador -->
+      <div style="display:grid;grid-template-columns:1fr 2fr;gap:12px;margin-bottom:14px">
+        <div class="form-group"><label class="form-label">Nº Contrato</label><input id="af-contrato" class="form-control"></div>
+        <div class="form-group"><label class="form-label">Coordinador(a) de Baja Complejidad</label><input id="af-coordinador" class="form-control" value="DIANA CASTILLA BARRAZA"></div>
+      </div>
+      <!-- Funcionarios -->
+      <div class="form-group" style="margin-bottom:14px">
+        <label class="form-label">Funcionario(s) que realiza(n) la Evaluación</label>
+        <div id="af-funcionarios-list" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:6px"></div>
+        <div style="display:flex;gap:7px">
+          <select id="af-func-select" class="form-control" style="flex:1">
+            <option value="">— Seleccionar usuario —</option>
+          </select>
+          <button class="btn btn-outline" style="font-size:11.5px;padding:5px 12px" onclick="agregarFuncionario()">+ Agregar</button>
+        </div>
+      </div>
+      <!-- Puntos a tratar -->
+      <div class="form-group" style="margin-bottom:14px">
+        <label class="form-label">Puntos a Tratar</label>
+        <textarea id="af-puntos" class="form-control" rows="3" placeholder="Revisión y confrontación de resultados..."></textarea>
+      </div>
+      <!-- Objetivo -->
+      <div class="form-group" style="margin-bottom:14px">
+        <label class="form-label">Objetivo</label>
+        <textarea id="af-objetivo" class="form-control" rows="3" placeholder="Verificar la ejecución de la efectiva prestación..."></textarea>
+      </div>
+      <!-- Desarrollo y conclusiones -->
+      <div class="form-group" style="margin-bottom:14px">
+        <label class="form-label">Desarrollo y Conclusiones <span style="font-weight:400;color:var(--gris3)">(antes del gráfico)</span></label>
+        <textarea id="af-desarrollo" class="form-control" rows="3" placeholder="Se realiza la evaluación de la ejecución..."></textarea>
+      </div>
+      <!-- Párrafo después del gráfico -->
+      <div class="form-group" style="margin-bottom:14px">
+        <label class="form-label">Párrafo después del Gráfico</label>
+        <textarea id="af-parrafo" class="form-control" rows="3" placeholder="Se verifica la ejecución de las actividades..."></textarea>
+      </div>
+      <!-- Observaciones -->
+      <div class="form-group" style="margin-bottom:8px">
+        <label class="form-label">Observaciones</label>
+        <textarea id="af-obs" class="form-control" rows="2"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- Vista Previa -->
+  <div id="acta-preview-pane" style="display:none;flex:1;overflow-y:auto;background:#9CA3AF;padding:20px;justify-content:center">
+    <div id="acta-preview-doc" style="width:210mm;min-height:297mm;background:#fff;margin:0 auto;padding:14mm 14mm 14mm 14mm;font-family:'Arial',sans-serif;font-size:9pt;box-shadow:0 4px 24px rgba(0,0,0,.25)">
+      <!-- Se llena con renderActaPreview() -->
+    </div>
+  </div>
+</div>
+
 </div>
 
 <!-- TAB MANTENIMIENTO -->
@@ -733,6 +851,12 @@ document.addEventListener("DOMContentLoaded",async()=>{
   await cargarIPS();
   await cargarUsuarios();
   await cargarEstado();
+  // Cargar badge de actas en background
+  fetch("/api/actas").then(r=>r.json()).then(d=>{
+    _actas_all=d.actas||[];
+    const b=document.getElementById("nav-badge-actas");
+    if(b) b.textContent=_actas_all.length;
+  }).catch(()=>{});
 });
 
 function hoy(){return new Date().toISOString().slice(0,10);}
@@ -1043,7 +1167,7 @@ async function evaluarAhora(){
   const d=await r.json();
   btn.innerHTML="⚡ Evaluar";btn.disabled=false;
   if(!d.ok){alert("Error: "+(d.error||"desconocido"));return;}
-  S.resultados=d;renderResultados(d);goStep(3);
+  S.resultados=d;S._resultados=d;renderResultados(d);goStep(3);
 }
 
 function renderResultados(data){
@@ -1468,6 +1592,359 @@ function abrirNuevaActividad(){
   document.getElementById("cups-fin-chips").innerHTML=Object.entries(finMap).map(([cod,desc])=>`
     <span onclick="toggleFinChip('${cod}',this)" style="cursor:pointer;padding:2px 9px;border-radius:12px;font-size:10.5px;font-weight:600;border:1.5px solid var(--gris2);background:#fff;color:var(--gris3)">${cod} – ${typeof desc==="string"?desc.substring(0,30):""}</span>`).join("");
   abrirModal("modal-cups");
+}
+
+// ══════════════════════════════════════════════════════
+// MÓDULO ACTAS
+// ══════════════════════════════════════════════════════
+let _actas_all=[];
+let _acta_actual=null;  // acta en edición
+
+async function cargarActasTab(){
+  // Llenar selector de IPS del filtro
+  const sel=document.getElementById("actas-filtro-ips");
+  if(sel && _ips_list.length>0 && sel.options.length<=1){
+    _ips_list.forEach(ip=>{
+      const o=document.createElement("option");
+      o.value=ip.id;o.textContent=ip.nombre;
+      sel.appendChild(o);
+    });
+  }
+  const r=await fetch("/api/actas");
+  const d=await r.json();
+  _actas_all=d.actas||[];
+  document.getElementById("nav-badge-actas").textContent=_actas_all.length;
+  renderActasTable(_actas_all);
+  // Llenar selector de funcionarios
+  poblarFuncSelect();
+}
+
+function poblarFuncSelect(){
+  const sel=document.getElementById("af-func-select");if(!sel) return;
+  fetch("/api/usuarios").then(r=>r.json()).then(d=>{
+    sel.innerHTML='<option value="">— Seleccionar usuario —</option>';
+    (d.usuarios||[]).forEach(u=>{
+      const o=document.createElement("option");
+      o.value=u.nombre;o.textContent=u.nombre;
+      sel.appendChild(o);
+    });
+  }).catch(()=>{});
+}
+
+function renderActasTable(actas){
+  const tbody=document.getElementById("actas-tbody");if(!tbody) return;
+  if(!actas.length){
+    tbody.innerHTML='<tr><td colspan="8" style="text-align:center;padding:36px;color:var(--gris3)">Sin actas registradas</td></tr>';
+    return;
+  }
+  tbody.innerHTML=actas.map(a=>`<tr style="cursor:pointer" onclick="abrirActaDetalle('${a.id}')">
+    <td><strong style="font-size:11.5px">${a.acta_num||'—'}</strong></td>
+    <td style="font-size:11.5px">${a.empresa||'—'}</td>
+    <td style="font-size:11px;color:var(--gris3)">${a.municipio||'—'}</td>
+    <td style="font-size:11px">${a.periodo_evaluado||'—'}</td>
+    <td style="font-size:11px">${a.fecha_eval||'—'}</td>
+    <td><span style="font-size:10px;font-weight:700;background:var(--azul4);color:var(--azul);padding:2px 7px;border-radius:10px">${a.regimen||'—'}</span></td>
+    <td style="font-size:10.5px;color:var(--gris3)">${a.creado_por||'—'}</td>
+    <td><button onclick="event.stopPropagation();eliminarActa('${a.id}')" style="background:none;border:none;cursor:pointer;font-size:12px;color:var(--gris3)" title="Eliminar">🗑</button></td>
+  </tr>`).join("");
+}
+
+function filtrarActas(q){
+  const ipsId=document.getElementById("actas-filtro-ips")?.value||"";
+  let f=_actas_all;
+  if(ipsId) f=f.filter(a=>a.ips_id===ipsId);
+  if(q){
+    const lq=q.toLowerCase();
+    f=f.filter(a=>(a.acta_num||"").toLowerCase().includes(lq)||
+      (a.empresa||"").toLowerCase().includes(lq)||(a.municipio||"").toLowerCase().includes(lq));
+  }
+  renderActasTable(f);
+}
+
+function abrirNuevaActa(){
+  _acta_actual=null;
+  // Precargar datos de IPS activa si hay una seleccionada
+  const ips=S.ips_activa;
+  document.getElementById("af-num").value="";
+  document.getElementById("af-fecha").value=hoy();
+  document.getElementById("af-periodo").value="";
+  document.getElementById("af-vigencia").value=ips?(ips.vigencia_inicio&&ips.vigencia_fin?ips.vigencia_inicio+"-"+ips.vigencia_fin:""):"";
+  document.getElementById("af-empresa").value=ips?ips.nombre:"";
+  document.getElementById("af-nit").value=ips?ips.nit||"":"";
+  document.getElementById("af-regimen").value=ips?ips.regimen||"SUBSIDIADO":"SUBSIDIADO";
+  document.getElementById("af-municipio").value=ips?ips.municipio||"":"";
+  document.getElementById("af-lugar").value="VALLEDUPAR";
+  document.getElementById("af-contrato").value=ips?ips.num_contrato||"":"";
+  document.getElementById("af-coordinador").value="DIANA CASTILLA BARRAZA";
+  document.getElementById("af-funcionarios-list").innerHTML="";
+  document.getElementById("af-puntos").value="Revisión y confrontación de resultados del seguimiento a las actividades de recuperación de la salud y atención primaria, reportadas según Anexo No. 12 por la Coordinación de Baja Complejidad";
+  document.getElementById("af-objetivo").value="Verificar la ejecución de la efectiva prestación de los servicios, cumplimiento de metas reflejadas en los RIPS cargados y facturas radicadas por parte de los prestadores de la red de atención primaria bajo la modalidad de cápita, según los anexos 11, 13, 14 y 17.";
+  document.getElementById("af-desarrollo").value="Se realiza la evaluación de la ejecución de las actividades contenidas en las rutas de atención en salud correspondientes al período evaluado. En donde se evidencia lo relacionado en la gráfica 1.";
+  document.getElementById("af-parrafo").value="Se verifica la ejecución de las actividades de atención primaria, correspondientes a la vigencia antes mencionada, se aclara que se debe cumplir con mínimo el 100% de las actividades programadas para los servicios Asistenciales, a continuación, se relaciona en la tabla 2. el resultado obtenido:";
+  document.getElementById("af-obs").value="";
+  document.getElementById("acta-detail-num").textContent="Nueva Acta";
+  switchActaView("form");
+  document.getElementById("actas-list-view").style.display="none";
+  document.getElementById("actas-detail-view").style.display="flex";
+}
+
+async function abrirActaDetalle(id){
+  const r=await fetch(`/api/actas/${id}`);
+  const d=await r.json();
+  const a=d.acta;if(!a) return;
+  _acta_actual=a;
+  document.getElementById("af-num").value=a.acta_num||"";
+  document.getElementById("af-fecha").value=a.fecha_eval||"";
+  document.getElementById("af-periodo").value=a.periodo_evaluado||"";
+  document.getElementById("af-vigencia").value=a.vigencia_contrato||"";
+  document.getElementById("af-empresa").value=a.empresa||"";
+  document.getElementById("af-nit").value=a.nit||"";
+  document.getElementById("af-regimen").value=a.regimen||"SUBSIDIADO";
+  document.getElementById("af-municipio").value=a.municipio||"";
+  document.getElementById("af-lugar").value=a.lugar||"VALLEDUPAR";
+  document.getElementById("af-contrato").value=a.num_contrato||"";
+  document.getElementById("af-coordinador").value=a.coordinador||"";
+  document.getElementById("af-puntos").value=a.puntos_a_tratar||"";
+  document.getElementById("af-objetivo").value=a.objetivo||"";
+  document.getElementById("af-desarrollo").value=a.desarrollo_conclusiones||"";
+  document.getElementById("af-parrafo").value=a.parrafo_despues_grafico||"";
+  document.getElementById("af-obs").value=a.observaciones||"";
+  // Funcionarios
+  const fl=document.getElementById("af-funcionarios-list");
+  fl.innerHTML=(a.funcionarios||[]).map(f=>crearChipFuncionario(f)).join("");
+  document.getElementById("acta-detail-num").textContent="Acta Nº "+a.acta_num;
+  switchActaView("form");
+  document.getElementById("actas-list-view").style.display="none";
+  document.getElementById("actas-detail-view").style.display="flex";
+}
+
+function volverListaActas(){
+  document.getElementById("actas-detail-view").style.display="none";
+  document.getElementById("actas-list-view").style.display="block";
+  _acta_actual=null;
+}
+
+function switchActaView(mode){
+  document.getElementById("acta-tab-form").classList.toggle("active",mode==="form");
+  document.getElementById("acta-tab-prev").classList.toggle("active",mode==="preview");
+  document.getElementById("acta-form-pane").style.display=mode==="form"?"block":"none";
+  const prev=document.getElementById("acta-preview-pane");
+  prev.style.display=mode==="preview"?"flex":"none";
+  if(mode==="preview") renderActaPreview();
+}
+
+function leerActaForm(){
+  return {
+    acta_num:document.getElementById("af-num").value,
+    fecha_eval:document.getElementById("af-fecha").value,
+    periodo_evaluado:document.getElementById("af-periodo").value,
+    vigencia_contrato:document.getElementById("af-vigencia").value,
+    empresa:document.getElementById("af-empresa").value,
+    nit:document.getElementById("af-nit").value,
+    regimen:document.getElementById("af-regimen").value,
+    municipio:document.getElementById("af-municipio").value,
+    lugar:document.getElementById("af-lugar").value,
+    num_contrato:document.getElementById("af-contrato").value,
+    coordinador:document.getElementById("af-coordinador").value,
+    funcionarios:[...document.querySelectorAll(".func-chip")].map(c=>c.dataset.nombre),
+    puntos_a_tratar:document.getElementById("af-puntos").value,
+    objetivo:document.getElementById("af-objetivo").value,
+    desarrollo_conclusiones:document.getElementById("af-desarrollo").value,
+    parrafo_despues_grafico:document.getElementById("af-parrafo").value,
+    observaciones:document.getElementById("af-obs").value,
+    ips_id:_acta_actual?.ips_id||S.ips_activa?.id||"",
+  };
+}
+
+async function guardarActaDetalle(){
+  const body=leerActaForm();
+  let r,d;
+  if(_acta_actual){
+    r=await fetch(`/api/actas/${_acta_actual.id}`,{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
+  } else {
+    r=await fetch("/api/actas",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
+    d=await r.json();
+    if(d.ok) _acta_actual=d.acta;
+  }
+  d=await(r.json? r.json():r);
+  if(d?.ok||r.ok){
+    document.getElementById("acta-detail-num").textContent="Acta Nº "+body.acta_num;
+    await cargarActasTab();
+    document.getElementById("nav-badge-actas").textContent=_actas_all.length;
+    alert("✅ Acta guardada correctamente");
+  }
+}
+
+async function eliminarActa(id){
+  if(!confirm("¿Eliminar esta acta? Esta acción no se puede deshacer.")) return;
+  await fetch(`/api/actas/${id}`,{method:"DELETE"});
+  await cargarActasTab();
+}
+
+// ── Funcionarios ─────────────────────────────────────
+function crearChipFuncionario(nombre){
+  return `<span class="func-chip" data-nombre="${nombre}" style="display:inline-flex;align-items:center;gap:5px;background:var(--azul4);border:1.5px solid var(--azul3);border-radius:20px;padding:3px 10px;font-size:11.5px;font-weight:600;color:var(--azul)">
+    ${nombre}
+    <button onclick="this.closest('.func-chip').remove()" style="background:none;border:none;cursor:pointer;font-size:11px;color:var(--gris3);line-height:1">✕</button>
+  </span>`;
+}
+
+function agregarFuncionario(){
+  const sel=document.getElementById("af-func-select");
+  const nombre=sel.value;if(!nombre) return;
+  const fl=document.getElementById("af-funcionarios-list");
+  // No duplicar
+  if([...fl.querySelectorAll(".func-chip")].some(c=>c.dataset.nombre===nombre)) return;
+  fl.insertAdjacentHTML("beforeend",crearChipFuncionario(nombre));
+  sel.value="";
+}
+
+// ── Vista Previa ──────────────────────────────────────
+function renderActaPreview(){
+  const a=leerActaForm();
+  const res=_acta_actual?.resultados||S._resultados||{};
+  // Datos para gráfica
+  const progData=Object.entries(res).map(([pid,r])=>({
+    nombre:r.nombre_acta||pid,
+    pct:r.pct_cumplimiento||0,
+    exigido:r.total_exigido||0,
+    reconocido:r.total_reconocido||0,
+    descuento:r.total_descuento||0,
+  }));
+
+  const today=new Date();
+  const emision="15/06/2022";
+  const vigForm="02/03/2028";
+
+  const barHtml=progData.length?`
+    <div style="margin:8px 0 4px;font-size:8pt;font-weight:700;text-align:center">Servicios Asistenciales</div>
+    <div style="display:flex;align-items:flex-end;gap:3px;height:90px;padding:0 4px;border-bottom:1px solid #333;position:relative">
+      <div style="position:absolute;top:0;left:0;right:0;border-top:1px dashed #999;font-size:6pt;color:#999;text-align:right;padding-right:2px">100%</div>
+      ${progData.map(p=>{
+        const h=Math.min(p.pct*0.80,80);
+        const color=p.pct>=100?"#2563EB":p.pct>=70?"#0EA5E9":"#38BDF8";
+        return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px">
+          <div style="font-size:6pt;font-weight:700">${Math.round(p.pct)}%</div>
+          <div style="width:100%;background:${color};height:${h}px;border-radius:2px 2px 0 0"></div>
+          <div style="font-size:5pt;text-align:center;color:#444;word-break:break-word;max-width:36px">${p.nombre.replace(/ /g,"<br>")}</div>
+        </div>`;}).join("")}
+    </div>`:`<div style="text-align:center;padding:20px;color:#999;font-size:8pt">Sin datos de evaluación</div>`;
+
+  const tablaHtml=progData.length?`
+    <table style="width:100%;border-collapse:collapse;font-size:7.5pt;margin-top:8px">
+      <thead><tr style="background:#1F4E79;color:#fff">
+        <th style="padding:3px 5px;text-align:left">PROGRAMA / SERVICIO</th>
+        <th style="padding:3px 5px;text-align:right">VR EXIGIDO</th>
+        <th style="padding:3px 5px;text-align:right">VR RECONOCIDO</th>
+        <th style="padding:3px 5px;text-align:right">DESCUENTO</th>
+        <th style="padding:3px 5px;text-align:center">% CUMPL.</th>
+      </tr></thead>
+      <tbody>
+        ${progData.map((p,i)=>`<tr style="background:${i%2?"#f5f5f5":"#fff"}">
+          <td style="padding:3px 5px">${p.nombre}</td>
+          <td style="padding:3px 5px;text-align:right">${fmt(p.exigido)}</td>
+          <td style="padding:3px 5px;text-align:right">${fmt(p.reconocido)}</td>
+          <td style="padding:3px 5px;text-align:right">${fmt(p.descuento)}</td>
+          <td style="padding:3px 5px;text-align:center;font-weight:700;color:${p.pct>=100?"#166534":p.pct>=70?"#0369A1":"#9F1239"}">${Math.round(p.pct)}%</td>
+        </tr>`).join("")}
+        <tr style="background:#1F4E79;color:#fff;font-weight:700">
+          <td style="padding:3px 5px">TOTAL</td>
+          <td style="padding:3px 5px;text-align:right">${fmt(progData.reduce((s,p)=>s+p.exigido,0))}</td>
+          <td style="padding:3px 5px;text-align:right">${fmt(progData.reduce((s,p)=>s+p.reconocido,0))}</td>
+          <td style="padding:3px 5px;text-align:right">${fmt(progData.reduce((s,p)=>s+p.descuento,0))}</td>
+          <td style="padding:3px 5px;text-align:center">${progData.length?Math.round(progData.reduce((s,p)=>s+p.pct,0)/progData.length):0}%</td>
+        </tr>
+      </tbody>
+    </table>`:"";
+
+  const funcs=(a.funcionarios||[]).join(", ");
+  const cell=(label,val,extra="")=>`<td style="padding:3px 6px;border:1px solid #333;${extra}"><strong>${label}:</strong> ${val}</td>`;
+
+  document.getElementById("acta-preview-doc").innerHTML=`
+    <!-- Encabezado -->
+    <table style="width:100%;border-collapse:collapse;border:1px solid #333;margin-bottom:0">
+      <tr>
+        <td style="width:90px;padding:4px 8px;border:1px solid #333;text-align:center;vertical-align:middle">
+          <div style="font-size:8pt;font-weight:900;color:#1F4E79;letter-spacing:1px">DUSAKAWI</div>
+          <div style="font-size:6pt;color:#2E75B6">EPSI</div>
+        </td>
+        <td style="padding:4px 8px;border:1px solid #333;text-align:center;vertical-align:middle">
+          <div style="font-size:7.5pt;color:#555">PROCESO: GESTIÓN DEL RIESGO EN SALUD</div>
+          <div style="font-size:11pt;font-weight:800;color:#1F4E79">ACTA DE EVALUACIÓN DE SERVICIOS</div>
+        </td>
+        <td style="width:130px;padding:4px 8px;border:1px solid #333;font-size:7pt;vertical-align:top">
+          <div><strong>CÓDIGO:</strong> DGR-BAJ-FT-11</div>
+          <div><strong>VERSIÓN:</strong> 02</div>
+          <div><strong>EMISIÓN:</strong> ${emision}</div>
+          <div><strong>VIGENCIA:</strong> ${vigForm}</div>
+          <div><strong>PÁGINA</strong> 1 DE 2</div>
+        </td>
+      </tr>
+    </table>
+
+    <!-- Datos del acta -->
+    <table style="width:100%;border-collapse:collapse;border:1px solid #333;border-top:none">
+      <tr>
+        ${cell("ACTA Nº",a.acta_num)}
+        ${cell("FECHA DE EVALUACIÓN",a.fecha_eval)}
+        ${cell("PERIODO EVALUADO",a.periodo_evaluado)}
+      </tr>
+      <tr>
+        ${cell("VIGENCIA DEL CONTRATO",a.vigencia_contrato,"width:40%")}
+        ${cell("EMPRESA",a.empresa,"width:60%")}
+      </tr>
+      <tr>
+        ${cell("NIT",a.nit,"width:25%")}
+        ${cell("REGIMEN",a.regimen,"width:25%")}
+        ${cell("MUNICIPIO",a.municipio,"width:50%")}
+      </tr>
+      <tr>
+        ${cell("LUGAR",a.lugar,"width:50%")}
+        ${cell("Nº CONTRATO",a.num_contrato,"width:50%")}
+      </tr>
+    </table>
+
+    <!-- Campos de texto -->
+    <table style="width:100%;border-collapse:collapse;border:1px solid #333;border-top:none">
+      <tr><td style="padding:4px 6px;border:1px solid #333"><strong>PUNTOS A TRATAR:</strong><br>${a.puntos_a_tratar||''}</td></tr>
+      <tr><td style="padding:4px 6px;border:1px solid #333"><strong>OBJETIVO:</strong><br>${a.objetivo||''}</td></tr>
+      <tr><td style="padding:4px 6px;border:1px solid #333"><strong>DESARROLLO Y CONCLUSIONES:</strong><br>${a.desarrollo_conclusiones||''}</td></tr>
+    </table>
+
+    <!-- Gráfica -->
+    ${barHtml}
+
+    <!-- Párrafo post-gráfica -->
+    ${a.parrafo_despues_grafico?`<p style="font-size:8pt;margin:8px 0">${a.parrafo_despues_grafico}</p>`:''}
+
+    <!-- Tabla 2 -->
+    ${tablaHtml}
+
+    <!-- Coordinador y funcionarios -->
+    <table style="width:100%;border-collapse:collapse;border:1px solid #333;margin-top:8px">
+      <tr>
+        ${cell("COORDINADOR(A) DE BAJA COMPLEJIDAD",a.coordinador,"width:50%")}
+        ${cell("FUNCIONARIO(S) QUE REALIZA(N) LA EVALUACIÓN",funcs,"width:50%")}
+      </tr>
+    </table>
+    ${a.observaciones?`<p style="font-size:8pt;margin-top:6px"><strong>OBSERVACIONES:</strong> ${a.observaciones}</p>`:""}
+  `;
+}
+
+function imprimirActa(){
+  switchActaView("preview");
+  setTimeout(()=>{
+    const doc=document.getElementById("acta-preview-doc");
+    const w=window.open("","_blank","width=900,height=700");
+    w.document.write(`<!DOCTYPE html><html><head><title>Acta</title>
+      <style>body{margin:0;font-family:Arial,sans-serif}@media print{@page{size:A4;margin:10mm}}table{border-collapse:collapse}</style>
+      </head><body>${doc.innerHTML}</body></html>`);
+    w.document.close();w.focus();w.print();
+  },300);
+}
+
+function exportarActaExcel(){
+  alert("Generación de Excel desde acta guardada — disponible en v0.2 con Supabase");
 }
 
 async function limpiarSesion(){
