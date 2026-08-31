@@ -227,9 +227,6 @@ textarea.form-control{resize:vertical;min-height:56px}
   <div class="panel-left">
     <div class="pl-header">
       <span>🏥</span><div class="pl-title">Prestadores</div>
-      {% if current_user.rol in ['admin','evaluador'] %}
-      <button class="btn-add" onclick="abrirModal('modal-ips')">+ Nuevo</button>
-      {% endif %}
     </div>
     <div class="search-wrap"><input class="search-input" id="search-ips" placeholder="Buscar por nombre o NIT..." oninput="filtrarIPS(this.value)"></div>
     <div class="ips-list" id="ips-list"><div class="empty-state">Cargando prestadores...</div></div>
