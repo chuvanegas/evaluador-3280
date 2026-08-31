@@ -1024,7 +1024,8 @@ function renderMetasTabla(){
         </td>
         <td id="upc_m_${p.id}_${aid}" style="padding:4px 8px;text-align:right;font-size:10.5px;color:var(--gris3);white-space:nowrap">$0,00</td>
         <td id="vrm_${p.id}_${aid}" style="padding:4px 8px;text-align:right;font-size:10.5px;font-weight:600;white-space:nowrap">$0,00</td>
-        <td style="padding:2px 4px;text-align:center">
+        <td style="padding:2px 4px;text-align:center;white-space:nowrap">
+          <button onclick="toggleActivoMeta('${p.id}','${aid}',this)" data-activo="1" title="Activo / Inactivo" style="background:none;border:none;cursor:pointer;font-size:11px;padding:2px 4px;border-radius:3px;color:#16a34a;font-weight:600">✔ Act.</button>
           <button onclick="quitarActividadMeta('${p.id}','${aid}')" title="Quitar" style="background:none;border:none;cursor:pointer;font-size:12px;color:var(--gris3);padding:2px">🗑</button>
         </td>
       </tr>`;
@@ -1076,12 +1077,17 @@ function renderMetasTabla(){
 }
 
 function _sumMetasProg(pid){
-  const p=S.config?.programas?.find(pr=>pr.id===pid);
-  if(!p) return 0;
-  return (p.actividades||[]).reduce((s,aid)=>{
+  const tbody=document.getElementById(`tbody-${pid}`);
+  if(!tbody) return 0;
+  let s=0;
+  tbody.querySelectorAll("tr[data-meta-act]").forEach(row=>{
+    const btn=row.querySelector("button[data-activo]");
+    if(btn && btn.getAttribute("data-activo")==="0") return; // inactivo
+    const aid=row.getAttribute("data-meta-act");
     const el=document.getElementById(`mm_${pid}_${aid}`);
-    return s+(el?parseFloat(el.value||0):0);
-  },0);
+    s+=el?parseFloat(el.value||0):0;
+  });
+  return s;
 }
 
 function recalcUPC(pid){
@@ -1144,7 +1150,8 @@ function agregarActividadMeta(pid){
     </td>
     <td id="upc_m_${pid}_${aid}" style="padding:4px 8px;text-align:right;font-size:10.5px;color:var(--gris3);white-space:nowrap">$0,00</td>
     <td id="vrm_${pid}_${aid}" style="padding:4px 8px;text-align:right;font-size:10.5px;font-weight:600;white-space:nowrap">$0,00</td>
-    <td style="padding:2px 4px;text-align:center">
+    <td style="padding:2px 4px;text-align:center;white-space:nowrap">
+      <button onclick="toggleActivoMeta('${pid}','${aid}',this)" data-activo="1" title="Activo / Inactivo" style="background:none;border:none;cursor:pointer;font-size:11px;padding:2px 4px;border-radius:3px;color:#16a34a;font-weight:600">✔ Act.</button>
       <button onclick="quitarActividadMeta('${pid}','${aid}')" title="Quitar" style="background:none;border:none;cursor:pointer;font-size:12px;color:var(--gris3);padding:2px">🗑</button>
     </td>`;
   tbody.appendChild(tr);
@@ -1155,6 +1162,27 @@ function agregarActividadMeta(pid){
     p.actividades.push(aid);
     if(!S.config.actividades_base[aid]) S.config.actividades_base[aid]={descripcion:desc.trim(),archivo:"procedimientos",cups:[],finalidad:[],deduplicar:false,aplica_a:[]};
   }
+}
+
+function toggleActivoMeta(pid,aid,btn){
+  const activo=btn.getAttribute("data-activo")==="1";
+  const tr=btn.closest("tr");
+  if(activo){
+    btn.setAttribute("data-activo","0");
+    btn.textContent="✘ Inact.";
+    btn.style.color="#dc2626";
+    tr.style.opacity="0.45";
+    const inp=document.getElementById(`mm_${pid}_${aid}`);
+    if(inp){ inp.disabled=true; inp.style.opacity="0.4"; }
+  } else {
+    btn.setAttribute("data-activo","1");
+    btn.textContent="✔ Act.";
+    btn.style.color="#16a34a";
+    tr.style.opacity="1";
+    const inp=document.getElementById(`mm_${pid}_${aid}`);
+    if(inp){ inp.disabled=false; inp.style.opacity="1"; }
+  }
+  recalcUPC(pid);
 }
 
 function quitarActividadMeta(pid,aid){
@@ -1177,7 +1205,13 @@ function leerMetasModal(){
     lma[p.id]=parseFloat(lmaEl?.value||0);
     const total=_sumMetasProg(p.id);
     const upc=total>0?lma[p.id]/total:0;
-    for(const aid of p.actividades||[]){
+    const tbody=document.getElementById(`tbody-${p.id}`);
+    const aids=tbody
+      ? [...tbody.querySelectorAll("tr[data-meta-act]")]
+          .filter(r=>{ const b=r.querySelector("button[data-activo]"); return !b||b.getAttribute("data-activo")!=="0"; })
+          .map(r=>r.getAttribute("data-meta-act"))
+      : (p.actividades||[]);
+    for(const aid of aids){
       const mEl=document.getElementById(`mm_${p.id}_${aid}`);
       const meta=parseFloat(mEl?.value||0);
       if(meta>0||upc>0) metas[p.id][aid]={meta,upc};
