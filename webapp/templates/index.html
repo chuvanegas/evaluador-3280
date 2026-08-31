@@ -987,11 +987,28 @@ function toggleMetasManual(){
   if(el.style.display==="block") renderMetasTabla();
 }
 
+function _grupoPrograma(pid){
+  const CV=['PRIMERA_INFANCIA','INFANCIA','ADOLESCENCIA','JOVENES','ADULTEZ','VEJEZ'];
+  if(CV.includes(pid)) return {key:'cv',label:'📋 Cursos de Vida — Res. 3280/2018',color:'#1E40AF'};
+  if(pid.startsWith('RUTA_MATERNA')) return {key:'materna',label:'🤰 Ruta Materno Perinatal',color:'#9D174D'};
+  if(pid.startsWith('DI')||pid==='DI_SALUD_MENTAL') return {key:'di',label:'🔁 Ruta Integral Demanda Inducida',color:'#065F46'};
+  if(pid.startsWith('RCV')) return {key:'rcv',label:'❤️ Ruta Cerebrovascular y Metabólica',color:'#92400E'};
+  return {key:'otros',label:'📌 Otros',color:'#374151'};
+}
+
 function renderMetasTabla(){
   if(!S.config) return;
   const progs=S.config.programas||[];
   const container=document.getElementById("m-metas-tablas");
-  container.innerHTML=progs.map(p=>{
+  // Agrupar por segmento
+  const grupos={};
+  for(const p of progs){
+    const g=_grupoPrograma(p.id);
+    if(!grupos[g.key]) grupos[g.key]={meta:g,progs:[]};
+    grupos[g.key].progs.push(p);
+  }
+  const html=Object.values(grupos).map(({meta:g,progs:gprogs})=>{
+    const body=gprogs.map(p=>{
     const lma=_lma_ips[p.id]||0;
     const acts=(p.actividades||[]).filter(aid=>S.config.actividades_base[aid]);
     const rows=acts.map(aid=>{
@@ -1009,38 +1026,46 @@ function renderMetasTabla(){
         <td id="vrm_${p.id}_${aid}" style="padding:4px 8px;text-align:right;font-size:10.5px;font-weight:600;white-space:nowrap">$0</td>
       </tr>`;
     }).join("");
-    return `<div style="margin-bottom:18px">
-      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px;padding:6px 10px;background:var(--azul);border-radius:8px 8px 0 0">
-        <span style="font-size:11px;font-weight:700;color:#fff;flex:1">${p.nombre||p.id}</span>
-        <label style="font-size:10px;color:rgba(255,255,255,.75)">LMA ($)</label>
+    return `<div style="margin-bottom:14px">
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:5px 10px;background:${g.color};border-radius:8px 8px 0 0">
+        <span style="font-size:10.5px;font-weight:700;color:#fff;flex:1">${p.nombre||p.id}</span>
+        <label style="font-size:9.5px;color:rgba(255,255,255,.7)">LMA ($)</label>
         <input type="number" min="0" step="1" value="${lma}" class="lma-input" data-prog="${p.id}"
           oninput="recalcUPC('${p.id}')"
-          style="width:130px;padding:3px 8px;font-size:11px;border:1px solid rgba(255,255,255,.4);border-radius:6px;background:rgba(255,255,255,.15);color:#fff">
-        <span style="font-size:10px;color:rgba(255,255,255,.85);white-space:nowrap">UPC: <strong id="upc-disp-${p.id}">$0</strong></span>
+          style="width:120px;padding:2px 7px;font-size:10.5px;border:1px solid rgba(255,255,255,.4);border-radius:5px;background:rgba(255,255,255,.15);color:#fff">
+        <span style="font-size:9.5px;color:rgba(255,255,255,.85);white-space:nowrap">UPC: <strong id="upc-disp-${p.id}">$0</strong></span>
       </div>
-      <div style="overflow-x:auto;max-height:280px;overflow-y:auto;border:1px solid var(--gris1);border-top:none;border-radius:0 0 8px 8px">
+      <div style="overflow-x:auto;max-height:260px;overflow-y:auto;border:1px solid var(--gris1);border-top:none;border-radius:0 0 8px 8px">
         <table style="width:100%;border-collapse:collapse;font-size:10.5px">
           <thead style="position:sticky;top:0;background:var(--gris0);z-index:1">
             <tr>
-              <th style="text-align:left;padding:5px 8px;font-weight:600;border-bottom:1px solid var(--gris1)">Descripción</th>
-              <th style="padding:5px 8px;text-align:center;border-bottom:1px solid var(--gris1);white-space:nowrap">Meta</th>
-              <th style="padding:5px 8px;text-align:right;border-bottom:1px solid var(--gris1);white-space:nowrap">UPC ($)</th>
-              <th style="padding:5px 8px;text-align:right;border-bottom:1px solid var(--gris1);white-space:nowrap">Valor Meta ($)</th>
+              <th style="text-align:left;padding:4px 8px;font-weight:600;border-bottom:1px solid var(--gris1)">Descripción</th>
+              <th style="padding:4px 8px;text-align:center;border-bottom:1px solid var(--gris1);white-space:nowrap">Meta</th>
+              <th style="padding:4px 8px;text-align:right;border-bottom:1px solid var(--gris1);white-space:nowrap">UPC ($)</th>
+              <th style="padding:4px 8px;text-align:right;border-bottom:1px solid var(--gris1);white-space:nowrap">Valor Meta ($)</th>
             </tr>
           </thead>
           <tbody>${rows}</tbody>
           <tfoot>
             <tr style="background:var(--gris0);font-weight:700;border-top:2px solid var(--gris2)">
-              <td style="padding:5px 8px;font-size:10.5px">TOTAL</td>
-              <td id="tot-meta-${p.id}" style="padding:5px 8px;text-align:center;font-size:10.5px">0</td>
+              <td style="padding:4px 8px;font-size:10.5px">TOTAL</td>
+              <td id="tot-meta-${p.id}" style="padding:4px 8px;text-align:center;font-size:10.5px">0</td>
               <td></td>
-              <td id="tot-vr-${p.id}" style="padding:5px 8px;text-align:right;font-size:10.5px">$0</td>
+              <td id="tot-vr-${p.id}" style="padding:4px 8px;text-align:right;font-size:10.5px">$0</td>
             </tr>
           </tfoot>
         </table>
       </div>
     </div>`;
+    }).join("");
+    return `<div style="margin-bottom:22px">
+      <div style="padding:8px 14px;background:${g.color}22;border-left:4px solid ${g.color};border-radius:4px;margin-bottom:10px">
+        <span style="font-size:12px;font-weight:700;color:${g.color}">${g.label}</span>
+      </div>
+      <div style="padding-left:4px">${body}</div>
+    </div>`;
   }).join("");
+  container.innerHTML=html;
   progs.forEach(p=>recalcUPC(p.id));
 }
 
