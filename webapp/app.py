@@ -180,10 +180,15 @@ def create_ips():
         "id": str(uuid.uuid4())[:8],
         "nombre": body.get("nombre","").upper(),
         "nit": body.get("nit",""),
-        "num_contrato": body.get("num_contrato",""),
-        "regimen": body.get("regimen","SUBSIDIADO"),
+        "departamento": body.get("departamento",""),
         "municipio": body.get("municipio",""),
+        "num_contrato": body.get("num_contrato",""),
+        "vigencia_inicio": body.get("vigencia_inicio",""),
+        "vigencia_fin": body.get("vigencia_fin",""),
         "rep_legal": body.get("rep_legal",""),
+        "regimen": body.get("regimen","SUBSIDIADO"),
+        "tipo_contrato": body.get("tipo_contrato","ASISTENCIAL"),
+        "metas": body.get("metas", {}),
         "num_actas": 0,
         "creado_por": user.username,
         "creado_en": datetime.datetime.now().isoformat()
@@ -202,11 +207,44 @@ def update_ips(ips_id):
     ips_list = _load_ips()
     for ips in ips_list:
         if ips["id"] == ips_id:
-            for k in ["nombre","nit","num_contrato","regimen","municipio","rep_legal"]:
+            for k in ["nombre","nit","departamento","municipio","num_contrato","vigencia_inicio","vigencia_fin","rep_legal","regimen","tipo_contrato","metas"]:
                 if k in body: ips[k] = body[k]
             _save_ips(ips_list)
             return jsonify({"ok": True})
     return jsonify({"error": "No encontrado"}), 404
+
+@app.route("/api/ips/<ips_id>/metas", methods=["POST"])
+@login_required
+def set_metas_ips(ips_id):
+    """Guarda metas asociadas a una IPS (manual o desde archivo nota técnica)."""
+    user = _get_current_user()
+    if user.rol not in ["admin", "evaluador"]:
+        return jsonify({"error": "Sin permisos"}), 403
+    ips_list = _load_ips()
+    target = next((ip for ip in ips_list if ip["id"] == ips_id), None)
+    if not target:
+        return jsonify({"error": "IPS no encontrada"}), 404
+
+    # Carga desde archivo (nota técnica)
+    if request.files.get("archivo"):
+        f = request.files["archivo"]
+        fname = f.filename.lower()
+        tmp = UPLOAD_DIR / f"nt_{ips_id}_{f.filename}"
+        f.save(str(tmp))
+        if fname.endswith(".xlsx") or fname.endswith(".xls"):
+            metas = RIPSEvaluator.parsear_nota_tecnica(str(tmp))
+        else:
+            return jsonify({"error": "Formato no soportado para nota técnica"}), 400
+        target["metas"] = metas
+        _save_ips(ips_list)
+        resumen = {prog: sum(acts.values()) for prog, acts in metas.items()}
+        return jsonify({"ok": True, "metas": resumen})
+
+    # Carga manual (JSON)
+    body = request.get_json() or {}
+    target["metas"] = body.get("metas", {})
+    _save_ips(ips_list)
+    return jsonify({"ok": True})
 
 # ══════════════════════════════════════════════════════════════════════════
 # RUTAS USUARIOS

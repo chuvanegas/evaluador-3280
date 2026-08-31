@@ -436,7 +436,7 @@ textarea.form-control{resize:vertical;min-height:56px}
       <div class="pl-header">
         <span>🏥</span><div class="pl-title">Prestadores de Servicio</div>
         {% if current_user.rol in ['admin','evaluador'] %}
-        <button class="btn-add" onclick="abrirModal('modal-ips')">+ Nuevo</button>
+        <button class="btn-add" onclick="abrirNuevoIPS()">+ Nuevo</button>
         {% endif %}
       </div>
       <div class="search-wrap"><input class="search-input" id="search-mant" placeholder="Buscar por nombre, NIT o contrato..." oninput="filtrarMant(this.value)"></div>
@@ -562,20 +562,85 @@ textarea.form-control{resize:vertical;min-height:56px}
 {% endif %}
 
 <!-- MODAL IPS -->
-<div id="modal-ips" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.38);z-index:500;align-items:center;justify-content:center">
-  <div style="background:#fff;border-radius:14px;padding:26px;width:440px;max-width:96vw;box-shadow:0 16px 48px rgba(0,0,0,.18)">
-    <div style="font-size:15px;font-weight:700;color:var(--azul);margin-bottom:18px">🏥 Nuevo Prestador</div>
-    <div class="form-grid-2">
-      <div class="form-group"><label class="form-label">Nombre IPS</label><input id="m-nombre" class="form-control"></div>
-      <div class="form-group"><label class="form-label">NIT</label><input id="m-nit" class="form-control"></div>
-      <div class="form-group"><label class="form-label">Nº Contrato</label><input id="m-contrato" class="form-control"></div>
-      <div class="form-group"><label class="form-label">Régimen</label><select id="m-regimen" class="form-control"><option>SUBSIDIADO</option><option>CONTRIBUTIVO</option></select></div>
-      <div class="form-group"><label class="form-label">Municipio</label><input id="m-municipio" class="form-control"></div>
-      <div class="form-group"><label class="form-label">Rep. Legal</label><input id="m-rep" class="form-control"></div>
+<div id="modal-ips" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:500;align-items:flex-start;justify-content:center;overflow-y:auto;padding:24px 12px">
+  <div style="background:#fff;border-radius:16px;width:600px;max-width:98vw;box-shadow:0 20px 60px rgba(0,0,0,.22);margin:auto">
+    <!-- Header -->
+    <div style="padding:22px 26px 16px;border-bottom:1px solid var(--gris1);display:flex;align-items:center;gap:10px">
+      <span style="font-size:22px">🏢</span>
+      <div style="flex:1">
+        <div style="font-size:16px;font-weight:800;color:var(--azul)" id="m-modal-title">Nuevo Prestador</div>
+      </div>
+      <button onclick="cerrarModal('modal-ips')" style="background:none;border:none;font-size:18px;cursor:pointer;color:var(--gris3);line-height:1">✕</button>
     </div>
-    <div class="btn-row" style="margin-top:18px">
-      <button class="btn btn-primary" onclick="guardarIPS()">💾 Guardar</button>
+    <!-- Body -->
+    <div style="padding:22px 26px">
+      <!-- Nombre -->
+      <div class="form-group" style="margin-bottom:14px">
+        <label class="form-label">Nombre del Prestador</label>
+        <input id="m-nombre" class="form-control" placeholder="Hospital San José...">
+      </div>
+      <!-- NIT | Departamento -->
+      <div class="form-grid-2" style="margin-bottom:14px">
+        <div class="form-group"><label class="form-label">NIT</label><input id="m-nit" class="form-control" placeholder="900123456-1"></div>
+        <div class="form-group"><label class="form-label">Departamento</label><input id="m-depto" class="form-control" placeholder="Cesar"></div>
+      </div>
+      <!-- Municipio | Nº Contrato -->
+      <div class="form-grid-2" style="margin-bottom:14px">
+        <div class="form-group"><label class="form-label">Municipio</label><input id="m-municipio" class="form-control" placeholder="Valledupar"></div>
+        <div class="form-group"><label class="form-label">Nº de Contrato</label><input id="m-contrato" class="form-control" placeholder="20570-093-AS"></div>
+      </div>
+      <!-- Vigencia -->
+      <div class="form-group" style="margin-bottom:14px">
+        <label class="form-label">Vigencia del Contrato</label>
+        <div style="display:flex;gap:8px;align-items:center">
+          <input id="m-vig-ini" type="date" class="form-control" style="flex:1">
+          <span style="color:var(--gris3);font-size:12px">—</span>
+          <input id="m-vig-fin" type="date" class="form-control" style="flex:1">
+        </div>
+      </div>
+      <!-- Rep Legal -->
+      <div class="form-group" style="margin-bottom:14px">
+        <label class="form-label">Representante Legal IPS</label>
+        <input id="m-rep" class="form-control" placeholder="Nombre completo">
+      </div>
+      <!-- Régimen | Tipo contrato -->
+      <div class="form-grid-2" style="margin-bottom:20px">
+        <div class="form-group">
+          <label class="form-label">Régimen</label>
+          <select id="m-regimen" class="form-control"><option value="SUBSIDIADO">SUBSIDIADO</option><option value="CONTRIBUTIVO">CONTRIBUTIVO</option></select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Tipo de Contrato</label>
+          <select id="m-tipo-contrato" class="form-control"><option value="ASISTENCIAL">ASISTENCIAL</option><option value="CAPITA">CAPITA</option><option value="EVENTO">EVENTO</option></select>
+        </div>
+      </div>
+
+      <!-- Metas Mensuales -->
+      <div style="border-top:1px solid var(--gris1);padding-top:16px;margin-bottom:4px">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+          <span style="font-size:14px">📈</span>
+          <div style="font-size:13px;font-weight:700;color:var(--azul)">Metas Mensuales — Servicios Asistenciales</div>
+          <div style="margin-left:auto;display:flex;gap:6px">
+            <button class="btn btn-outline" style="font-size:11px;padding:4px 10px" onclick="toggleMetasManual()">✏️ Manual</button>
+            <label class="btn btn-outline" style="font-size:11px;padding:4px 10px;cursor:pointer;margin:0">
+              📎 Desde archivo
+              <input type="file" id="m-metas-file" accept=".xlsx,.xls,.txt,.pdf" style="display:none" onchange="cargarMetasArchivo(this)">
+            </label>
+          </div>
+        </div>
+        <!-- Resumen de metas cargadas -->
+        <div id="m-metas-resumen" style="display:none;background:var(--verde3);border:1px solid var(--verde2);border-radius:8px;padding:10px 14px;font-size:11.5px;margin-bottom:10px"></div>
+        <!-- Grid manual de metas -->
+        <div id="m-metas-manual" style="display:none">
+          <div style="font-size:11px;color:var(--gris3);margin-bottom:8px">Ingresa la meta mensual por programa (número de atenciones esperadas)</div>
+          <div id="m-metas-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:8px"></div>
+        </div>
+      </div>
+    </div>
+    <!-- Footer -->
+    <div style="padding:14px 26px 20px;border-top:1px solid var(--gris1);display:flex;justify-content:flex-end;gap:10px">
       <button class="btn btn-outline" onclick="cerrarModal('modal-ips')">Cancelar</button>
+      <button class="btn btn-primary" style="padding:8px 22px" onclick="guardarIPS()">💾 Guardar Prestador</button>
     </div>
   </div>
 </div>
@@ -753,10 +818,91 @@ function goEvaluar(){
 function abrirModal(id){document.getElementById(id).style.display="flex";}
 function cerrarModal(id){document.getElementById(id).style.display="none";}
 
+let _metas_ips={};  // metas temporales en el modal
+let _ips_edit_id=null;
+
 async function guardarIPS(){
-  const body={nombre:v("m-nombre"),nit:v("m-nit"),num_contrato:v("m-contrato"),regimen:v("m-regimen"),municipio:v("m-municipio"),rep_legal:v("m-rep")};
-  await fetch("/api/ips",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
+  if(!v("m-nombre").trim()){alert("El nombre del prestador es requerido");return;}
+  const body={
+    nombre:v("m-nombre"),nit:v("m-nit"),departamento:v("m-depto"),
+    municipio:v("m-municipio"),num_contrato:v("m-contrato"),
+    vigencia_inicio:v("m-vig-ini"),vigencia_fin:v("m-vig-fin"),
+    rep_legal:v("m-rep"),regimen:v("m-regimen"),
+    tipo_contrato:v("m-tipo-contrato"),metas:_metas_ips
+  };
+  // Recoger metas manuales si están visibles
+  if(document.getElementById("m-metas-manual").style.display!=="none"){
+    document.querySelectorAll(".meta-prog-input").forEach(inp=>{
+      const prog=inp.dataset.prog;
+      const val=parseInt(inp.value)||0;
+      if(val>0) _metas_ips[prog]=val;
+    });
+    body.metas=_metas_ips;
+  }
+  const url=_ips_edit_id?`/api/ips/${_ips_edit_id}`:`/api/ips`;
+  const method=_ips_edit_id?"PUT":"POST";
+  await fetch(url,{method,headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
+  _metas_ips={};_ips_edit_id=null;
   cerrarModal("modal-ips");await cargarIPS();
+}
+
+function abrirNuevoIPS(){
+  _ips_edit_id=null;_metas_ips={};
+  document.getElementById("m-modal-title").textContent="Nuevo Prestador";
+  ["m-nombre","m-nit","m-depto","m-municipio","m-contrato","m-vig-ini","m-vig-fin","m-rep"].forEach(id=>{
+    const el=document.getElementById(id);if(el) el.value="";
+  });
+  document.getElementById("m-regimen").value="SUBSIDIADO";
+  document.getElementById("m-tipo-contrato").value="ASISTENCIAL";
+  document.getElementById("m-metas-resumen").style.display="none";
+  document.getElementById("m-metas-manual").style.display="none";
+  renderMetasGrid();
+  abrirModal("modal-ips");
+}
+
+function toggleMetasManual(){
+  const el=document.getElementById("m-metas-manual");
+  el.style.display=el.style.display==="none"?"block":"none";
+  if(el.style.display==="block") renderMetasGrid();
+}
+
+function renderMetasGrid(){
+  const progs=S.config?.programas||[];
+  document.getElementById("m-metas-grid").innerHTML=progs.map(p=>`
+    <div style="background:var(--gris0);border-radius:8px;padding:9px 12px">
+      <div style="font-size:10.5px;font-weight:600;color:var(--azul);margin-bottom:5px">${p.nombre||p.id}</div>
+      <input type="number" min="0" value="${_metas_ips[p.id]||""}" class="form-control meta-prog-input" data-prog="${p.id}" placeholder="0" style="padding:5px 8px;font-size:12px">
+    </div>`).join("");
+}
+
+async function cargarMetasArchivo(input){
+  const f=input.files[0];if(!f) return;
+  // Si hay IPS ya guardada, sube al servidor
+  if(_ips_edit_id){
+    const fd=new FormData();fd.append("archivo",f);
+    const r=await fetch(`/api/ips/${_ips_edit_id}/metas`,{method:"POST",body:fd});
+    const d=await r.json();
+    if(d.ok){
+      _metas_ips=d.metas||{};
+      mostrarResumenMetas(_metas_ips);
+      alert("✅ Metas cargadas desde archivo");
+    } else alert("Error: "+(d.error||"formato no soportado"));
+  } else {
+    // Sin IPS guardada: solo mostrar nombre del archivo, guardar al crear
+    document.getElementById("m-metas-resumen").innerHTML=`📎 Archivo seleccionado: <strong>${f.name}</strong> — se procesará al guardar el prestador`;
+    document.getElementById("m-metas-resumen").style.display="block";
+    // Guardamos referencia al archivo para procesarlo después
+    _metas_archivo_pendiente=f;
+  }
+  input.value="";
+}
+
+let _metas_archivo_pendiente=null;
+
+function mostrarResumenMetas(metas){
+  const html=Object.entries(metas).map(([p,v])=>`<span style="margin-right:12px"><strong>${p}:</strong> ${v}</span>`).join("");
+  document.getElementById("m-metas-resumen").innerHTML="✅ Metas cargadas: "+html;
+  document.getElementById("m-metas-resumen").style.display="block";
 }
 
 async function guardarUsuario(){
@@ -1077,12 +1223,23 @@ function iniciarEvalIPSMant(id){
 
 function llenarModalIPS(id){
   const ip=_ips_list.find(i=>i.id==id);if(!ip) return;
+  _ips_edit_id=id;
+  _metas_ips=ip.metas||{};
+  document.getElementById("m-modal-title").textContent="Editar Prestador";
   document.getElementById("m-nombre").value=ip.nombre||"";
   document.getElementById("m-nit").value=ip.nit||"";
-  document.getElementById("m-contrato").value=ip.num_contrato||"";
-  document.getElementById("m-regimen").value=ip.regimen||"SUBSIDIADO";
+  document.getElementById("m-depto").value=ip.departamento||"";
   document.getElementById("m-municipio").value=ip.municipio||"";
+  document.getElementById("m-contrato").value=ip.num_contrato||"";
+  document.getElementById("m-vig-ini").value=ip.vigencia_inicio||"";
+  document.getElementById("m-vig-fin").value=ip.vigencia_fin||"";
   document.getElementById("m-rep").value=ip.rep_legal||"";
+  document.getElementById("m-regimen").value=ip.regimen||"SUBSIDIADO";
+  document.getElementById("m-tipo-contrato").value=ip.tipo_contrato||"ASISTENCIAL";
+  document.getElementById("m-metas-manual").style.display="none";
+  if(Object.keys(_metas_ips).length) mostrarResumenMetas(_metas_ips);
+  else document.getElementById("m-metas-resumen").style.display="none";
+  renderMetasGrid();
 }
 
 const TIPO_LABELS={"consultas":"🩺 Consulta","procedimientos":"⚕️ Proced.","medicamentos":"💊 Medic.","otrosServicios":"🔬 Otros"};
