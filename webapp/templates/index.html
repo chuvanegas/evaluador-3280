@@ -496,9 +496,9 @@ textarea.form-control{resize:vertical;min-height:56px}
           </div>
           {% endif %}
         </div>
-        <div style="padding:0;overflow-x:auto">
+        <div style="overflow:auto;max-height:320px">
           <table class="users-table" id="cv-table">
-            <thead><tr><th>Curso de Vida</th><th style="width:90px">Edad mín.</th><th style="width:90px">Edad máx.</th><th style="width:36px"></th></tr></thead>
+            <thead style="position:sticky;top:0;z-index:1"><tr><th>Curso de Vida</th><th style="width:90px">Edad mín.</th><th style="width:90px">Edad máx.</th><th style="width:36px"></th></tr></thead>
             <tbody id="cv-tbody"><tr><td colspan="4" style="text-align:center;padding:14px;color:var(--gris3)">Cargando...</td></tr></tbody>
           </table>
         </div>
@@ -514,9 +514,9 @@ textarea.form-control{resize:vertical;min-height:56px}
           </div>
           {% endif %}
         </div>
-        <div style="padding:0;overflow-x:auto">
+        <div style="overflow:auto;max-height:320px">
           <table class="users-table" id="fin-table">
-            <thead><tr><th style="width:80px">Código</th><th>Descripción</th><th style="width:36px"></th></tr></thead>
+            <thead style="position:sticky;top:0;z-index:1"><tr><th style="width:80px">Código</th><th>Descripción</th><th style="width:36px"></th></tr></thead>
             <tbody id="fin-tbody"><tr><td colspan="3" style="text-align:center;padding:14px;color:var(--gris3)">Cargando...</td></tr></tbody>
           </table>
         </div>
