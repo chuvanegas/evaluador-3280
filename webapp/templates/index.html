@@ -729,7 +729,7 @@ textarea.form-control{resize:vertical;min-height:56px}
         </div>
         <div class="form-group">
           <label class="form-label">Tipo de Contrato</label>
-          <select id="m-tipo-contrato" class="form-control"><option value="ASISTENCIAL">ASISTENCIAL</option><option value="CAPITA">CAPITA</option><option value="EVENTO">EVENTO</option></select>
+          <select id="m-tipo-contrato" class="form-control"><option value="CAPITA">CAPITA</option><option value="EVENTO">EVENTO</option><option value="CONTRATADO">CONTRATADO</option><option value="NO CONTRATADO">NO CONTRATADO</option></select>
         </div>
       </div>
 
@@ -975,7 +975,7 @@ function abrirNuevoIPS(){
     const el=document.getElementById(id);if(el) el.value="";
   });
   document.getElementById("m-regimen").value="SUBSIDIADO";
-  document.getElementById("m-tipo-contrato").value="ASISTENCIAL";
+  document.getElementById("m-tipo-contrato").value="CAPITA";
   document.getElementById("m-metas-resumen").style.display="none";
   document.getElementById("m-metas-manual").style.display="none";
   abrirModal("modal-ips");
