@@ -1,5 +1,5 @@
 {
-  "version": "1.1",
+  "version": "1.2",
   "resolucion": "3280/2018",
 
   "field_mappings": {
@@ -61,412 +61,776 @@
 
     "consulta_medicina_general": {
       "descripcion": "Atención en salud por medicina general o especialista en pediatría o medicina familiar",
-      "archivo": "consultas",
-      "cups": ["890201","890283","890263","890301"],
-      "finalidad": ["11"],
-      "deduplicar": true,
-      "aplica_a": ["PRIMERA_INFANCIA","INFANCIA","ADOLESCENCIA","JOVENES","ADULTEZ","VEJEZ"]
+      "archivo": "consultas", "cups": ["890201","890283","890263","890301"], "finalidad": ["11"],
+      "deduplicar": true, "aplica_a": ["PRIMERA_INFANCIA","INFANCIA","ADOLESCENCIA","JOVENES","ADULTEZ","VEJEZ"]
     },
-
     "consulta_enfermeria": {
       "descripcion": "Atención en salud por profesional de enfermería",
-      "archivo": "consultas",
-      "cups": ["890205","890305"],
-      "finalidad": ["11"],
-      "deduplicar": true,
-      "aplica_a": ["PRIMERA_INFANCIA","INFANCIA","ADOLESCENCIA","VEJEZ"]
+      "archivo": "consultas", "cups": ["890205","890305"], "finalidad": ["11"],
+      "deduplicar": true, "aplica_a": ["PRIMERA_INFANCIA","INFANCIA","ADOLESCENCIA","VEJEZ"]
     },
-
     "consulta_odontologia": {
       "descripcion": "Atención en salud bucal por profesional de odontología o higienista oral",
-      "archivo": "consultas",
-      "cups": ["890203","890303"],
-      "finalidad": ["11"],
-      "deduplicar": true,
-      "aplica_a": ["PRIMERA_INFANCIA","INFANCIA","ADOLESCENCIA","JOVENES","ADULTEZ","VEJEZ"]
+      "archivo": "consultas", "cups": ["890203","890303"], "finalidad": ["11"],
+      "deduplicar": true, "aplica_a": ["PRIMERA_INFANCIA","INFANCIA","ADOLESCENCIA","JOVENES","ADULTEZ","VEJEZ"]
     },
-
     "consulta_lactancia": {
       "descripcion": "Atención por profesional de enfermería, medicina general o nutrición para la promoción y apoyo de la lactancia materna",
-      "archivo": "procedimientos",
-      "cups": ["I10605","H10605"],
-      "finalidad": [],
-      "deduplicar": true,
-      "aplica_a": ["PRIMERA_INFANCIA"]
+      "archivo": "procedimientos", "cups": ["I10605","H10605"], "finalidad": [],
+      "deduplicar": true, "aplica_a": ["PRIMERA_INFANCIA"]
     },
-
     "proc_tamizaje_hemoglobina": {
       "descripcion": "Tamizaje para hemoglobina",
-      "archivo": "procedimientos",
-      "cups": ["902213","903824"],
-      "finalidad": [],
-      "deduplicar": true,
-      "aplica_a": ["PRIMERA_INFANCIA"]
+      "archivo": "procedimientos", "cups": ["902213","903824"], "finalidad": [],
+      "deduplicar": true, "aplica_a": ["PRIMERA_INFANCIA"]
     },
-
     "proc_hemoglobina": {
       "descripcion": "Hemoglobina",
-      "archivo": "procedimientos",
-      "cups": ["903882","902213"],
-      "finalidad": [],
-      "deduplicar": true,
-      "aplica_a": ["INFANCIA","ADOLESCENCIA"]
+      "archivo": "procedimientos", "cups": ["903882","902213"], "finalidad": [],
+      "deduplicar": true, "aplica_a": ["INFANCIA","ADOLESCENCIA"]
     },
-
     "proc_hematocrito": {
       "descripcion": "Hematocrito",
-      "archivo": "procedimientos",
-      "cups": ["903883","902214"],
-      "finalidad": [],
-      "deduplicar": true,
-      "aplica_a": ["INFANCIA","ADOLESCENCIA"]
+      "archivo": "procedimientos", "cups": ["903883","902214"], "finalidad": [],
+      "deduplicar": true, "aplica_a": ["INFANCIA","ADOLESCENCIA"]
     },
-
     "proc_barniz_fluor": {
       "descripcion": "Aplicación de barniz de flúor",
-      "archivo": "procedimientos",
-      "cups": ["997106"],
-      "finalidad": ["14"],
-      "deduplicar": true,
-      "aplica_a": ["PRIMERA_INFANCIA","INFANCIA","ADOLESCENCIA"]
+      "archivo": "procedimientos", "cups": ["997106"], "finalidad": ["14"],
+      "deduplicar": true, "aplica_a": ["PRIMERA_INFANCIA","INFANCIA","ADOLESCENCIA"]
     },
-
     "proc_profilaxis": {
       "descripcion": "Profilaxis y remoción de placa bacteriana (por persona)",
-      "archivo": "procedimientos",
-      "cups": ["997001","997002"],
-      "finalidad": ["14"],
-      "deduplicar": true,
-      "aplica_a": ["PRIMERA_INFANCIA","INFANCIA","ADOLESCENCIA","JOVENES","ADULTEZ","VEJEZ"]
+      "archivo": "procedimientos", "cups": ["997001","997002"], "finalidad": ["14"],
+      "deduplicar": true, "aplica_a": ["PRIMERA_INFANCIA","INFANCIA","ADOLESCENCIA","JOVENES","ADULTEZ","VEJEZ"]
     },
-
     "proc_detartraje": {
       "descripcion": "Detartraje supragingival (por persona)",
-      "archivo": "procedimientos",
-      "cups": ["997003"],
-      "finalidad": ["14"],
-      "deduplicar": true,
-      "aplica_a": ["ADOLESCENCIA","JOVENES","ADULTEZ","VEJEZ"]
+      "archivo": "procedimientos", "cups": ["997003"], "finalidad": ["14"],
+      "deduplicar": true, "aplica_a": ["ADOLESCENCIA","JOVENES","ADULTEZ","VEJEZ"]
     },
-
     "proc_sellantes": {
       "descripcion": "Aplicación de sellantes (por persona)",
-      "archivo": "procedimientos",
-      "cups": ["997107"],
-      "finalidad": ["14"],
-      "deduplicar": true,
-      "aplica_a": ["PRIMERA_INFANCIA","INFANCIA","ADOLESCENCIA"]
+      "archivo": "procedimientos", "cups": ["997107"], "finalidad": ["14"],
+      "deduplicar": true, "aplica_a": ["PRIMERA_INFANCIA","INFANCIA","ADOLESCENCIA"]
     },
-
     "proc_fortificacion_micronutrientes": {
       "descripcion": "Fortificación casera con micronutrientes en polvo",
-      "archivo": "otrosServicios",
-      "cups": ["PYM01RIA"],
-      "finalidad": [],
-      "deduplicar": true,
-      "aplica_a": ["PRIMERA_INFANCIA"]
+      "archivo": "otrosServicios", "cups": ["PYM01RIA"], "finalidad": [],
+      "deduplicar": true, "aplica_a": ["PRIMERA_INFANCIA"]
     },
-
     "med_vitamina_a": {
       "descripcion": "Suplementación con micronutrientes (vitamina A)",
-      "archivo": "medicamentos",
-      "cups": [],
-      "busqueda_nombre": ["VITAMINA A","RETINOL"],
-      "finalidad": [],
-      "deduplicar": true,
-      "aplica_a": ["PRIMERA_INFANCIA"]
+      "archivo": "medicamentos", "cups": [], "busqueda_nombre": ["VITAMINA A","RETINOL"], "finalidad": [],
+      "deduplicar": true, "aplica_a": ["PRIMERA_INFANCIA"]
     },
-
     "med_hierro": {
       "descripcion": "Suplementación con hierro",
-      "archivo": "medicamentos",
-      "cups": [],
-      "busqueda_nombre": ["FERROSO","HIERRO"],
-      "finalidad": [],
-      "deduplicar": true,
-      "aplica_a": ["PRIMERA_INFANCIA"]
+      "archivo": "medicamentos", "cups": [], "busqueda_nombre": ["FERROSO","HIERRO"], "finalidad": [],
+      "deduplicar": true, "aplica_a": ["PRIMERA_INFANCIA"]
     },
-
     "med_desparasitacion": {
       "descripcion": "Desparasitación Antihelmíntica con Albendazol dosis única 400mg vía oral",
-      "archivo": "medicamentos",
-      "cups": [],
-      "busqueda_nombre": ["ALBENDAZOL","PIRANTEL","PAMOATO","OXANTEL"],
-      "finalidad": [],
-      "deduplicar": true,
-      "aplica_a": ["PRIMERA_INFANCIA"]
+      "archivo": "medicamentos", "cups": [], "busqueda_nombre": ["ALBENDAZOL","PIRANTEL","PAMOATO","OXANTEL"], "finalidad": [],
+      "deduplicar": true, "aplica_a": ["PRIMERA_INFANCIA"]
     },
-
     "edu_individual": {
       "descripcion": "Educación individual",
-      "archivo": "procedimientos",
-      "cups": ["990201","990202","990203","990204","990205","990206"],
-      "finalidad": [],
-      "deduplicar": false,
-      "aplica_a": ["PRIMERA_INFANCIA","INFANCIA","ADOLESCENCIA","JOVENES","ADULTEZ","VEJEZ"]
+      "archivo": "procedimientos", "cups": ["990201","990202","990203","990204","990205","990206"], "finalidad": [],
+      "deduplicar": false, "aplica_a": ["PRIMERA_INFANCIA","INFANCIA","ADOLESCENCIA","JOVENES","ADULTEZ","VEJEZ"]
     },
-
     "edu_familia": {
       "descripcion": "Educación dirigida a la familia",
-      "archivo": "procedimientos",
-      "cups": ["990201","990202","990203","990204","990205","990206"],
-      "finalidad": [],
-      "deduplicar": false,
-      "aplica_a": ["PRIMERA_INFANCIA","INFANCIA","ADOLESCENCIA","JOVENES","ADULTEZ","VEJEZ"]
+      "archivo": "procedimientos", "cups": ["990201","990202","990203","990204","990205","990206"], "finalidad": [],
+      "deduplicar": false, "aplica_a": ["PRIMERA_INFANCIA","INFANCIA","ADOLESCENCIA","JOVENES","ADULTEZ","VEJEZ"]
     },
-
     "edu_grupal": {
       "descripcion": "Educación grupal",
-      "archivo": "procedimientos",
-      "cups": ["990101","990102","990103","990104","990105","990106"],
-      "finalidad": [],
-      "deduplicar": false,
-      "aplica_a": ["PRIMERA_INFANCIA","INFANCIA","ADOLESCENCIA","JOVENES","ADULTEZ","VEJEZ"]
+      "archivo": "procedimientos", "cups": ["990101","990102","990103","990104","990105","990106"], "finalidad": [],
+      "deduplicar": false, "aplica_a": ["PRIMERA_INFANCIA","INFANCIA","ADOLESCENCIA","JOVENES","ADULTEZ","VEJEZ"]
     },
-
     "proc_prueba_treponema": {
       "descripcion": "Prueba rápida treponémica",
-      "archivo": "procedimientos",
-      "cups": ["903885","906212"],
-      "finalidad": [],
-      "deduplicar": true,
-      "aplica_a": ["ADOLESCENCIA","JOVENES","ADULTEZ","VEJEZ"]
+      "archivo": "procedimientos", "cups": ["903885","906212"], "finalidad": [],
+      "deduplicar": true, "aplica_a": ["ADOLESCENCIA","JOVENES","ADULTEZ","VEJEZ"]
     },
-
     "proc_prueba_vih": {
       "descripcion": "Prueba rápida para VIH (incluye confirmatoria)",
-      "archivo": "procedimientos",
-      "cups": ["903886","906211","906213"],
-      "finalidad": [],
-      "deduplicar": true,
-      "aplica_a": ["ADOLESCENCIA","JOVENES","ADULTEZ","VEJEZ"]
+      "archivo": "procedimientos", "cups": ["903886","906211","906213"], "finalidad": [],
+      "deduplicar": true, "aplica_a": ["ADOLESCENCIA","JOVENES","ADULTEZ","VEJEZ"]
     },
-
     "proc_asesoria_pre_vih": {
       "descripcion": "Asesoría pre test VIH",
-      "archivo": "procedimientos",
-      "cups": ["903887","890271"],
-      "finalidad": [],
-      "deduplicar": true,
-      "aplica_a": ["ADOLESCENCIA","JOVENES","ADULTEZ","VEJEZ"]
+      "archivo": "procedimientos", "cups": ["903887","890271"], "finalidad": [],
+      "deduplicar": true, "aplica_a": ["ADOLESCENCIA","JOVENES","ADULTEZ","VEJEZ"]
     },
-
     "proc_asesoria_pos_vih": {
       "descripcion": "Asesoría pos test VIH",
-      "archivo": "procedimientos",
-      "cups": ["903888","890272"],
-      "finalidad": [],
-      "deduplicar": true,
-      "aplica_a": ["ADOLESCENCIA","JOVENES","ADULTEZ","VEJEZ"]
+      "archivo": "procedimientos", "cups": ["903888","890272"], "finalidad": [],
+      "deduplicar": true, "aplica_a": ["ADOLESCENCIA","JOVENES","ADULTEZ","VEJEZ"]
     },
-
     "proc_prueba_embarazo": {
       "descripcion": "Prueba de embarazo",
-      "archivo": "procedimientos",
-      "cups": ["903889","906201"],
-      "finalidad": [],
-      "deduplicar": true,
-      "aplica_a": ["ADOLESCENCIA","JOVENES","ADULTEZ"]
+      "archivo": "procedimientos", "cups": ["903889","906201"], "finalidad": [],
+      "deduplicar": true, "aplica_a": ["ADOLESCENCIA","JOVENES","ADULTEZ"]
     },
-
     "consulta_anticoncepcion": {
       "descripcion": "Atención en salud por medicina general, medicina familiar o enfermería para la asesoría en anticoncepción",
-      "archivo": "consultas",
-      "cups": ["890203","890273"],
-      "finalidad": ["11"],
-      "deduplicar": true,
-      "aplica_a": ["ADOLESCENCIA","JOVENES","ADULTEZ","VEJEZ"]
+      "archivo": "consultas", "cups": ["890203","890273"], "finalidad": ["11"],
+      "deduplicar": true, "aplica_a": ["ADOLESCENCIA","JOVENES","ADULTEZ","VEJEZ"]
     },
-
     "consulta_anticoncepcion_control": {
       "descripcion": "Atención en salud por medicina general, medicina familiar o enfermería para la asesoría en anticoncepción - Control",
-      "archivo": "consultas",
-      "cups": ["890274"],
-      "finalidad": ["11"],
-      "deduplicar": true,
-      "aplica_a": ["ADOLESCENCIA","JOVENES","ADULTEZ","VEJEZ"]
+      "archivo": "consultas", "cups": ["890274"], "finalidad": ["11"],
+      "deduplicar": true, "aplica_a": ["ADOLESCENCIA","JOVENES","ADULTEZ","VEJEZ"]
     },
-
     "med_anticoncepcion_oral": {
       "descripcion": "Suministro de anticoncepción oral ciclo e inyectable",
-      "archivo": "medicamentos",
-      "cups": [],
-      "busqueda_nombre": ["ANTICONCEPTIVO","MESTRANOL","ETINILESTRADIOL","LEVONORGESTREL","DESOGESTREL","GESTODENO"],
-      "finalidad": [],
-      "deduplicar": false,
-      "aplica_a": ["ADOLESCENCIA","JOVENES","ADULTEZ"]
+      "archivo": "medicamentos", "cups": [], "busqueda_nombre": ["ANTICONCEPTIVO","MESTRANOL","ETINILESTRADIOL","LEVONORGESTREL","DESOGESTREL","GESTODENO"], "finalidad": [],
+      "deduplicar": false, "aplica_a": ["ADOLESCENCIA","JOVENES","ADULTEZ"]
     },
-
     "med_preservativos": {
       "descripcion": "Suministro de preservativos",
-      "archivo": "medicamentos",
-      "cups": [],
-      "busqueda_nombre": ["PRESERVATIVO","CONDON","CONDÓN"],
-      "finalidad": [],
-      "deduplicar": false,
-      "aplica_a": ["ADOLESCENCIA","JOVENES","ADULTEZ","VEJEZ"]
+      "archivo": "medicamentos", "cups": [], "busqueda_nombre": ["PRESERVATIVO","CONDON","CONDÓN"], "finalidad": [],
+      "deduplicar": false, "aplica_a": ["ADOLESCENCIA","JOVENES","ADULTEZ","VEJEZ"]
     },
-
     "proc_anticoncepcion_subdermico": {
       "descripcion": "Inserción de anticonceptivos subdérmicos",
-      "archivo": "procedimientos",
-      "cups": ["360301","360305"],
-      "finalidad": [],
-      "deduplicar": true,
-      "aplica_a": ["ADOLESCENCIA","JOVENES","ADULTEZ"]
+      "archivo": "procedimientos", "cups": ["360301","360305"], "finalidad": [],
+      "deduplicar": true, "aplica_a": ["ADOLESCENCIA","JOVENES","ADULTEZ"]
     },
-
     "proc_diu": {
       "descripcion": "Inserción de dispositivo intrauterino + anticonceptivo (DIU) SOD",
-      "archivo": "procedimientos",
-      "cups": ["360302","360303"],
-      "finalidad": [],
-      "deduplicar": true,
-      "aplica_a": ["ADOLESCENCIA","JOVENES","ADULTEZ"]
+      "archivo": "procedimientos", "cups": ["360302","360303"], "finalidad": [],
+      "deduplicar": true, "aplica_a": ["ADOLESCENCIA","JOVENES","ADULTEZ"]
     },
-
     "proc_glicemia": {
       "descripcion": "Glicemia basal",
-      "archivo": "procedimientos",
-      "cups": ["903901","904332"],
-      "finalidad": [],
-      "deduplicar": true,
-      "aplica_a": ["JOVENES","ADULTEZ","VEJEZ"]
+      "archivo": "procedimientos", "cups": ["903901","904332"], "finalidad": [],
+      "deduplicar": true, "aplica_a": ["JOVENES","ADULTEZ","VEJEZ"]
     },
-
     "proc_colesterol_total": {
       "descripcion": "Colesterol total",
-      "archivo": "procedimientos",
-      "cups": ["903902","904305"],
-      "finalidad": [],
-      "deduplicar": true,
-      "aplica_a": ["JOVENES","ADULTEZ","VEJEZ"]
+      "archivo": "procedimientos", "cups": ["903902","904305"], "finalidad": [],
+      "deduplicar": true, "aplica_a": ["JOVENES","ADULTEZ","VEJEZ"]
     },
-
     "proc_colesterol_hdl": {
       "descripcion": "Colesterol HDL",
-      "archivo": "procedimientos",
-      "cups": ["903903","904307"],
-      "finalidad": [],
-      "deduplicar": true,
-      "aplica_a": ["JOVENES","ADULTEZ","VEJEZ"]
+      "archivo": "procedimientos", "cups": ["903903","904307"], "finalidad": [],
+      "deduplicar": true, "aplica_a": ["JOVENES","ADULTEZ","VEJEZ"]
     },
-
     "proc_colesterol_ldl": {
       "descripcion": "Colesterol LDL",
-      "archivo": "procedimientos",
-      "cups": ["903904","904308"],
-      "finalidad": [],
-      "deduplicar": true,
-      "aplica_a": ["JOVENES","ADULTEZ","VEJEZ"]
+      "archivo": "procedimientos", "cups": ["903904","904308"], "finalidad": [],
+      "deduplicar": true, "aplica_a": ["JOVENES","ADULTEZ","VEJEZ"]
     },
-
     "proc_trigliceridos": {
       "descripcion": "Triglicéridos",
-      "archivo": "procedimientos",
-      "cups": ["903905","904340"],
-      "finalidad": [],
-      "deduplicar": true,
-      "aplica_a": ["JOVENES","ADULTEZ","VEJEZ"]
+      "archivo": "procedimientos", "cups": ["903905","904340"], "finalidad": [],
+      "deduplicar": true, "aplica_a": ["JOVENES","ADULTEZ","VEJEZ"]
     },
-
     "proc_creatinina": {
       "descripcion": "Creatinina",
-      "archivo": "procedimientos",
-      "cups": ["903906","904319"],
-      "finalidad": [],
-      "deduplicar": true,
-      "aplica_a": ["JOVENES","ADULTEZ","VEJEZ"]
+      "archivo": "procedimientos", "cups": ["903906","904319"], "finalidad": [],
+      "deduplicar": true, "aplica_a": ["JOVENES","ADULTEZ","VEJEZ"]
     },
-
     "proc_uroanalis": {
       "descripcion": "Uroanálisis",
-      "archivo": "procedimientos",
-      "cups": ["903910","904351"],
-      "finalidad": [],
-      "deduplicar": true,
-      "aplica_a": ["JOVENES","ADULTEZ","VEJEZ"]
+      "archivo": "procedimientos", "cups": ["903910","904351"], "finalidad": [],
+      "deduplicar": true, "aplica_a": ["JOVENES","ADULTEZ","VEJEZ"]
     },
-
     "proc_hep_b": {
       "descripcion": "Prueba rápida para Hepatitis B",
-      "archivo": "procedimientos",
-      "cups": ["906214","906215"],
-      "finalidad": [],
-      "deduplicar": true,
-      "aplica_a": ["JOVENES","ADULTEZ","VEJEZ"]
+      "archivo": "procedimientos", "cups": ["906214","906215"], "finalidad": [],
+      "deduplicar": true, "aplica_a": ["JOVENES","ADULTEZ","VEJEZ"]
     },
-
     "proc_hep_c": {
       "descripcion": "Prueba rápida para Hepatitis C",
-      "archivo": "procedimientos",
-      "cups": ["906216","906217"],
-      "finalidad": [],
-      "deduplicar": true,
-      "aplica_a": ["JOVENES","ADULTEZ","VEJEZ"]
+      "archivo": "procedimientos", "cups": ["906216","906217"], "finalidad": [],
+      "deduplicar": true, "aplica_a": ["JOVENES","ADULTEZ","VEJEZ"]
     },
-
     "proc_citologia": {
       "descripcion": "Tamizaje de cáncer de cuello uterino (citología)",
-      "archivo": "procedimientos",
-      "cups": ["910101","910102"],
-      "finalidad": [],
-      "deduplicar": true,
-      "aplica_a": ["JOVENES","ADULTEZ","VEJEZ"]
+      "archivo": "procedimientos", "cups": ["910101","910102"], "finalidad": [],
+      "deduplicar": true, "aplica_a": ["JOVENES","ADULTEZ","VEJEZ"]
     },
-
     "proc_adn_vph": {
       "descripcion": "Tamizaje de cáncer de cuello uterino (ADN VPH)",
-      "archivo": "procedimientos",
-      "cups": ["910103","910104"],
-      "finalidad": [],
-      "deduplicar": true,
-      "aplica_a": ["ADULTEZ","VEJEZ"]
+      "archivo": "procedimientos", "cups": ["910103","910104"], "finalidad": [],
+      "deduplicar": true, "aplica_a": ["ADULTEZ","VEJEZ"]
     },
-
     "proc_inspeccion_visual": {
       "descripcion": "Tamizaje de inspección visual",
-      "archivo": "procedimientos",
-      "cups": ["910105"],
-      "finalidad": [],
-      "deduplicar": true,
-      "aplica_a": ["ADULTEZ"]
+      "archivo": "procedimientos", "cups": ["910105"], "finalidad": [],
+      "deduplicar": true, "aplica_a": ["ADULTEZ"]
     },
-
     "proc_mamografia": {
       "descripcion": "Tamizaje para cáncer de mama (valoración clínica de la mama)",
-      "archivo": "procedimientos",
-      "cups": ["380401","380402"],
-      "finalidad": [],
-      "deduplicar": true,
-      "aplica_a": ["ADULTEZ","VEJEZ"]
+      "archivo": "procedimientos", "cups": ["380401","380402"], "finalidad": [],
+      "deduplicar": true, "aplica_a": ["ADULTEZ","VEJEZ"]
     },
-
     "proc_psa": {
       "descripcion": "Tamizaje para cáncer de próstata (PSA)",
-      "archivo": "procedimientos",
-      "cups": ["903908","904345"],
-      "finalidad": [],
-      "deduplicar": true,
-      "aplica_a": ["ADULTEZ","VEJEZ"]
+      "archivo": "procedimientos", "cups": ["903908","904345"], "finalidad": [],
+      "deduplicar": true, "aplica_a": ["ADULTEZ","VEJEZ"]
     },
-
     "proc_tacto_rectal": {
       "descripcion": "Tamizaje para cáncer de próstata (Tacto rectal)",
-      "archivo": "procedimientos",
-      "cups": ["890291"],
-      "finalidad": [],
-      "deduplicar": true,
-      "aplica_a": ["ADULTEZ","VEJEZ"]
+      "archivo": "procedimientos", "cups": ["890291"], "finalidad": [],
+      "deduplicar": true, "aplica_a": ["ADULTEZ","VEJEZ"]
     },
-
     "proc_sangre_oculta": {
       "descripcion": "Tamizaje para cáncer de colon (Sangre oculta en materia fecal por inmunoquímica)",
-      "archivo": "procedimientos",
-      "cups": ["903909","904346"],
-      "finalidad": [],
-      "deduplicar": true,
-      "aplica_a": ["ADULTEZ","VEJEZ"]
+      "archivo": "procedimientos", "cups": ["903909","904346"], "finalidad": [],
+      "deduplicar": true, "aplica_a": ["ADULTEZ","VEJEZ"]
+    },
+
+    "materna_consulta_preconcepcion": {
+      "descripcion": "Consulta de primera vez y control (consulta de medicina general, medicina familiar o enfermería)",
+      "archivo": "consultas", "cups": ["890201","890205","890283"], "finalidad": ["11"],
+      "deduplicar": false, "aplica_a": []
+    },
+    "materna_ag_hep_b": {
+      "descripcion": "Antígeno superficie hepatitis B (AgSHB)",
+      "archivo": "procedimientos", "cups": ["906214","906218"], "finalidad": [],
+      "deduplicar": true, "aplica_a": []
+    },
+    "materna_hemoclasificacion": {
+      "descripcion": "Hemoclasificación",
+      "archivo": "procedimientos", "cups": ["903815","902230"], "finalidad": [],
+      "deduplicar": true, "aplica_a": []
+    },
+    "materna_hemograma": {
+      "descripcion": "Hemograma",
+      "archivo": "procedimientos", "cups": ["903822","903821"], "finalidad": [],
+      "deduplicar": true, "aplica_a": []
+    },
+    "materna_hemoparasitos": {
+      "descripcion": "Hemoparásitos (en zonas endémicas)",
+      "archivo": "procedimientos", "cups": ["903846"], "finalidad": [],
+      "deduplicar": true, "aplica_a": []
+    },
+    "materna_igg_toxoplasma": {
+      "descripcion": "IgG G toxoplasma",
+      "archivo": "procedimientos", "cups": ["906501","906502"], "finalidad": [],
+      "deduplicar": true, "aplica_a": []
+    },
+    "materna_igg_rubeola": {
+      "descripcion": "IgG G rubéola",
+      "archivo": "procedimientos", "cups": ["906503","906504"], "finalidad": [],
+      "deduplicar": true, "aplica_a": []
+    },
+    "materna_igg_varicela": {
+      "descripcion": "IgG G varicela",
+      "archivo": "procedimientos", "cups": ["906505","906506"], "finalidad": [],
+      "deduplicar": true, "aplica_a": []
+    },
+    "materna_urocultivo": {
+      "descripcion": "Urocultivo con concentración mínima inhibitoria (CMI)",
+      "archivo": "procedimientos", "cups": ["903864","903865"], "finalidad": [],
+      "deduplicar": true, "aplica_a": []
+    },
+    "materna_acido_folico": {
+      "descripcion": "Suministro de ácido fólico",
+      "archivo": "medicamentos", "cups": [], "busqueda_nombre": ["ACIDO FOLICO","ÁCIDO FÓLICO","FOLATO"], "finalidad": [],
+      "deduplicar": false, "aplica_a": []
+    },
+    "materna_ive_consulta": {
+      "descripcion": "Consulta medicina general inicial",
+      "archivo": "consultas", "cups": ["890201","890283"], "finalidad": [],
+      "deduplicar": false, "aplica_a": []
+    },
+    "materna_ive_valoracion_psicosocial": {
+      "descripcion": "Valoración psicosocial (trabajo social o psicología)",
+      "archivo": "consultas", "cups": ["890207","890208"], "finalidad": [],
+      "deduplicar": false, "aplica_a": []
+    },
+    "materna_ive_ecografia": {
+      "descripcion": "Ecografía Transvaginal (si no hay FUM confiable)",
+      "archivo": "procedimientos", "cups": ["881508","881509"], "finalidad": [],
+      "deduplicar": true, "aplica_a": []
+    },
+    "materna_ive_medicamento": {
+      "descripcion": "Suministro de medicamentos (Misoprostol o mifepristona)",
+      "archivo": "medicamentos", "cups": [], "busqueda_nombre": ["MISOPROSTOL","MIFEPRISTONA"], "finalidad": [],
+      "deduplicar": false, "aplica_a": []
+    },
+    "materna_ive_seguimiento": {
+      "descripcion": "Seguimiento Clínico Medicina General",
+      "archivo": "consultas", "cups": ["890201","890263"], "finalidad": [],
+      "deduplicar": false, "aplica_a": []
+    },
+    "materna_ive_edu": {
+      "descripcion": "Educación individual en salud, asesoría y entrega de método anticonceptivo",
+      "archivo": "procedimientos", "cups": ["990201","990202"], "finalidad": [],
+      "deduplicar": false, "aplica_a": []
+    },
+    "materna_prenatal_consulta_medgen": {
+      "descripcion": "Consulta de medicina general",
+      "archivo": "consultas", "cups": ["890201","890263","890283"], "finalidad": ["11"],
+      "deduplicar": false, "aplica_a": []
+    },
+    "materna_prenatal_consulta_enf": {
+      "descripcion": "Atención en salud por profesional de enfermería",
+      "archivo": "consultas", "cups": ["890205","890305"], "finalidad": ["11"],
+      "deduplicar": false, "aplica_a": []
+    },
+    "materna_prenatal_consulta_gine": {
+      "descripcion": "Consulta de control por ginecología",
+      "archivo": "consultas", "cups": ["890225","890325"], "finalidad": [],
+      "deduplicar": false, "aplica_a": []
+    },
+    "materna_prenatal_escala_riesgo": {
+      "descripcion": "Elaboración de escala de Riesgo Biopsicosocial",
+      "archivo": "procedimientos", "cups": ["902180","902181"], "finalidad": [],
+      "deduplicar": false, "aplica_a": []
+    },
+    "materna_prenatal_odonto": {
+      "descripcion": "Consulta por odontología",
+      "archivo": "consultas", "cups": ["890203","890303"], "finalidad": ["11"],
+      "deduplicar": false, "aplica_a": []
+    },
+    "materna_prenatal_nutricion": {
+      "descripcion": "Consulta por nutrición",
+      "archivo": "consultas", "cups": ["890213","890313"], "finalidad": [],
+      "deduplicar": false, "aplica_a": []
+    },
+    "materna_prenatal_psicologia": {
+      "descripcion": "Consulta por psicología y/o trabajo social",
+      "archivo": "consultas", "cups": ["890207","890208","890307"], "finalidad": [],
+      "deduplicar": false, "aplica_a": []
+    },
+    "materna_prenatal_cuadro_hematico": {
+      "descripcion": "Cuadro hemático completo",
+      "archivo": "procedimientos", "cups": ["903822","903821"], "finalidad": [],
+      "deduplicar": false, "aplica_a": []
+    },
+    "materna_prenatal_urocultivo": {
+      "descripcion": "Urocultivo y antibiograma",
+      "archivo": "procedimientos", "cups": ["903864","903865"], "finalidad": [],
+      "deduplicar": false, "aplica_a": []
+    },
+    "materna_prenatal_coombs": {
+      "descripcion": "Coombs indirecto",
+      "archivo": "procedimientos", "cups": ["903816","902233"], "finalidad": [],
+      "deduplicar": false, "aplica_a": []
+    },
+    "materna_prenatal_ecografia_obs": {
+      "descripcion": "Ecografía obstétrica",
+      "archivo": "procedimientos", "cups": ["881505","881506","881507"], "finalidad": [],
+      "deduplicar": false, "aplica_a": []
+    },
+    "materna_prenatal_ecografia_nucal": {
+      "descripcion": "Ecografía translucencia nucal",
+      "archivo": "procedimientos", "cups": ["881504"], "finalidad": [],
+      "deduplicar": false, "aplica_a": []
+    },
+    "materna_prenatal_treponema": {
+      "descripcion": "Prueba treponémica (TPPA, TPHA o prueba rápida)",
+      "archivo": "procedimientos", "cups": ["903885","906212"], "finalidad": [],
+      "deduplicar": false, "aplica_a": []
+    },
+    "materna_prenatal_vdrl": {
+      "descripcion": "Prueba no treponémica (VDRL) en diluciones",
+      "archivo": "procedimientos", "cups": ["903884","906210"], "finalidad": [],
+      "deduplicar": false, "aplica_a": []
+    },
+    "materna_prenatal_glicemia_ayunas": {
+      "descripcion": "Glicemia en ayunas",
+      "archivo": "procedimientos", "cups": ["903901","904332"], "finalidad": [],
+      "deduplicar": false, "aplica_a": []
+    },
+    "materna_prenatal_ptog": {
+      "descripcion": "Prueba de tolerancia oral a la glucosa (PTOG) con 75 gramos (g) de glucosa",
+      "archivo": "procedimientos", "cups": ["903907","904333"], "finalidad": [],
+      "deduplicar": false, "aplica_a": []
+    },
+    "materna_prenatal_igg_toxo": {
+      "descripcion": "Inmunoglobulina G para toxoplasma",
+      "archivo": "procedimientos", "cups": ["906501","906502"], "finalidad": [],
+      "deduplicar": false, "aplica_a": []
+    },
+    "materna_prenatal_igm_toxo": {
+      "descripcion": "Inmunoglobulina M para toxoplasma",
+      "archivo": "procedimientos", "cups": ["906503"], "finalidad": [],
+      "deduplicar": false, "aplica_a": []
+    },
+    "materna_prenatal_chagas": {
+      "descripcion": "Tamizaje para chagas",
+      "archivo": "procedimientos", "cups": ["906401","906402"], "finalidad": [],
+      "deduplicar": false, "aplica_a": []
+    },
+    "materna_prenatal_vih": {
+      "descripcion": "Prueba rápida VIH, en caso de ser positivo solicitar prueba confirmatoria con una prueba rápida de VIH distinta",
+      "archivo": "procedimientos", "cups": ["903886","906211","906213"], "finalidad": [],
+      "deduplicar": false, "aplica_a": []
+    },
+    "materna_prenatal_frotis_estrepto": {
+      "descripcion": "Frotis recto vaginal, estreptococo grupo B",
+      "archivo": "procedimientos", "cups": ["903863"], "finalidad": [],
+      "deduplicar": false, "aplica_a": []
+    },
+    "materna_prenatal_toxoide": {
+      "descripcion": "Toxoide tetánico",
+      "archivo": "procedimientos", "cups": ["903960","903961"], "finalidad": [],
+      "deduplicar": false, "aplica_a": []
+    },
+    "materna_prenatal_influenza": {
+      "descripcion": "Influenza estacional",
+      "archivo": "procedimientos", "cups": ["903962","903963"], "finalidad": [],
+      "deduplicar": false, "aplica_a": []
+    },
+    "materna_prenatal_tdap": {
+      "descripcion": "Inmunización con TDAP",
+      "archivo": "procedimientos", "cups": ["903964","903965"], "finalidad": [],
+      "deduplicar": false, "aplica_a": []
+    },
+    "materna_prenatal_calcio": {
+      "descripcion": "Suministro de calcio tabletas (2 tab 600 mg día)",
+      "archivo": "medicamentos", "cups": [], "busqueda_nombre": ["CALCIO","CALCIUM"], "finalidad": [],
+      "deduplicar": false, "aplica_a": []
+    },
+    "materna_prenatal_desparasitacion": {
+      "descripcion": "Desparasitación Antihelmíntica con Albendazol dosis única 400mg vía oral",
+      "archivo": "medicamentos", "cups": [], "busqueda_nombre": ["ALBENDAZOL"], "finalidad": [],
+      "deduplicar": false, "aplica_a": []
+    },
+    "materna_prenatal_acido_folico": {
+      "descripcion": "Suministro de ácido fólico (1 tab 5 mg día)",
+      "archivo": "medicamentos", "cups": [], "busqueda_nombre": ["ACIDO FOLICO","ÁCIDO FÓLICO"], "finalidad": [],
+      "deduplicar": false, "aplica_a": []
+    },
+    "materna_prenatal_sulfato_ferroso": {
+      "descripcion": "Suministro de sulfato ferroso tabletas (1 tab 200 mg día)",
+      "archivo": "medicamentos", "cups": [], "busqueda_nombre": ["FERROSO","SULFATO FERROSO"], "finalidad": [],
+      "deduplicar": false, "aplica_a": []
+    },
+    "materna_parto_vaginal": {
+      "descripcion": "Atención parto vaginal",
+      "archivo": "consultas", "cups": ["730001","730002","730003"], "finalidad": [],
+      "deduplicar": true, "aplica_a": []
+    },
+    "materna_recien_nacido": {
+      "descripcion": "Valoración del recién nacido (incluye todo lo concerniente a la atención del recién nacido)",
+      "archivo": "consultas", "cups": ["890201","890281"], "finalidad": [],
+      "deduplicar": true, "aplica_a": []
+    },
+    "materna_posparto_consulta": {
+      "descripcion": "Consulta de medicina general",
+      "archivo": "consultas", "cups": ["890201","890283"], "finalidad": [],
+      "deduplicar": false, "aplica_a": []
+    },
+    "materna_posparto_hemoclasif": {
+      "descripcion": "Hemoclasificación",
+      "archivo": "procedimientos", "cups": ["903815","902230"], "finalidad": [],
+      "deduplicar": true, "aplica_a": []
+    },
+    "materna_posparto_tsh": {
+      "descripcion": "Resultado de prueba de TSH cuantitativa (hipotiroidismo congénito) del recién nacido",
+      "archivo": "procedimientos", "cups": ["903916","903917"], "finalidad": [],
+      "deduplicar": true, "aplica_a": []
+    },
+
+    "di_remision_valoracion": {
+      "descripcion": "Remisión a valoración integral primera vez o seguimiento (Médico General / Familiar)",
+      "archivo": "consultas", "cups": ["890201","890263","890283"], "finalidad": [],
+      "deduplicar": false, "aplica_a": []
+    },
+    "di_esquema_pai": {
+      "descripcion": "Remisión y actualización de esquema PAI",
+      "archivo": "procedimientos", "cups": [], "finalidad": [],
+      "deduplicar": false, "aplica_a": []
+    },
+    "di_seguimiento_inasistentes_pi": {
+      "descripcion": "Seguimiento a inasistentes a PRIMERA INFANCIA",
+      "archivo": "procedimientos", "cups": [], "finalidad": [],
+      "deduplicar": false, "aplica_a": []
+    },
+    "di_seguimiento_inasistentes_inf": {
+      "descripcion": "Seguimiento a inasistentes a INFANCIA",
+      "archivo": "procedimientos", "cups": [], "finalidad": [],
+      "deduplicar": false, "aplica_a": []
+    },
+    "di_seguimiento_inasistentes_pyms": {
+      "descripcion": "Seguimiento a inasistentes RUTA PYMS",
+      "archivo": "procedimientos", "cups": [], "finalidad": [],
+      "deduplicar": false, "aplica_a": []
+    },
+    "di_seguimiento_inasistentes": {
+      "descripcion": "Seguimiento a inasistentes",
+      "archivo": "procedimientos", "cups": [], "finalidad": [],
+      "deduplicar": false, "aplica_a": []
+    },
+    "di_canalizacion_citologia": {
+      "descripcion": "Canalización toma de citología cervicouterina",
+      "archivo": "consultas", "cups": [], "finalidad": [],
+      "deduplicar": false, "aplica_a": []
+    },
+    "di_canalizacion_colon": {
+      "descripcion": "Canalización para detección temprana de cáncer de colon a partir de los 50 a 75 años (sangre oculta en heces - bi anual)",
+      "archivo": "consultas", "cups": [], "finalidad": [],
+      "deduplicar": false, "aplica_a": []
+    },
+    "di_canalizacion_prostata": {
+      "descripcion": "Canalización para detección temprana de cáncer de próstata en hombres de 50 a 75 años - cada 5 años (PSA)",
+      "archivo": "consultas", "cups": [], "finalidad": [],
+      "deduplicar": false, "aplica_a": []
+    },
+    "di_canalizacion_mamografia": {
+      "descripcion": "Canalización toma de mamografía",
+      "archivo": "consultas", "cups": [], "finalidad": [],
+      "deduplicar": false, "aplica_a": []
+    },
+    "di_captacion_hta": {
+      "descripcion": "Captación usuarios diagnosticados hipertensión arterial - estrategia conoce tu riesgo peso saludable",
+      "archivo": "consultas", "cups": ["890201","890263"], "finalidad": [],
+      "deduplicar": false, "aplica_a": []
+    },
+    "di_captacion_dm": {
+      "descripcion": "Captación usuarios diagnosticados diabetes mellitus - estrategia conoce tu riesgo peso saludable",
+      "archivo": "consultas", "cups": ["890201","890263"], "finalidad": [],
+      "deduplicar": false, "aplica_a": []
+    },
+    "di_seguimiento_hta": {
+      "descripcion": "Seguimiento pacientes inasistentes y/o inadherentes con hipertensión arterial",
+      "archivo": "procedimientos", "cups": [], "finalidad": [],
+      "deduplicar": false, "aplica_a": []
+    },
+    "di_seguimiento_dm": {
+      "descripcion": "Seguimiento pacientes inasistentes y/o inadherentes con diabetes mellitus",
+      "archivo": "procedimientos", "cups": [], "finalidad": [],
+      "deduplicar": false, "aplica_a": []
+    },
+    "di_visita_domiciliaria": {
+      "descripcion": "Visitas domiciliarias y aplicación de la ficha de riesgo",
+      "archivo": "procedimientos", "cups": ["890234","890235"], "finalidad": [],
+      "deduplicar": false, "aplica_a": []
+    },
+    "di_usuarios_renuentes": {
+      "descripcion": "Identificación usuarios renuentes a la ruta y/o servicios de promoción-prevención",
+      "archivo": "procedimientos", "cups": [], "finalidad": [],
+      "deduplicar": false, "aplica_a": []
+    },
+    "di_canalizacion_preconcepcion": {
+      "descripcion": "Canalización consulta preconcepcional",
+      "archivo": "consultas", "cups": [], "finalidad": [],
+      "deduplicar": false, "aplica_a": []
+    },
+    "di_canalizacion_prenatal": {
+      "descripcion": "Canalización consulta de control prenatal",
+      "archivo": "consultas", "cups": [], "finalidad": [],
+      "deduplicar": false, "aplica_a": []
+    },
+    "di_seguimiento_rmnp": {
+      "descripcion": "Seguimiento a inasistentes a RMNP",
+      "archivo": "procedimientos", "cups": [], "finalidad": [],
+      "deduplicar": false, "aplica_a": []
+    },
+    "di_salud_mental_1": {
+      "descripcion": "Educación y comunicación para la promoción de la salud mental",
+      "archivo": "procedimientos", "cups": ["990101","990201"], "finalidad": [],
+      "deduplicar": false, "aplica_a": []
+    },
+    "di_salud_mental_2": {
+      "descripcion": "Educación y comunicación en salud para el fortalecimiento de factores protectores frente al consumo",
+      "archivo": "procedimientos", "cups": ["990101","990201"], "finalidad": [],
+      "deduplicar": false, "aplica_a": []
+    },
+    "di_salud_mental_3": {
+      "descripcion": "Educación y comunicación para la prevención de conducta suicida",
+      "archivo": "procedimientos", "cups": ["990101","990201"], "finalidad": [],
+      "deduplicar": false, "aplica_a": []
+    },
+    "di_salud_mental_4": {
+      "descripcion": "Educación y comunicación para la prevención de problemas y trastornos mentales (incluida formación de primeros respondientes y cuidado de la salud mental en la cotidianidad)",
+      "archivo": "procedimientos", "cups": ["990101","990201"], "finalidad": [],
+      "deduplicar": false, "aplica_a": []
+    },
+    "di_salud_mental_5": {
+      "descripcion": "Educación y comunicación para la prevención de violencia de género y violencias sexuales",
+      "archivo": "procedimientos", "cups": ["990101","990201"], "finalidad": [],
+      "deduplicar": false, "aplica_a": []
+    },
+    "di_salud_mental_6": {
+      "descripcion": "Educación y comunicación para la adopción de estilos de vida saludable",
+      "archivo": "procedimientos", "cups": ["990101","990201"], "finalidad": [],
+      "deduplicar": false, "aplica_a": []
+    },
+
+    "rcv_glucosa": {
+      "descripcion": "Glucosa en suero u otro fluido diferente a orina",
+      "archivo": "procedimientos", "cups": ["903901","904332","904331"], "finalidad": [],
+      "deduplicar": false, "aplica_a": []
+    },
+    "rcv_colesterol_total": {
+      "descripcion": "Colesterol total",
+      "archivo": "procedimientos", "cups": ["903902","904305"], "finalidad": [],
+      "deduplicar": false, "aplica_a": []
+    },
+    "rcv_colesterol_hdl": {
+      "descripcion": "Colesterol de alta densidad",
+      "archivo": "procedimientos", "cups": ["903903","904307"], "finalidad": [],
+      "deduplicar": false, "aplica_a": []
+    },
+    "rcv_colesterol_ldl": {
+      "descripcion": "Colesterol de baja densidad",
+      "archivo": "procedimientos", "cups": ["903904","904308"], "finalidad": [],
+      "deduplicar": false, "aplica_a": []
+    },
+    "rcv_trigliceridos": {
+      "descripcion": "Triglicéridos",
+      "archivo": "procedimientos", "cups": ["903905","904340"], "finalidad": [],
+      "deduplicar": false, "aplica_a": []
+    },
+    "rcv_hemograma2": {
+      "descripcion": "Hemograma II (hemoglobina hematocrito recuento de eritrocitos índices eritrocitarios leucograma recuento de plaquetas e índices plaquetarios) semiautomatizado",
+      "archivo": "procedimientos", "cups": ["903822","903821","902213"], "finalidad": [],
+      "deduplicar": false, "aplica_a": []
+    },
+    "rcv_uroanalis": {
+      "descripcion": "Uroanálisis",
+      "archivo": "procedimientos", "cups": ["903910","904351"], "finalidad": [],
+      "deduplicar": false, "aplica_a": []
+    },
+    "rcv_creatinina": {
+      "descripcion": "Creatinina en suero u otros fluidos",
+      "archivo": "procedimientos", "cups": ["903906","904319"], "finalidad": [],
+      "deduplicar": false, "aplica_a": []
+    },
+    "rcv_consulta_medgen_1vez": {
+      "descripcion": "Consulta de primera vez por medicina general",
+      "archivo": "consultas", "cups": ["890201","890283"], "finalidad": [],
+      "deduplicar": false, "aplica_a": []
+    },
+    "rcv_consulta_enf_1vez": {
+      "descripcion": "Consulta de primera vez por enfermería",
+      "archivo": "consultas", "cups": ["890205","890305"], "finalidad": [],
+      "deduplicar": false, "aplica_a": []
+    },
+    "rcv_consulta_med_interna": {
+      "descripcion": "Consulta de primera vez por especialista en medicina interna",
+      "archivo": "consultas", "cups": ["890211","890311"], "finalidad": [],
+      "deduplicar": false, "aplica_a": []
+    },
+    "rcv_consulta_cardiologia": {
+      "descripcion": "Consulta de primera vez por especialista en cardiología",
+      "archivo": "consultas", "cups": ["890220","890320"], "finalidad": [],
+      "deduplicar": false, "aplica_a": []
+    },
+    "rcv_consulta_endocrino": {
+      "descripcion": "Consulta de primera vez por especialista en endocrinología",
+      "archivo": "consultas", "cups": ["890224","890324"], "finalidad": [],
+      "deduplicar": false, "aplica_a": []
+    },
+    "rcv_consulta_nefrologia": {
+      "descripcion": "Consulta de primera vez por especialista en nefrología",
+      "archivo": "consultas", "cups": ["890226","890326"], "finalidad": [],
+      "deduplicar": false, "aplica_a": []
+    },
+    "rcv_hbg_glicosilada": {
+      "descripcion": "Hemoglobina glicosilada automatizada",
+      "archivo": "procedimientos", "cups": ["904334","903920"], "finalidad": [],
+      "deduplicar": false, "aplica_a": []
+    },
+    "rcv_microalbuminuria": {
+      "descripcion": "Microalbuminuria automatizada en orina parcial",
+      "archivo": "procedimientos", "cups": ["904352","903921"], "finalidad": [],
+      "deduplicar": false, "aplica_a": []
+    },
+    "rcv_creatinuria": {
+      "descripcion": "Creatinuria",
+      "archivo": "procedimientos", "cups": ["904322","903922"], "finalidad": [],
+      "deduplicar": false, "aplica_a": []
+    },
+    "rcv_potasio": {
+      "descripcion": "Potasio en suero u otros fluidos",
+      "archivo": "procedimientos", "cups": ["904338","903923"], "finalidad": [],
+      "deduplicar": false, "aplica_a": []
+    },
+    "rcv_seguimiento_medgen": {
+      "descripcion": "Consulta de seguimiento de control por medicina general",
+      "archivo": "consultas", "cups": ["890263","890201"], "finalidad": [],
+      "deduplicar": false, "aplica_a": []
+    },
+    "rcv_seguimiento_enf": {
+      "descripcion": "Consulta de control o de seguimiento por enfermería",
+      "archivo": "consultas", "cups": ["890205","890305"], "finalidad": [],
+      "deduplicar": false, "aplica_a": []
+    },
+    "rcv_seguimiento_med_interna": {
+      "descripcion": "Consulta de control o de seguimiento por especialista en medicina interna",
+      "archivo": "consultas", "cups": ["890211","890311"], "finalidad": [],
+      "deduplicar": false, "aplica_a": []
+    },
+    "rcv_seguimiento_cardiologia": {
+      "descripcion": "Consulta de control o de seguimiento por especialista en cardiología",
+      "archivo": "consultas", "cups": ["890220","890320"], "finalidad": [],
+      "deduplicar": false, "aplica_a": []
+    },
+    "rcv_seguimiento_nefrologia": {
+      "descripcion": "Consulta de control o de seguimiento por especialista en nefrología",
+      "archivo": "consultas", "cups": ["890226","890326"], "finalidad": [],
+      "deduplicar": false, "aplica_a": []
+    },
+    "rcv_seguimiento_nutricion": {
+      "descripcion": "Consulta de seguimiento por nutrición",
+      "archivo": "consultas", "cups": ["890213","890313"], "finalidad": [],
+      "deduplicar": false, "aplica_a": []
+    },
+    "rcv_seguimiento_psicologia": {
+      "descripcion": "Consulta de seguimiento por psicología",
+      "archivo": "consultas", "cups": ["890207","890307"], "finalidad": [],
+      "deduplicar": false, "aplica_a": []
+    },
+    "rcv_ecg": {
+      "descripcion": "Electrocardiograma de ritmo o de superficie SOD",
+      "archivo": "procedimientos", "cups": ["891201","891202"], "finalidad": [],
+      "deduplicar": false, "aplica_a": []
+    },
+    "rcv_ecografia_cardiaca": {
+      "descripcion": "Ecocardiograma transtorácico tridimensional",
+      "archivo": "procedimientos", "cups": ["881601","881602"], "finalidad": [],
+      "deduplicar": false, "aplica_a": []
+    },
+    "rcv_radiografia_torax": {
+      "descripcion": "Radiografía de tórax",
+      "archivo": "procedimientos", "cups": ["872101","872102"], "finalidad": [],
+      "deduplicar": false, "aplica_a": []
+    },
+    "rcv_ecografia_urinaria": {
+      "descripcion": "Ecografía de vías urinarias (riñones, vejiga y próstata transabdominal)",
+      "archivo": "procedimientos", "cups": ["881401","881402"], "finalidad": [],
+      "deduplicar": false, "aplica_a": []
+    },
+    "rcv_transaminasas_ami": {
+      "descripcion": "Transaminasas aminotranferasa",
+      "archivo": "procedimientos", "cups": ["904357","903925"], "finalidad": [],
+      "deduplicar": false, "aplica_a": []
+    },
+    "rcv_transaminasas_glu": {
+      "descripcion": "Transaminasas glutámico oxalacética",
+      "archivo": "procedimientos", "cups": ["904356","903924"], "finalidad": [],
+      "deduplicar": false, "aplica_a": []
+    },
+    "rcv_consulta_oftalmologia": {
+      "descripcion": "Consulta de primera vez por especialista en oftalmología (fondo de ojo, retinopatía diabética)",
+      "archivo": "consultas", "cups": ["890228","890328"], "finalidad": [],
+      "deduplicar": false, "aplica_a": []
+    },
+    "rcv_consulta_nutricion_1vez": {
+      "descripcion": "Consulta de primera vez por nutrición y dietética",
+      "archivo": "consultas", "cups": ["890213","890313"], "finalidad": [],
+      "deduplicar": false, "aplica_a": []
+    },
+    "rcv_consulta_psicologia_1vez": {
+      "descripcion": "Consulta de primera vez por psicología",
+      "archivo": "consultas", "cups": ["890207","890307"], "finalidad": [],
+      "deduplicar": false, "aplica_a": []
+    },
+    "rcv_edu_grupal": {
+      "descripcion": "Educación grupal en salud, por equipo interdisciplinario",
+      "archivo": "procedimientos", "cups": ["990101","990102"], "finalidad": [],
+      "deduplicar": false, "aplica_a": []
     }
   },
 
@@ -477,21 +841,11 @@
       "nombre_acta": "INDIVIDUALES PARA NIÑOS Y NIÑAS EN PRIMERA INFANCIA 1M - 5A",
       "edad_min": 0, "edad_max": 5,
       "actividades": [
-        "consulta_medicina_general",
-        "consulta_enfermeria",
-        "consulta_odontologia",
-        "consulta_lactancia",
-        "proc_tamizaje_hemoglobina",
-        "proc_barniz_fluor",
-        "proc_profilaxis",
-        "proc_sellantes",
-        "proc_fortificacion_micronutrientes",
-        "med_vitamina_a",
-        "med_hierro",
-        "med_desparasitacion",
-        "edu_individual",
-        "edu_familia",
-        "edu_grupal"
+        "consulta_medicina_general","consulta_enfermeria","consulta_odontologia",
+        "consulta_lactancia","proc_tamizaje_hemoglobina","proc_barniz_fluor",
+        "proc_profilaxis","proc_sellantes","proc_fortificacion_micronutrientes",
+        "med_vitamina_a","med_hierro","med_desparasitacion",
+        "edu_individual","edu_familia","edu_grupal"
       ]
     },
     {
@@ -500,17 +854,9 @@
       "nombre_acta": "INDIVIDUALES PARA NIÑOS Y NIÑAS EN INFANCIA 6 - 11 AÑOS",
       "edad_min": 6, "edad_max": 11,
       "actividades": [
-        "consulta_medicina_general",
-        "consulta_enfermeria",
-        "consulta_odontologia",
-        "proc_hemoglobina",
-        "proc_hematocrito",
-        "proc_barniz_fluor",
-        "proc_profilaxis",
-        "proc_sellantes",
-        "edu_individual",
-        "edu_familia",
-        "edu_grupal"
+        "consulta_medicina_general","consulta_enfermeria","consulta_odontologia",
+        "proc_hemoglobina","proc_hematocrito","proc_barniz_fluor",
+        "proc_profilaxis","proc_sellantes","edu_individual","edu_familia","edu_grupal"
       ]
     },
     {
@@ -519,29 +865,13 @@
       "nombre_acta": "INDIVIDUALES PARA LOS ADOLESCENTES 12 - 17 AÑOS",
       "edad_min": 12, "edad_max": 17,
       "actividades": [
-        "consulta_medicina_general",
-        "consulta_enfermeria",
-        "consulta_odontologia",
-        "proc_prueba_treponema",
-        "proc_prueba_vih",
-        "proc_asesoria_pre_vih",
-        "proc_asesoria_pos_vih",
-        "proc_hemoglobina",
-        "proc_hematocrito",
-        "proc_prueba_embarazo",
-        "consulta_anticoncepcion",
-        "consulta_anticoncepcion_control",
-        "med_anticoncepcion_oral",
-        "med_preservativos",
-        "proc_anticoncepcion_subdermico",
-        "proc_diu",
-        "proc_barniz_fluor",
-        "proc_profilaxis",
-        "proc_detartraje",
-        "proc_sellantes",
-        "edu_individual",
-        "edu_familia",
-        "edu_grupal"
+        "consulta_medicina_general","consulta_enfermeria","consulta_odontologia",
+        "proc_prueba_treponema","proc_prueba_vih","proc_asesoria_pre_vih","proc_asesoria_pos_vih",
+        "proc_hemoglobina","proc_hematocrito","proc_prueba_embarazo",
+        "consulta_anticoncepcion","consulta_anticoncepcion_control",
+        "med_anticoncepcion_oral","med_preservativos","proc_anticoncepcion_subdermico","proc_diu",
+        "proc_barniz_fluor","proc_profilaxis","proc_detartraje","proc_sellantes",
+        "edu_individual","edu_familia","edu_grupal"
       ]
     },
     {
@@ -550,34 +880,13 @@
       "nombre_acta": "INDIVIDUALES PARA LOS JOVENES 18 - 28 AÑOS",
       "edad_min": 18, "edad_max": 28,
       "actividades": [
-        "consulta_medicina_general",
-        "consulta_odontologia",
-        "proc_glicemia",
-        "proc_colesterol_total",
-        "proc_colesterol_hdl",
-        "proc_colesterol_ldl",
-        "proc_trigliceridos",
-        "proc_creatinina",
-        "proc_uroanalis",
-        "proc_prueba_treponema",
-        "proc_prueba_vih",
-        "proc_asesoria_pre_vih",
-        "proc_asesoria_pos_vih",
-        "proc_hep_b",
-        "proc_hep_c",
-        "proc_prueba_embarazo",
-        "proc_citologia",
-        "consulta_anticoncepcion",
-        "consulta_anticoncepcion_control",
-        "med_anticoncepcion_oral",
-        "med_preservativos",
-        "proc_anticoncepcion_subdermico",
-        "proc_diu",
-        "proc_profilaxis",
-        "proc_detartraje",
-        "edu_individual",
-        "edu_familia",
-        "edu_grupal"
+        "consulta_medicina_general","consulta_odontologia",
+        "proc_glicemia","proc_colesterol_total","proc_colesterol_hdl","proc_colesterol_ldl","proc_trigliceridos","proc_creatinina","proc_uroanalis",
+        "proc_prueba_treponema","proc_prueba_vih","proc_asesoria_pre_vih","proc_asesoria_pos_vih",
+        "proc_hep_b","proc_hep_c","proc_prueba_embarazo","proc_citologia",
+        "consulta_anticoncepcion","consulta_anticoncepcion_control",
+        "med_anticoncepcion_oral","med_preservativos","proc_anticoncepcion_subdermico","proc_diu",
+        "proc_profilaxis","proc_detartraje","edu_individual","edu_familia","edu_grupal"
       ]
     },
     {
@@ -586,40 +895,14 @@
       "nombre_acta": "INDIVIDUALES PARA LOS ADULTOS 29 - 59 AÑOS",
       "edad_min": 29, "edad_max": 59,
       "actividades": [
-        "consulta_medicina_general",
-        "consulta_odontologia",
-        "proc_adn_vph",
-        "proc_inspeccion_visual",
-        "proc_citologia",
-        "proc_mamografia",
-        "proc_psa",
-        "proc_tacto_rectal",
-        "proc_sangre_oculta",
-        "proc_glicemia",
-        "proc_colesterol_total",
-        "proc_colesterol_hdl",
-        "proc_colesterol_ldl",
-        "proc_trigliceridos",
-        "proc_creatinina",
-        "proc_uroanalis",
-        "proc_prueba_treponema",
-        "proc_prueba_vih",
-        "proc_asesoria_pre_vih",
-        "proc_asesoria_pos_vih",
-        "proc_hep_b",
-        "proc_hep_c",
-        "proc_prueba_embarazo",
-        "consulta_anticoncepcion",
-        "consulta_anticoncepcion_control",
-        "med_anticoncepcion_oral",
-        "med_preservativos",
-        "proc_anticoncepcion_subdermico",
-        "proc_diu",
-        "proc_profilaxis",
-        "proc_detartraje",
-        "edu_individual",
-        "edu_familia",
-        "edu_grupal"
+        "consulta_medicina_general","consulta_odontologia",
+        "proc_adn_vph","proc_inspeccion_visual","proc_citologia","proc_mamografia","proc_psa","proc_tacto_rectal","proc_sangre_oculta",
+        "proc_glicemia","proc_colesterol_total","proc_colesterol_hdl","proc_colesterol_ldl","proc_trigliceridos","proc_creatinina","proc_uroanalis",
+        "proc_prueba_treponema","proc_prueba_vih","proc_asesoria_pre_vih","proc_asesoria_pos_vih",
+        "proc_hep_b","proc_hep_c","proc_prueba_embarazo",
+        "consulta_anticoncepcion","consulta_anticoncepcion_control",
+        "med_anticoncepcion_oral","med_preservativos","proc_anticoncepcion_subdermico","proc_diu",
+        "proc_profilaxis","proc_detartraje","edu_individual","edu_familia","edu_grupal"
       ]
     },
     {
@@ -628,36 +911,236 @@
       "nombre_acta": "INDIVIDUALES PARA LOS ADULTOS MAYORES 60 A 80 Y MAS",
       "edad_min": 60, "edad_max": 200,
       "actividades": [
-        "consulta_medicina_general",
-        "consulta_enfermeria",
-        "consulta_odontologia",
-        "proc_adn_vph",
-        "proc_citologia",
-        "proc_mamografia",
-        "proc_psa",
-        "proc_tacto_rectal",
-        "proc_sangre_oculta",
-        "proc_glicemia",
-        "proc_colesterol_total",
-        "proc_colesterol_hdl",
-        "proc_colesterol_ldl",
-        "proc_trigliceridos",
-        "proc_creatinina",
-        "proc_uroanalis",
-        "proc_prueba_treponema",
-        "proc_prueba_vih",
-        "proc_asesoria_pre_vih",
-        "proc_asesoria_pos_vih",
-        "proc_hep_b",
-        "proc_hep_c",
-        "consulta_anticoncepcion",
-        "consulta_anticoncepcion_control",
-        "med_preservativos",
-        "proc_profilaxis",
-        "proc_detartraje",
-        "edu_individual",
-        "edu_familia",
-        "edu_grupal"
+        "consulta_medicina_general","consulta_enfermeria","consulta_odontologia",
+        "proc_adn_vph","proc_citologia","proc_mamografia","proc_psa","proc_tacto_rectal","proc_sangre_oculta",
+        "proc_glicemia","proc_colesterol_total","proc_colesterol_hdl","proc_colesterol_ldl","proc_trigliceridos","proc_creatinina","proc_uroanalis",
+        "proc_prueba_treponema","proc_prueba_vih","proc_asesoria_pre_vih","proc_asesoria_pos_vih",
+        "proc_hep_b","proc_hep_c",
+        "consulta_anticoncepcion","consulta_anticoncepcion_control","med_preservativos",
+        "proc_profilaxis","proc_detartraje","edu_individual","edu_familia","edu_grupal"
+      ]
+    },
+    {
+      "id": "RUTA_MATERNA_PRECONCEPCION",
+      "nombre": "RUTA MATERNO PERINATAL — Atención Preconcepcional",
+      "nombre_acta": "RUTA MATERNO PERINATAL · ATENCION PRECONCEPCIONAL",
+      "edad_min": 10, "edad_max": 55,
+      "actividades": [
+        "materna_consulta_preconcepcion",
+        "materna_ag_hep_b","proc_citologia","proc_glicemia",
+        "materna_hemoclasificacion","materna_hemograma","materna_hemoparasitos",
+        "materna_igg_toxoplasma","materna_igg_rubeola","materna_igg_varicela",
+        "proc_prueba_treponema","materna_urocultivo","proc_prueba_vih",
+        "proc_asesoria_pre_vih","proc_asesoria_pos_vih","materna_acido_folico"
+      ]
+    },
+    {
+      "id": "RUTA_MATERNA_IVE",
+      "nombre": "RUTA MATERNO PERINATAL — Interrupción Voluntaria del Embarazo (< 12 semanas)",
+      "nombre_acta": "RUTA MATERNO PERINATAL · INTERRUPCION VOLUNTARIA DEL EMBARAZO",
+      "edad_min": 10, "edad_max": 55,
+      "actividades": [
+        "materna_ive_consulta","materna_ive_valoracion_psicosocial","materna_ive_ecografia",
+        "materna_ive_medicamento","materna_ive_seguimiento","materna_ive_edu"
+      ]
+    },
+    {
+      "id": "RUTA_MATERNA_PRENATAL",
+      "nombre": "RUTA MATERNO PERINATAL — Atención Cuidado Prenatal",
+      "nombre_acta": "RUTA MATERNO PERINATAL · ATENCION CUIDADO PRENATAL",
+      "edad_min": 10, "edad_max": 55,
+      "actividades": [
+        "materna_prenatal_consulta_medgen","materna_prenatal_consulta_enf","materna_prenatal_consulta_gine",
+        "materna_prenatal_escala_riesgo","materna_prenatal_odonto","materna_prenatal_nutricion",
+        "materna_prenatal_psicologia","materna_prenatal_cuadro_hematico","materna_hemoclasificacion",
+        "materna_prenatal_urocultivo","materna_prenatal_coombs",
+        "materna_prenatal_ecografia_obs","materna_prenatal_ecografia_nucal",
+        "materna_prenatal_treponema","materna_prenatal_vdrl","materna_prenatal_glicemia_ayunas",
+        "materna_prenatal_ptog","materna_prenatal_igg_toxo","materna_prenatal_igm_toxo",
+        "materna_prenatal_chagas","materna_prenatal_vih",
+        "proc_asesoria_pre_vih","proc_asesoria_pos_vih","materna_ag_hep_b","proc_citologia",
+        "materna_prenatal_frotis_estrepto","materna_prenatal_toxoide",
+        "materna_prenatal_influenza","materna_prenatal_tdap",
+        "materna_prenatal_calcio","materna_prenatal_desparasitacion",
+        "materna_prenatal_acido_folico","materna_prenatal_sulfato_ferroso"
+      ]
+    },
+    {
+      "id": "RUTA_MATERNA_PARTO",
+      "nombre": "RUTA MATERNO PERINATAL — Atención del Parto y Recién Nacido",
+      "nombre_acta": "RUTA MATERNO PERINATAL · ATENCION DEL PARTO Y RECIEN NACIDO",
+      "edad_min": 10, "edad_max": 55,
+      "actividades": [
+        "materna_parto_vaginal","materna_recien_nacido"
+      ]
+    },
+    {
+      "id": "RUTA_MATERNA_POSPARTO",
+      "nombre": "RUTA MATERNO PERINATAL — Atención Posparto Binomio Madre-Hijo",
+      "nombre_acta": "RUTA MATERNO PERINATAL · ATENCION POSPARTO BIMONIO MADRE - HIJO",
+      "edad_min": 10, "edad_max": 55,
+      "actividades": [
+        "materna_posparto_consulta","materna_posparto_hemoclasif","materna_posparto_tsh"
+      ]
+    },
+    {
+      "id": "DI_PRIMERA_INFANCIA",
+      "nombre": "DEMANDA INDUCIDA — Primera Infancia (0-5 años) - 1",
+      "nombre_acta": "RUTA INTEGRAL DEMANDA INDUCIDA · PRIMERA INFANCIA -1",
+      "edad_min": 0, "edad_max": 5,
+      "actividades": [
+        "di_remision_valoracion","di_esquema_pai","di_seguimiento_inasistentes_pi"
+      ]
+    },
+    {
+      "id": "DI_INFANCIA",
+      "nombre": "DEMANDA INDUCIDA — Infancia (6-11 años) - 2",
+      "nombre_acta": "RUTA INTEGRAL DEMANDA INDUCIDA · INFANCIA -2",
+      "edad_min": 6, "edad_max": 11,
+      "actividades": [
+        "di_remision_valoracion","di_esquema_pai","di_seguimiento_inasistentes_inf"
+      ]
+    },
+    {
+      "id": "DI_ADOLESCENCIA",
+      "nombre": "DEMANDA INDUCIDA — Adolescencia (12-17 años) - 3",
+      "nombre_acta": "RUTA INTEGRAL DEMANDA INDUCIDA · ADOLESCENCIA -3",
+      "edad_min": 12, "edad_max": 17,
+      "actividades": [
+        "di_remision_valoracion","di_esquema_pai","di_seguimiento_inasistentes_pyms"
+      ]
+    },
+    {
+      "id": "DI_JOVENES",
+      "nombre": "DEMANDA INDUCIDA — Juventud (18-28 años) - 4",
+      "nombre_acta": "RUTA INTEGRAL DEMANDA INDUCIDA · JUVENTUD -4",
+      "edad_min": 18, "edad_max": 28,
+      "actividades": [
+        "di_remision_valoracion","di_esquema_pai","di_seguimiento_inasistentes_pyms"
+      ]
+    },
+    {
+      "id": "DI_ADULTEZ",
+      "nombre": "DEMANDA INDUCIDA — Adultez (29-59 años) - 5",
+      "nombre_acta": "RUTA INTEGRAL DEMANDA INDUCIDA · ADULTEZ -5",
+      "edad_min": 29, "edad_max": 59,
+      "actividades": [
+        "di_remision_valoracion","di_esquema_pai","di_seguimiento_inasistentes"
+      ]
+    },
+    {
+      "id": "DI_VEJEZ",
+      "nombre": "DEMANDA INDUCIDA — Vejez (60+ años) - 6",
+      "nombre_acta": "RUTA INTEGRAL DEMANDA INDUCIDA · VEJEZ -6",
+      "edad_min": 60, "edad_max": 200,
+      "actividades": [
+        "di_remision_valoracion","di_esquema_pai","di_seguimiento_inasistentes"
+      ]
+    },
+    {
+      "id": "DI0007",
+      "nombre": "DEMANDA INDUCIDA — Tamizaciones Detección Oportuna Cáncer CCU-Mama-Próstata-Colon",
+      "nombre_acta": "RUTA INTEGRAL DEMANDA INDUCIDA · DI0007",
+      "edad_min": 0, "edad_max": 200,
+      "actividades": [
+        "di_canalizacion_citologia","di_canalizacion_colon","di_canalizacion_prostata","di_canalizacion_mamografia"
+      ]
+    },
+    {
+      "id": "DI0008",
+      "nombre": "DEMANDA INDUCIDA — Enfermedades Precursoras HTA-DM",
+      "nombre_acta": "RUTA INTEGRAL DEMANDA INDUCIDA · DI0008",
+      "edad_min": 0, "edad_max": 200,
+      "actividades": [
+        "di_captacion_hta","di_captacion_dm","di_seguimiento_hta","di_seguimiento_dm"
+      ]
+    },
+    {
+      "id": "DI0009",
+      "nombre": "DEMANDA INDUCIDA — Caracterización Grupo Familiar",
+      "nombre_acta": "RUTA INTEGRAL DEMANDA INDUCIDA · DI0009",
+      "edad_min": 0, "edad_max": 200,
+      "actividades": [
+        "di_visita_domiciliaria","di_usuarios_renuentes"
+      ]
+    },
+    {
+      "id": "DI00011",
+      "nombre": "DEMANDA INDUCIDA — Ruta Materno Perinatal",
+      "nombre_acta": "RUTA INTEGRAL DEMANDA INDUCIDA · DI00011",
+      "edad_min": 10, "edad_max": 55,
+      "actividades": [
+        "di_canalizacion_preconcepcion","di_canalizacion_prenatal","di_seguimiento_rmnp"
+      ]
+    },
+    {
+      "id": "DI_SALUD_MENTAL",
+      "nombre": "DEMANDA INDUCIDA — Ruta de Salud Mental",
+      "nombre_acta": "RUTA INTEGRAL DEMANDA INDUCIDA · SALUD MENTAL",
+      "edad_min": 0, "edad_max": 200,
+      "actividades": [
+        "di_salud_mental_1","di_salud_mental_2","di_salud_mental_3",
+        "di_salud_mental_4","di_salud_mental_5","di_salud_mental_6"
+      ]
+    },
+    {
+      "id": "RCV_RIESGO",
+      "nombre": "RUTA CEREBROVASCULAR Y METABÓLICA — Riesgo Bajo-Moderado-Alto",
+      "nombre_acta": "RUTA CEREBROVASCULAR Y METABOLICA · RIESGO-BAJO-MODERADO-ALTO",
+      "edad_min": 0, "edad_max": 200,
+      "actividades": [
+        "rcv_glucosa","rcv_colesterol_total","rcv_colesterol_hdl","rcv_colesterol_ldl","rcv_trigliceridos",
+        "rcv_hemograma2","rcv_uroanalis","rcv_creatinina",
+        "rcv_consulta_medgen_1vez","rcv_consulta_enf_1vez","rcv_consulta_med_interna",
+        "rcv_consulta_cardiologia","rcv_consulta_endocrino","rcv_consulta_nefrologia",
+        "rcv_hbg_glicosilada","rcv_microalbuminuria","rcv_creatinuria","rcv_potasio",
+        "rcv_seguimiento_medgen","rcv_seguimiento_enf","rcv_seguimiento_med_interna",
+        "rcv_seguimiento_cardiologia","rcv_seguimiento_nefrologia",
+        "rcv_seguimiento_nutricion","rcv_seguimiento_psicologia",
+        "rcv_ecg","rcv_ecografia_cardiaca","rcv_radiografia_torax","rcv_ecografia_urinaria",
+        "rcv_transaminasas_ami","rcv_transaminasas_glu",
+        "rcv_consulta_oftalmologia","rcv_consulta_nutricion_1vez","rcv_consulta_psicologia_1vez",
+        "rcv_edu_grupal"
+      ]
+    },
+    {
+      "id": "RCV_DM",
+      "nombre": "RUTA CEREBROVASCULAR Y METABÓLICA — DM",
+      "nombre_acta": "RUTA CEREBROVASCULAR Y METABOLICA · DM",
+      "edad_min": 0, "edad_max": 200,
+      "actividades": [
+        "rcv_glucosa","rcv_colesterol_total","rcv_colesterol_hdl","rcv_colesterol_ldl","rcv_trigliceridos",
+        "rcv_hemograma2","rcv_uroanalis","rcv_creatinina",
+        "rcv_consulta_medgen_1vez","rcv_consulta_enf_1vez","rcv_consulta_med_interna",
+        "rcv_consulta_cardiologia","rcv_consulta_endocrino","rcv_consulta_nefrologia",
+        "rcv_hbg_glicosilada","rcv_microalbuminuria","rcv_creatinuria","rcv_potasio",
+        "rcv_seguimiento_medgen","rcv_seguimiento_enf","rcv_seguimiento_med_interna",
+        "rcv_seguimiento_cardiologia","rcv_seguimiento_nefrologia",
+        "rcv_seguimiento_nutricion","rcv_seguimiento_psicologia",
+        "rcv_ecg","rcv_ecografia_cardiaca","rcv_radiografia_torax","rcv_ecografia_urinaria",
+        "rcv_transaminasas_ami","rcv_transaminasas_glu",
+        "rcv_consulta_oftalmologia","rcv_consulta_nutricion_1vez","rcv_consulta_psicologia_1vez",
+        "rcv_edu_grupal"
+      ]
+    },
+    {
+      "id": "RCV_DM_HTA",
+      "nombre": "RUTA CEREBROVASCULAR Y METABÓLICA — DM + HTA",
+      "nombre_acta": "RUTA CEREBROVASCULAR Y METABOLICA · DM+HTA",
+      "edad_min": 0, "edad_max": 200,
+      "actividades": [
+        "rcv_glucosa","rcv_colesterol_total","rcv_colesterol_hdl","rcv_colesterol_ldl","rcv_trigliceridos",
+        "rcv_hemograma2","rcv_uroanalis","rcv_creatinina",
+        "rcv_consulta_medgen_1vez","rcv_consulta_enf_1vez","rcv_consulta_med_interna",
+        "rcv_consulta_cardiologia","rcv_consulta_endocrino","rcv_consulta_nefrologia",
+        "rcv_hbg_glicosilada","rcv_microalbuminuria","rcv_creatinuria","rcv_potasio",
+        "rcv_seguimiento_medgen","rcv_seguimiento_enf","rcv_seguimiento_med_interna",
+        "rcv_seguimiento_cardiologia","rcv_seguimiento_nefrologia",
+        "rcv_seguimiento_nutricion","rcv_seguimiento_psicologia",
+        "rcv_ecg","rcv_ecografia_cardiaca","rcv_radiografia_torax","rcv_ecografia_urinaria",
+        "rcv_transaminasas_ami","rcv_transaminasas_glu",
+        "rcv_consulta_oftalmologia","rcv_consulta_nutricion_1vez","rcv_consulta_psicologia_1vez",
+        "rcv_edu_grupal"
       ]
     }
   ]
