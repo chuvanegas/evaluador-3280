@@ -669,18 +669,35 @@ html.dark .it-btn.active{color:var(--azul2)}
         <button onclick="filtrarSegCUPS('di')" id="fseg-di" style="padding:3px 10px;border-radius:12px;font-size:11px;font-weight:600;border:1.5px solid #065F46;background:none;color:#065F46;cursor:pointer">🔁 Demanda Inducida</button>
         <button onclick="filtrarSegCUPS('rcv')" id="fseg-rcv" style="padding:3px 10px;border-radius:12px;font-size:11px;font-weight:600;border:1.5px solid #92400E;background:none;color:#92400E;cursor:pointer">❤️ RCV</button>
       </div>
-      <div style="padding:0;overflow-x:auto;overflow-y:auto;max-height:calc(100vh - 280px)">
+      <div style="padding:0;overflow-x:auto">
         <table class="users-table" id="cups-table">
           <thead><tr>
-            <th style="width:100px;position:sticky;top:0;z-index:5">CUPS</th>
-            <th style="position:sticky;top:0;z-index:5">Descripción / Actividad</th>
-            <th style="width:90px;position:sticky;top:0;z-index:5">Tipo</th>
-            <th style="width:130px;position:sticky;top:0;z-index:5">Finalidades</th>
-            <th style="width:160px;position:sticky;top:0;z-index:5">Cursos de Vida</th>
-            <th style="width:42px;position:sticky;top:0;z-index:5"></th>
+            <th style="width:100px">CUPS</th>
+            <th>Descripción / Actividad</th>
+            <th style="width:90px">Tipo</th>
+            <th style="width:130px">Finalidades</th>
+            <th style="width:160px">Cursos de Vida</th>
+            <th style="width:42px"></th>
           </tr></thead>
           <tbody id="cups-tbody"><tr><td colspan="6" style="text-align:center;padding:24px;color:var(--gris3)">Cargando...</td></tr></tbody>
         </table>
+      </div>
+      <!-- Paginación -->
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-top:1px solid var(--gris1);gap:8px;flex-wrap:wrap">
+        <div style="font-size:11px;color:var(--gris3)" id="cups-pag-info"></div>
+        <div style="display:flex;align-items:center;gap:6px">
+          <button onclick="cupsPagIr(0)" id="cups-pag-first" style="padding:4px 9px;border:1.5px solid var(--gris2);border-radius:6px;background:none;cursor:pointer;font-size:12px;color:var(--gris3)">«</button>
+          <button onclick="cupsPagIr(_cupsPag-1)" id="cups-pag-prev" style="padding:4px 9px;border:1.5px solid var(--gris2);border-radius:6px;background:none;cursor:pointer;font-size:12px;color:var(--gris3)">‹ Anterior</button>
+          <span id="cups-pag-nums" style="display:flex;gap:4px"></span>
+          <button onclick="cupsPagIr(_cupsPag+1)" id="cups-pag-next" style="padding:4px 9px;border:1.5px solid var(--azul2);border-radius:6px;background:var(--azul4);cursor:pointer;font-size:12px;color:var(--azul2);font-weight:600">Siguiente ›</button>
+          <button onclick="cupsPagIr(Math.ceil(_cupsFiltered.length/CUPS_PER_PAGE)-1)" id="cups-pag-last" style="padding:4px 9px;border:1.5px solid var(--gris2);border-radius:6px;background:none;cursor:pointer;font-size:12px;color:var(--gris3)">»</button>
+          <select onchange="CUPS_PER_PAGE=+this.value;cupsPagIr(0)" style="padding:4px 7px;border:1.5px solid var(--gris2);border-radius:6px;font-size:11px;color:var(--gris3);background:var(--card-bg)">
+            <option value="15">15 / pág</option>
+            <option value="25" selected>25 / pág</option>
+            <option value="50">50 / pág</option>
+            <option value="100">100 / pág</option>
+          </select>
+        </div>
       </div>
     </div>
   </div>
@@ -1876,12 +1893,20 @@ function renderMantConfig(cfg){
 }
 
 function renderCUPSRows(rows, cfg){
+  _cupsFiltered=rows;
+  _cupsPag=0;
+  _renderCupsPagina();
+}
+
+function _renderCupsFilas(rows){
   const cupstb=document.getElementById("cups-tbody");if(!cupstb) return;
-  const finMap=cfg?cfg.finalidades||S.config?.finalidades||{}:S.config?.finalidades||{};
+  const finMap=S.config?.finalidades||{};
   if(!rows.length){
     cupstb.innerHTML='<tr><td colspan="6" style="text-align:center;padding:18px;color:var(--gris3)">No hay actividades configuradas</td></tr>';
     return;
   }
+  // Para encabezados de segmento/programa necesitamos saber cuál es el anterior en la página
+  // Buscamos el contexto del primer elemento visible
   let lastSegKey=null, lastProgId=null, html="";
   for(const {act_id,act,prog,cups,fins,aplica,archivo,seg} of rows){
     const s=seg||{key:'otros',label:'📌 Otros',color:'#374151'};
@@ -1914,8 +1939,58 @@ function renderCUPSRows(rows, cfg){
   }
   cupstb.innerHTML=html;
 }
+// alias para compatibilidad interna
+function _renderCupsFilasLegacy(rows){_renderCupsFilas(rows);}
 
 let _activeSeg='';
+let _cupsFiltered=[];
+let _cupsPag=0;
+let CUPS_PER_PAGE=25;
+
+function cupsPagIr(n){
+  const total=Math.ceil(_cupsFiltered.length/CUPS_PER_PAGE);
+  _cupsPag=Math.max(0,Math.min(n,total-1));
+  _renderCupsPagina();
+}
+
+function _renderCupsPagina(){
+  const total=Math.ceil(_cupsFiltered.length/CUPS_PER_PAGE)||1;
+  const desde=_cupsPag*CUPS_PER_PAGE;
+  const hasta=Math.min(desde+CUPS_PER_PAGE,_cupsFiltered.length);
+  const pagRows=_cupsFiltered.slice(desde,hasta);
+
+  // Info
+  const info=document.getElementById("cups-pag-info");
+  if(info) info.textContent=`Mostrando ${desde+1}–${hasta} de ${_cupsFiltered.length} actividades`;
+
+  // Botones prev/next/first/last
+  const prev=document.getElementById("cups-pag-prev");
+  const next=document.getElementById("cups-pag-next");
+  const first=document.getElementById("cups-pag-first");
+  const last=document.getElementById("cups-pag-last");
+  if(prev){prev.disabled=_cupsPag===0;prev.style.opacity=_cupsPag===0?".4":"1";}
+  if(next){next.disabled=_cupsPag>=total-1;next.style.opacity=_cupsPag>=total-1?".4":"1";}
+  if(first){first.disabled=_cupsPag===0;first.style.opacity=_cupsPag===0?".4":"1";}
+  if(last){last.disabled=_cupsPag>=total-1;last.style.opacity=_cupsPag>=total-1?".4":"1";}
+
+  // Números de página (máx 7 visibles)
+  const nums=document.getElementById("cups-pag-nums");
+  if(nums){
+    let pages=[];
+    if(total<=7){pages=Array.from({length:total},(_,i)=>i);}
+    else{
+      const s=Math.max(0,Math.min(_cupsPag-3,total-7));
+      pages=Array.from({length:7},(_,i)=>s+i);
+    }
+    nums.innerHTML=pages.map(i=>`<button onclick="cupsPagIr(${i})"
+      style="width:28px;height:28px;border-radius:6px;border:1.5px solid ${i===_cupsPag?'var(--azul2)':'var(--gris2)'};
+      background:${i===_cupsPag?'var(--azul2)':'none'};color:${i===_cupsPag?'#fff':'var(--gris3)'};
+      font-size:11px;font-weight:600;cursor:pointer">${i+1}</button>`).join("");
+  }
+
+  // Renderizar filas de esta página
+  _renderCupsFilas(pagRows);
+}
 function filtrarCUPS(q){
   document.getElementById("cups-search").value=q||"";
   let rows=_cupsRows;
