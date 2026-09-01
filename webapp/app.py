@@ -438,17 +438,23 @@ def upload_rips():
         except Exception as e:
             info.append({"archivo": nombre, "error": str(e), "ok": False})
 
+    # Calcular cobertura usando RIPSEvaluator (usa fecha máx de atención, igual que Excel)
     cobertura = {}
-    if "usuarios" in sd["archivos"]:
-        from evaluator import _calcular_edad, _grupo_edad, _load_config
-        cfg = _load_config()
-        hoy = datetime.date.today()
-        for u in sd["archivos"]["usuarios"]:
-            fn = u.get("fechaNacimiento") or u.get("fecha_nacimiento")
-            edad = _calcular_edad(fn, hoy)
-            grupo = _grupo_edad(edad, cfg["cursos_de_vida"])
-            if grupo: cobertura[grupo] = cobertura.get(grupo, 0) + 1
-    return jsonify({"archivos_cargados": list(sd["archivos"].keys()), "detalle": info, "cobertura_poblacion": cobertura})
+    total_usuarios = 0
+    try:
+        from evaluator import RIPSEvaluator
+        ev = RIPSEvaluator()
+        for nombre, datos in sd["archivos"].items():
+            ev.cargar_archivo(nombre, datos)
+        ev._calcular_grupos()
+        total_usuarios = len(ev._usuarios)
+        for info_u in ev._usuarios.values():
+            g = info_u.get("grupo")
+            if g: cobertura[g] = cobertura.get(g, 0) + 1
+    except Exception as e:
+        cobertura = {"error": str(e)}
+    return jsonify({"archivos_cargados": list(sd["archivos"].keys()), "detalle": info,
+                    "cobertura_poblacion": cobertura, "total_usuarios": total_usuarios})
 
 def _canonicalizar_nombre(nombre):
     nombre = nombre.lower()
