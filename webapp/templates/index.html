@@ -2694,9 +2694,16 @@ function _calcularCobertura(archivos){
     const g=grupo(edad);
     if(g) cobertura[g]=(cobertura[g]||0)+1;
     const actos=actosPorNum[num]||[];
-    const cupsCount={};
-    for(const a of actos) cupsCount[a.cups]=(cupsCount[a.cups]||0)+1;
-    const repetidos=Object.fromEntries(Object.entries(cupsCount).filter(([,v])=>v>1));
+    // Solo contar como repetido si mismo CUPS en la MISMA fecha (facturación duplicada)
+    const cupsPerFecha={};// "CUPS|fecha" → conteo
+    for(const a of actos){
+      const k=a.cups+'|'+a.fecha;
+      cupsPerFecha[k]=(cupsPerFecha[k]||0)+1;
+    }
+    const repetidos={};
+    for(const[k,n] of Object.entries(cupsPerFecha)){
+      if(n>1){const cups=k.split('|')[0];repetidos[cups]=(repetidos[cups]||0)+(n-1);}
+    }
     detalle.push({tipo_doc:meta.tipo,num_doc:num,edad,sexo:meta.sexo,grupo:g,total_actos:actos.length,cups_repetidos:repetidos});
   }
   detalle.sort((a,b)=>((a.grupo||'')>(b.grupo||'')?1:-1)||((a.num_doc>b.num_doc)?1:-1));
