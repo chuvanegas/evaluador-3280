@@ -296,10 +296,58 @@ html.dark .it-btn.active{color:var(--azul2)}
       <div class="pr-card-body"><div id="ips-det-actas-list" style="color:var(--gris3);font-size:12.5px">Sin actas previas.</div></div>
     </div>
     <div class="pr-card" id="dash-placeholder">
-      <div class="pr-card-body" style="text-align:center;padding:48px 20px;color:var(--gris3)">
-        <div style="font-size:38px;margin-bottom:10px">🏥</div>
-        <div style="font-size:13.5px;font-weight:600;margin-bottom:5px">Selecciona un prestador</div>
-        <div style="font-size:12px">Haz clic en una IPS de la lista para ver sus actas.</div>
+      <div class="pr-card-body" style="text-align:center;padding:28px 20px 14px;color:var(--gris3)">
+        <div style="font-size:32px;margin-bottom:8px">🏥</div>
+        <div style="font-size:13px;font-weight:600;margin-bottom:3px">Selecciona un prestador</div>
+        <div style="font-size:11px">Haz clic en una IPS de la lista para ver sus actas.</div>
+      </div>
+    </div>
+    <!-- Carga de Datos RIPS en Dashboard -->
+    <div class="pr-card">
+      <div class="pr-card-header">
+        <div class="pr-card-icon">🗄️</div>
+        <div><div class="pr-card-title">Carga de Datos RIPS</div><div class="pr-card-sub">Arrastra o selecciona archivos TXT (Res. 3374) o JSON</div></div>
+      </div>
+      <div class="pr-card-body">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">
+          <!-- TXT -->
+          <label id="dash-lbl-txt" style="border:2px dashed var(--gris2);border-radius:10px;padding:22px 14px;display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer;transition:.15s;background:var(--gris0)"
+            ondragover="event.preventDefault();this.style.borderColor='var(--azul2)'"
+            ondragleave="this.style.borderColor=''"
+            ondrop="event.preventDefault();dashCargarRIPS(event.dataTransfer.files,'txt')">
+            <input type="file" accept=".txt" multiple style="display:none" onchange="dashCargarRIPS(this.files,'txt')">
+            <span style="font-size:28px">📄</span>
+            <div style="font-size:12px;font-weight:700;color:var(--azul)">ARCHIVOS RIPS (.TXT)</div>
+            <div style="font-size:10px;color:var(--gris3)" id="dash-sub-txt">Seleccionar TXT</div>
+          </label>
+          <!-- JSON -->
+          <label id="dash-lbl-json" style="border:2px dashed var(--gris2);border-radius:10px;padding:22px 14px;display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer;transition:.15s;background:var(--gris0)"
+            ondragover="event.preventDefault();this.style.borderColor='var(--azul2)'"
+            ondragleave="this.style.borderColor=''"
+            ondrop="event.preventDefault();dashCargarRIPS(event.dataTransfer.files,'json')">
+            <input type="file" accept=".json" multiple style="display:none" onchange="dashCargarRIPS(this.files,'json')">
+            <span style="font-size:28px">📋</span>
+            <div style="font-size:12px;font-weight:700;color:var(--azul)">RIPS JSON (.JSON)</div>
+            <div style="font-size:10px;color:var(--gris3)" id="dash-sub-json">Seleccionar JSON</div>
+          </label>
+        </div>
+        <div id="dash-rips-status" style="font-size:11px;color:var(--gris3);text-align:center;margin-bottom:10px;min-height:16px"></div>
+        <div style="display:grid;grid-template-columns:1fr auto;gap:8px">
+          <button class="btn btn-primary" style="justify-content:center;font-size:13px;padding:9px 0" onclick="dashProcesarRIPS()">
+            ⬆️ Procesar Data
+          </button>
+          <button class="btn" style="font-size:12px;padding:9px 14px;background:var(--gris0);border:1.5px solid var(--gris2);border-radius:8px;cursor:pointer;color:var(--gris3)" onclick="dashLimpiarRIPS()">
+            🗑 Limpiar RIPS
+          </button>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">
+          <button class="btn" id="dash-btn-preeval" style="justify-content:center;font-size:12px;padding:7px 0;background:var(--verde3);border:1.5px solid var(--verde2);border-radius:8px;cursor:pointer;color:var(--verde);font-weight:600;opacity:.5;pointer-events:none" onclick="dashIrEvaluacion()">
+            🔍 Pre-evaluar RIPS
+          </button>
+          <button class="btn" id="dash-btn-evaluar" style="justify-content:center;font-size:12px;padding:7px 0;background:var(--azul4);border:1.5px solid var(--azul2);border-radius:8px;cursor:pointer;color:var(--azul2);font-weight:600;opacity:.5;pointer-events:none" onclick="dashIrEvaluacion()">
+            ⚡ Ir a Evaluación
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -2532,6 +2580,68 @@ function leerInfo(){
 function v(id){return document.getElementById(id)?.value||"";}
 function fmt(n){if(n==null)return"$0";return"$"+parseFloat(n).toLocaleString("es-CO",{minimumFractionDigits:2,maximumFractionDigits:2});}
 function pct(n){return(parseFloat(n||0)*100).toFixed(2)+"%";}
+
+// ── CARGA RIPS DESDE DASHBOARD ──
+let _dashFiles=[];
+function dashCargarRIPS(files,tipo){
+  const arr=Array.from(files);
+  if(!arr.length) return;
+  arr.forEach(f=>{
+    if(!_dashFiles.find(x=>x.name===f.name)) _dashFiles.push(f);
+  });
+  const txtC=_dashFiles.filter(f=>f.name.endsWith('.txt')||f.name.endsWith('.TXT')).length;
+  const jsonC=_dashFiles.filter(f=>f.name.endsWith('.json')||f.name.endsWith('.JSON')).length;
+  document.getElementById('dash-sub-txt').textContent=txtC?`${txtC} archivo(s) TXT`:'Seleccionar TXT';
+  document.getElementById('dash-sub-json').textContent=jsonC?`${jsonC} archivo(s) JSON`:'Seleccionar JSON';
+  if(txtC) document.getElementById('dash-lbl-txt').style.borderColor='var(--azul2)';
+  if(jsonC) document.getElementById('dash-lbl-json').style.borderColor='var(--azul2)';
+  document.getElementById('dash-rips-status').textContent=`${_dashFiles.length} archivo(s) seleccionado(s) — pendiente procesar`;
+}
+async function dashProcesarRIPS(){
+  if(!_dashFiles.length){alert('Selecciona al menos un archivo RIPS primero.');return;}
+  const st=document.getElementById('dash-rips-status');
+  st.textContent='Procesando...';
+  const fd=new FormData();
+  _dashFiles.forEach(f=>fd.append('files',f));
+  try{
+    const r=await fetch('/api/upload-rips',{method:'POST',body:fd});
+    const d=await r.json();
+    if(d.archivos_cargados){
+      const ok=d.detalle.filter(x=>x.ok).length;
+      const usu=d.cobertura_poblacion?Object.values(d.cobertura_poblacion).reduce((a,b)=>a+b,0):null;
+      st.textContent=`✅ ${ok} sección(es) cargadas${usu?` · ${usu} usuarios`:''}`;
+      st.style.color='var(--verde)';
+      ['dash-btn-preeval','dash-btn-evaluar'].forEach(id=>{
+        const b=document.getElementById(id);
+        b.style.opacity='1';b.style.pointerEvents='auto';
+      });
+    } else {
+      st.textContent='❌ Error: '+(d.error||'desconocido');
+      st.style.color='#dc2626';
+    }
+  } catch(e){st.textContent='❌ Error de conexión';st.style.color='#dc2626';}
+}
+function dashLimpiarRIPS(){
+  _dashFiles=[];
+  ['txt','json'].forEach(t=>{
+    document.getElementById('dash-sub-'+t).textContent=t==='txt'?'Seleccionar TXT':'Seleccionar JSON';
+    document.getElementById('dash-lbl-'+t).style.borderColor='';
+  });
+  const st=document.getElementById('dash-rips-status');
+  st.textContent='';st.style.color='var(--gris3)';
+  ['dash-btn-preeval','dash-btn-evaluar'].forEach(id=>{
+    const b=document.getElementById(id);
+    b.style.opacity='.5';b.style.pointerEvents='none';
+  });
+  fetch('/api/limpiar',{method:'POST'}).catch(()=>{});
+}
+function dashIrEvaluacion(){
+  document.querySelectorAll('.tab-content').forEach(p=>p.classList.remove('active'));
+  document.getElementById('tab-evaluacion').classList.add('active');
+  document.querySelectorAll('.nav-tab').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(b=>{if(b.textContent.includes('Evaluación'))b.classList.add('active');});
+  preevaluar();
+}
 </script>
 </body>
 </html>
