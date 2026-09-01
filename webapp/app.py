@@ -635,6 +635,44 @@ def upload_rips():
                     "cobertura_poblacion": cobertura, "total_usuarios": total_usuarios,
                     "usuarios_detalle": usuarios_detalle})
 
+@app.route("/api/procesar-rips", methods=["POST"])
+@login_required
+def procesar_rips():
+    """Recibe datos RIPS pre-parseados por el browser y los guarda en sesión."""
+    body = request.get_json(force=True, silent=True) or {}
+    archivos = body.get("archivos", {})
+    detalle_in = body.get("detalle", [])
+    # El browser ya calculó cobertura y usuarios_detalle
+    cobertura = body.get("cobertura_poblacion", {})
+    usuarios_detalle = body.get("usuarios_detalle", [])
+    total_usuarios = body.get("total_usuarios", len(usuarios_detalle))
+
+    sd = _session_data()
+    for nombre, datos in archivos.items():
+        sd["archivos"][nombre] = datos
+
+    # Si el browser no envió cobertura (fallback), calcular en servidor
+    if not cobertura:
+        try:
+            from evaluator import RIPSEvaluator
+            ev = RIPSEvaluator()
+            for nombre, datos in sd["archivos"].items():
+                ev.cargar_archivo(nombre, datos)
+            ev._calcular_grupos()
+            total_usuarios = len(ev._usuarios)
+            for info_u in ev._usuarios.values():
+                g = info_u.get("grupo")
+                if g: cobertura[g] = cobertura.get(g, 0) + 1
+        except Exception as e:
+            cobertura = {"error": str(e)}
+
+    return jsonify({"archivos_cargados": list(sd["archivos"].keys()),
+                    "detalle": detalle_in,
+                    "cobertura_poblacion": cobertura,
+                    "total_usuarios": total_usuarios,
+                    "usuarios_detalle": usuarios_detalle})
+
+
 def _canonicalizar_nombre(nombre):
     nombre = nombre.lower()
     for alias, canon in [

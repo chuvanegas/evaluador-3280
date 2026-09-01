@@ -2578,22 +2578,170 @@ function dashCargarRIPS(files,tipo){
   arr.forEach(f=>{
     if(!_dashFiles.find(x=>x.name===f.name)) _dashFiles.push(f);
   });
-  const txtC=_dashFiles.filter(f=>f.name.endsWith('.txt')||f.name.endsWith('.TXT')).length;
-  const jsonC=_dashFiles.filter(f=>f.name.endsWith('.json')||f.name.endsWith('.JSON')).length;
+  const txtC=_dashFiles.filter(f=>f.name.toLowerCase().endsWith('.txt')).length;
+  const jsonC=_dashFiles.filter(f=>f.name.toLowerCase().endsWith('.json')).length;
   document.getElementById('dash-sub-txt').textContent=txtC?`${txtC} archivo(s) TXT`:'Seleccionar TXT';
   document.getElementById('dash-sub-json').textContent=jsonC?`${jsonC} archivo(s) JSON`:'Seleccionar JSON';
   if(txtC) document.getElementById('dash-lbl-txt').style.borderColor='var(--azul2)';
   if(jsonC) document.getElementById('dash-lbl-json').style.borderColor='var(--azul2)';
   document.getElementById('dash-rips-status').textContent=`${_dashFiles.length} archivo(s) seleccionado(s) — pendiente procesar`;
 }
+
+// Parsea TXT RIPS (Res. 3374) en el navegador — evita límite 4.5MB de Vercel
+function _parsearRipsTxt(text){
+  const lines=text.replace(/\r/g,'').split('\n').map(l=>l.replace(/\|+$/,'').trim());
+  const raw={};let sec=null;
+  for(const l of lines){
+    if(l.startsWith('°---- ARCHIVO-')&&l.endsWith('----°')){
+      const n=l.replace('°---- ARCHIVO-','').replace(' ----°','').trim();
+      if(!(n in raw)){raw[n]=[];sec=n;}else{sec=null;}
+    }else if(sec&&l&&!l.startsWith('°')) raw[sec].push(l);
+  }
+  const c=(l,i)=>(l.split(',')[i]||'').trim();
+  const r={};
+  if(raw['USUARIOS']){r.usuarios=raw['USUARIOS'].map(l=>({
+    tipoDocumentoIdentificacion:c(l,0),numDocumentoIdentificacion:c(l,1),
+    fechaNacimiento:c(l,3),codSexo:c(l,4)
+  })).filter(x=>x.numDocumentoIdentificacion);}
+  if(raw['CONSULTAS']){r.consultas=raw['CONSULTAS'].map(l=>({
+    tipoDocumentoIdentificacion:c(l,1),numDocumentoIdentificacion:c(l,2),
+    fechaInicioAtencion:c(l,4).slice(0,10),codConsulta:c(l,6),finalidadTecnologiaSalud:c(l,20)
+  })).filter(x=>x.numDocumentoIdentificacion);}
+  if(raw['PROCEDIMIENTOS']){r.procedimientos=raw['PROCEDIMIENTOS'].map(l=>({
+    tipoDocumentoIdentificacion:c(l,1),numDocumentoIdentificacion:c(l,2),
+    fechaInicioAtencion:c(l,4).slice(0,10),codProcedimiento:c(l,7),finalidadTecnologiaSalud:c(l,19)
+  })).filter(x=>x.numDocumentoIdentificacion);}
+  if(raw['MEDICAMENTOS']){r.medicamentos=raw['MEDICAMENTOS'].map(l=>({
+    tipoDocumentoIdentificacion:c(l,1),numDocumentoIdentificacion:c(l,2),
+    fechaDispensacionMedicamento:c(l,6).slice(0,10),codTecnologiaSalud:c(l,10)
+  })).filter(x=>x.numDocumentoIdentificacion);}
+  if(raw['OTROS SERVICIOS']){r.otrosServicios=raw['OTROS SERVICIOS'].map(l=>({
+    tipoDocumentoIdentificacion:c(l,1),numDocumentoIdentificacion:c(l,2),
+    fechaInicioAtencion:c(l,6).slice(0,10),codServicio:c(l,8)
+  })).filter(x=>x.numDocumentoIdentificacion);}
+  return r;
+}
+
+function _readFileText(file,enc='UTF-8'){
+  return new Promise((res,rej)=>{
+    const fr=new FileReader();
+    fr.onload=e=>res(e.target.result);
+    fr.onerror=rej;
+    fr.readAsText(file,enc);
+  });
+}
+
+// Calcula cobertura y detalle de usuarios 100% en el browser
+function _calcularCobertura(archivos){
+  // Determinar fechaMax por usuario a partir de todos los archivos de servicio
+  const FECHA_KEYS={
+    consultas:'fechaInicioAtencion',procedimientos:'fechaInicioAtencion',
+    medicamentos:'fechaDispensacionMedicamento',otrosServicios:'fechaInicioAtencion'
+  };
+  const CUPS_KEYS={
+    consultas:'codConsulta',procedimientos:'codProcedimiento',
+    medicamentos:'codTecnologiaSalud',otrosServicios:'codServicio'
+  };
+  const fechaMax={};// numDoc → fecha ISO max
+  const actosPorNum={};// numDoc → [{cups,fecha,archivo}]
+  for(const[arch,fk] of Object.entries(FECHA_KEYS)){
+    for(const r of (archivos[arch]||[])){
+      const num=(r.numDocumentoIdentificacion||'').trim();
+      const f=(r[fk]||'').slice(0,10);
+      const cups=(r[CUPS_KEYS[arch]]||'').trim();
+      if(num&&f){
+        if(!fechaMax[num]||f>fechaMax[num]) fechaMax[num]=f;
+        if(cups) (actosPorNum[num]=actosPorNum[num]||[]).push({cups,fecha:f,archivo:arch});
+      }
+    }
+  }
+  // Construir mapa de usuarios desde archivo USUARIOS
+  const usuariosMeta={};
+  for(const r of (archivos.usuarios||[])){
+    const num=(r.numDocumentoIdentificacion||'').trim();
+    if(num) usuariosMeta[num]={tipo:r.tipoDocumentoIdentificacion,fechaNac:r.fechaNacimiento,sexo:r.codSexo};
+  }
+  // Para usuarios que no están en USUARIOS pero sí en servicios, añadirlos sin fechaNac
+  for(const num of Object.keys(fechaMax)){
+    if(!usuariosMeta[num]) usuariosMeta[num]={tipo:'',fechaNac:'',sexo:''};
+  }
+  // Calcular edad y grupo
+  function calcEdad(fechaNac,refFecha){
+    if(!fechaNac||!refFecha) return null;
+    const[yn,mn,dn]=(fechaNac.split('-').map(Number));
+    const[yr,mr,dr]=(refFecha.split('-').map(Number));
+    let age=(yr-yn);
+    if(mr<mn||(mr===mn&&dr<dn)) age--;
+    return age<0?0:age;
+  }
+  function grupo(edad){
+    if(edad===null||edad===undefined) return null;
+    if(edad<=5)  return'PRIMERA_INFANCIA';
+    if(edad<=11) return'INFANCIA';
+    if(edad<=17) return'ADOLESCENCIA';
+    if(edad<=28) return'JOVENES';
+    if(edad<=59) return'ADULTEZ';
+    return'VEJEZ';
+  }
+  const cobertura={};
+  const detalle=[];
+  for(const[num,meta] of Object.entries(usuariosMeta)){
+    const refFecha=fechaMax[num]||null;
+    let fNac=meta.fechaNac;
+    // normalizar dd/mm/yyyy → yyyy-mm-dd
+    if(fNac&&fNac.includes('/')){const p=fNac.split('/');fNac=p[2]+'-'+p[1].padStart(2,'0')+'-'+p[0].padStart(2,'0');}
+    const edad=calcEdad(fNac,refFecha);
+    const g=grupo(edad);
+    if(g) cobertura[g]=(cobertura[g]||0)+1;
+    const actos=actosPorNum[num]||[];
+    const cupsCount={};
+    for(const a of actos) cupsCount[a.cups]=(cupsCount[a.cups]||0)+1;
+    const repetidos=Object.fromEntries(Object.entries(cupsCount).filter(([,v])=>v>1));
+    detalle.push({tipo_doc:meta.tipo,num_doc:num,edad,sexo:meta.sexo,grupo:g,total_actos:actos.length,cups_repetidos:repetidos});
+  }
+  detalle.sort((a,b)=>((a.grupo||'')>(b.grupo||'')?1:-1)||((a.num_doc>b.num_doc)?1:-1));
+  return{cobertura,usuarios_detalle:detalle,total_usuarios:detalle.length};
+}
+
 async function dashProcesarRIPS(){
   if(!_dashFiles.length){alert('Selecciona al menos un archivo RIPS primero.');return;}
   const st=document.getElementById('dash-rips-status');
-  st.textContent='Procesando...';
-  const fd=new FormData();
-  _dashFiles.forEach(f=>fd.append('files',f));
+  st.textContent='Leyendo archivos...';st.style.color='var(--gris3)';
+  // Parsear todos los archivos en el browser
+  const archivos={};const detalle=[];
+  for(const f of _dashFiles){
+    const nombre=f.name.toLowerCase();
+    try{
+      if(nombre.endsWith('.txt')){
+        let txt=await _readFileText(f,'windows-1252');
+        const secs=_parsearRipsTxt(txt);
+        for(const[k,v] of Object.entries(secs)){
+          archivos[k]=archivos[k]?archivos[k].concat(v):v;
+          detalle.push({archivo:k,registros:v.length,ok:true});
+        }
+      } else if(nombre.endsWith('.json')){
+        const txt=await _readFileText(f,'UTF-8');
+        let data=JSON.parse(txt);
+        if(!Array.isArray(data))data=[data];
+        let canon=nombre.replace('.json','');
+        if(canon.includes('consulta'))canon='consultas';
+        else if(canon.includes('proced'))canon='procedimientos';
+        else if(canon.includes('medicam'))canon='medicamentos';
+        else if(canon.includes('otro'))canon='otrosServicios';
+        else if(canon.includes('usuario'))canon='usuarios';
+        archivos[canon]=archivos[canon]?archivos[canon].concat(data):data;
+        detalle.push({archivo:canon,registros:data.length,ok:true});
+      }
+    }catch(err){detalle.push({archivo:f.name,error:err.message,ok:false});}
+  }
+  st.textContent='Calculando cobertura...';
+  // Calcular todo en el browser
+  const {cobertura,usuarios_detalle,total_usuarios}=_calcularCobertura(archivos);
+  // Enviar solo el resumen compacto al servidor (para sesión y evaluación)
   try{
-    const r=await fetch('/api/upload-rips',{method:'POST',body:fd});
+    const r=await fetch('/api/procesar-rips',{method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({archivos,detalle,cobertura_poblacion:cobertura,usuarios_detalle,total_usuarios})});
     if(!r.ok){const txt=await r.text();st.textContent='❌ Error HTTP '+r.status+': '+txt.slice(0,120);st.style.color='#dc2626';return;}
     const d=await r.json();
     if(d.archivos_cargados){
@@ -2676,7 +2824,7 @@ async function dashProcesarRIPS(){
       st.textContent='❌ Error: '+(d.error||'desconocido');
       st.style.color='#dc2626';
     }
-  } catch(e){st.textContent='❌ Error: '+e.message;st.style.color='#dc2626';}
+  } catch(e){st.textContent='❌ Error: '+e.message;st.style.color='#dc2626';console.error(e);}
 }
 function dashLimpiarRIPS(){
   _dashFiles=[];
