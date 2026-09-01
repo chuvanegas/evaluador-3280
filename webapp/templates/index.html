@@ -2796,8 +2796,13 @@ async function dashProcesarRIPS(){
   st.textContent='Leyendo archivos...';st.style.color='var(--gris3)';
   // Parsear todos los archivos en el browser
   const archivos={};const detalle=[];
+  // fechas por archivo para mostrar periodo
+  const _fechaKey={consultas:'fechaInicioAtencion',procedimientos:'fechaInicioAtencion',
+    medicamentos:'fechaDispensacionMedicamento',otrosServicios:'fechaInicioAtencion'};
+  const archivosInfo=[];// {nombre, fechaMin, fechaMax, secciones:{tipo:count}}
   for(const f of _dashFiles){
     const nombre=f.name.toLowerCase();
+    const info={nombre:f.name,fechaMin:null,fechaMax:null,secciones:{}};
     try{
       if(nombre.endsWith('.txt')){
         let txt=await _readFileText(f,'windows-1252');
@@ -2805,6 +2810,16 @@ async function dashProcesarRIPS(){
         for(const[k,v] of Object.entries(secs)){
           archivos[k]=archivos[k]?archivos[k].concat(v):v;
           detalle.push({archivo:k,registros:v.length,ok:true});
+          info.secciones[k]=(info.secciones[k]||0)+v.length;
+          // calcular fechas de este archivo
+          const fk=_fechaKey[k];
+          if(fk) for(const r of v){
+            const fd=(r[fk]||'').slice(0,10);
+            if(fd&&fd.length>=8){
+              if(!info.fechaMin||fd<info.fechaMin) info.fechaMin=fd;
+              if(!info.fechaMax||fd>info.fechaMax) info.fechaMax=fd;
+            }
+          }
         }
       } else if(nombre.endsWith('.json')){
         const txt=await _readFileText(f,'UTF-8');
@@ -2818,9 +2833,12 @@ async function dashProcesarRIPS(){
         else if(canon.includes('usuario'))canon='usuarios';
         archivos[canon]=archivos[canon]?archivos[canon].concat(data):data;
         detalle.push({archivo:canon,registros:data.length,ok:true});
+        info.secciones[canon]=(info.secciones[canon]||0)+data.length;
       }
+      archivosInfo.push(info);
     }catch(err){detalle.push({archivo:f.name,error:err.message,ok:false});}
   }
+  window._archivosInfo=archivosInfo;
   st.textContent='Calculando cobertura...';
   // Calcular todo en el browser
   const {cobertura,usuarios_detalle,total_usuarios}=_calcularCobertura(archivos);
@@ -2866,12 +2884,31 @@ async function dashProcesarRIPS(){
         </div>`;
       });
       html+='</div>';
-      // secciones cargadas
+      // secciones consolidadas (totales por tipo)
+      const totalesSec={};
+      d.detalle.filter(x=>x.ok).forEach(s=>{totalesSec[s.archivo]=(totalesSec[s.archivo]||0)+s.registros;});
       html+=`<div style="padding:6px 12px;border-top:1px solid var(--gris1);background:var(--gris0);display:flex;gap:6px;flex-wrap:wrap">`;
-      d.detalle.filter(x=>x.ok).forEach(s=>{
-        html+=`<span style="background:var(--azul3);color:var(--azul);padding:2px 7px;border-radius:10px;font-size:10px;font-weight:600">${s.archivo} <b>${s.registros}</b></span>`;
+      Object.entries(totalesSec).forEach(([sec,tot])=>{
+        html+=`<span style="background:var(--azul3);color:var(--azul);padding:2px 7px;border-radius:10px;font-size:10px;font-weight:600">${sec} <b>${tot.toLocaleString('es-CO')}</b></span>`;
       });
       html+='</div>';
+      // Fechas por archivo
+      const ai=window._archivosInfo||[];
+      if(ai.length){
+        const _fmt=d=>{ if(!d) return '—';
+          // yyyy-mm-dd o yyyymmdd → dd/mm/yyyy
+          if(d.includes('-')) return d.split('-').reverse().join('/');
+          if(d.length===8) return d.slice(6)+'/'+d.slice(4,6)+'/'+d.slice(0,4);
+          return d;};
+        html+=`<div style="padding:6px 12px;border-top:1px solid var(--gris1);background:var(--card-bg);display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+          <span style="font-size:9.5px;color:var(--gris3);font-weight:600">📅 PERIODOS:</span>`;
+        ai.forEach(info=>{
+          if(!info.fechaMin&&!info.fechaMax) return;
+          html+=`<span style="font-size:10px;background:var(--gris0);padding:2px 8px;border-radius:8px;border:1px solid var(--gris1)">
+            <b>${info.nombre}</b>: ${_fmt(info.fechaMin)} – ${_fmt(info.fechaMax)}</span>`;
+        });
+        html+='</div>';
+      }
       const tabla=document.getElementById('dash-cob-tabla');
       tabla.innerHTML=html; tabla.style.display='block';
       // Tabla detalle usuarios
