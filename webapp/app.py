@@ -520,6 +520,56 @@ def evaluar():
                     "totales": {"exigido": total_e, "reconocido": total_r, "descuento": total_d,
                                 "pct": total_r/total_e if total_e else 1.0}})
 
+@app.route("/api/preeval", methods=["POST"])
+@login_required
+def preeval():
+    """Pre-evaluación: cuenta actividades encontradas en los RIPS cargados sin necesitar metas."""
+    sd = _session_data()
+    body = request.get_json() or {}
+    periodo_str = body.get("periodo_fin", sd.get("info_acta", {}).get("periodo_fin", ""))
+    periodo_ref = None
+    if periodo_str:
+        for fmt in ("%Y-%m-%d", "%d/%m/%Y"):
+            try: periodo_ref = datetime.datetime.strptime(periodo_str, fmt).date(); break
+            except: pass
+
+    ev = RIPSEvaluator(periodo_ref=periodo_ref)
+    for nombre, data in sd["archivos"].items():
+        ev.cargar_archivo(nombre, data)
+    ev._calcular_grupos()
+
+    cfg = ev.cfg
+    resultados = {}
+    for prog in cfg.get("programas", []):
+        pid = prog["id"]
+        acts = {}
+        for aid in prog.get("actividades", []):
+            act_cfg = cfg["actividades_base"].get(aid)
+            if not act_cfg:
+                continue
+            total = ev._contar_actividad(act_cfg, pid)
+            acts[aid] = {
+                "descripcion": act_cfg.get("descripcion", aid),
+                "archivo": act_cfg.get("archivo", ""),
+                "cups": act_cfg.get("cups", []),
+                "encontrados": total
+            }
+        if any(v["encontrados"] > 0 for v in acts.values()):
+            resultados[pid] = {
+                "nombre": prog.get("nombre", pid),
+                "actividades": acts,
+                "total": sum(v["encontrados"] for v in acts.values())
+            }
+
+    cobertura = {}
+    for info in ev._usuarios.values():
+        g = info.get("grupo")
+        if g: cobertura[g] = cobertura.get(g, 0) + 1
+
+    archivos_resumen = {k: len(v) for k, v in sd["archivos"].items()}
+    return jsonify({"ok": True, "resultados": resultados, "cobertura": cobertura,
+                    "archivos": archivos_resumen, "total_usuarios": len(ev._usuarios)})
+
 @app.route("/api/actas", methods=["GET"])
 @login_required
 def get_actas():

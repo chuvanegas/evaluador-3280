@@ -327,6 +327,12 @@ html.dark .it-btn.active{color:var(--azul2)}
         {% endfor %}
       </div>
       <div class="cob-grid" id="cob-grid"></div>
+      <div style="margin-top:10px;display:flex;flex-direction:column;gap:7px">
+        <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="preevaluar()">
+          🔍 Pre-evaluar RIPS
+        </button>
+        <div id="preeval-status" style="font-size:10.5px;color:var(--gris3);text-align:center"></div>
+      </div>
     </div>
   </div>
   <div class="panel-right">
@@ -335,9 +341,11 @@ html.dark .it-btn.active{color:var(--azul2)}
       <span class="ws-sep">›</span>
       <div class="ws" id="ws2" onclick="goStep(2)"><div class="ws-num">2</div><div class="ws-label">Metas</div></div>
       <span class="ws-sep">›</span>
-      <div class="ws" id="ws3" onclick="goStep(3)"><div class="ws-num">3</div><div class="ws-label">Resultados</div></div>
+      <div class="ws" id="ws3" onclick="goStep(3)"><div class="ws-num">3</div><div class="ws-label">Pre-eval</div></div>
       <span class="ws-sep">›</span>
-      <div class="ws" id="ws4" onclick="goStep(4)"><div class="ws-num">4</div><div class="ws-label">Acta Excel</div></div>
+      <div class="ws" id="ws4" onclick="goStep(4)"><div class="ws-num">4</div><div class="ws-label">Resultados</div></div>
+      <span class="ws-sep">›</span>
+      <div class="ws" id="ws5" onclick="goStep(5)"><div class="ws-num">5</div><div class="ws-label">Acta Excel</div></div>
     </div>
 
     <!-- Step 1 -->
@@ -403,8 +411,32 @@ html.dark .it-btn.active{color:var(--azul2)}
       </div>
     </div>
 
-    <!-- Step 3 -->
+    <!-- Step 3 — Pre-evaluación RIPS -->
     <div id="step3" class="step-pane" style="display:none">
+      <div class="pr-card">
+        <div class="pr-card-header">
+          <div class="pr-card-icon">🔍</div>
+          <div><div class="pr-card-title">Pre-evaluación — Actividades Encontradas</div>
+          <div class="pr-card-sub">Conteo automático según configuración Res. 3280/2018</div></div>
+        </div>
+        <div class="pr-card-body" id="preeval-body">
+          <div style="text-align:center;padding:36px;color:var(--gris3)">
+            <div style="font-size:32px;margin-bottom:8px">🔍</div>
+            <div style="font-size:13px;font-weight:600;margin-bottom:4px">Carga los archivos RIPS y haz clic en Pre-evaluar</div>
+            <div style="font-size:11.5px">El sistema contará las actividades encontradas por programa según el config.</div>
+          </div>
+        </div>
+        <div style="padding:11px 16px">
+          <div class="btn-row">
+            <button class="btn btn-outline" onclick="goStep(2)">← Metas</button>
+            <button class="btn btn-primary" onclick="evaluarAhora()">⚡ Evaluar con metas →</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 4 — Resultados -->
+    <div id="step4" class="step-pane" style="display:none">
       <div class="stat-row" id="stat-row" style="display:none">
         <div class="stat-card"><div class="sc-label">Total Exigido</div><div class="sc-val" id="stat-exigido">$0</div></div>
         <div class="stat-card"><div class="sc-label">Reconocido</div><div class="sc-val pos" id="stat-reconocido">$0</div></div>
@@ -422,20 +454,20 @@ html.dark .it-btn.active{color:var(--azul2)}
       <div class="pr-card" id="resumen-card" style="display:none">
         <div class="pr-card-header"><div class="pr-card-icon">📋</div><div><div class="pr-card-title">Resumen para Acta</div></div></div>
         <div style="overflow-x:auto"><table class="acta-table"><thead><tr><th>Programa</th><th>Vr Exigido</th><th>Vr Reconocido</th><th>Descuento</th><th>% Cumpl.</th></tr></thead><tbody id="acta-summary-body"></tbody></table></div>
-        <div style="padding:11px 16px"><div class="btn-row"><button class="btn btn-outline" onclick="goStep(2)">← Atrás</button><button class="btn btn-primary" onclick="goStep(4)">Generar Acta →</button></div></div>
+        <div style="padding:11px 16px"><div class="btn-row"><button class="btn btn-outline" onclick="goStep(2)">← Atrás</button><button class="btn btn-primary" onclick="goStep(5)">Generar Acta →</button></div></div>
       </div>
       <div class="pr-card" id="res-placeholder"><div class="pr-card-body" style="text-align:center;padding:40px;color:var(--gris3)"><div style="font-size:34px;margin-bottom:9px">⚡</div><div style="font-size:13px;font-weight:600;margin-bottom:4px">Sin resultados</div><div style="font-size:11.5px">Completa los pasos y ejecuta la evaluación.</div></div></div>
     </div>
 
-    <!-- Step 4 -->
-    <div id="step4" class="step-pane" style="display:none">
+    <!-- Step 5 — Acta Excel -->
+    <div id="step5" class="step-pane" style="display:none">
       <div class="pr-card">
         <div class="pr-card-header"><div class="pr-card-icon">📄</div><div><div class="pr-card-title">Generar Acta de Evaluación</div><div class="pr-card-sub">Descarga el acta en formato Excel</div></div></div>
         <div class="pr-card-body">
           <div id="acta-mini-resumen"></div>
           <div class="btn-row">
             <button class="btn btn-success" id="btn-descargar" onclick="descargarActa()">⬇ Descargar Acta Excel</button>
-            <button class="btn btn-outline" onclick="goStep(3)">← Resultados</button>
+            <button class="btn btn-outline" onclick="goStep(4)">← Resultados</button>
           </div>
         </div>
       </div>
@@ -1334,7 +1366,7 @@ async function cargarUsuarios(){
 }
 
 function goStep(n){
-  [1,2,3,4].forEach(i=>{
+  [1,2,3,4,5].forEach(i=>{
     const p=document.getElementById(`step${i}`);if(p) p.style.display=i===n?"block":"none";
     const w=document.getElementById(`ws${i}`);if(w){
       w.classList.remove("active","done");
@@ -1369,6 +1401,75 @@ async function subirRIPS(files,hint){
       grid.appendChild(el);
     }
   }
+}
+
+async function preevaluar(){
+  const st=document.getElementById("preeval-status");
+  st.textContent="⏳ Procesando...";
+  const r=await fetch("/api/preeval",{method:"POST",headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({periodo_fin:document.getElementById("periodo_fin")?.value||""})});
+  const d=await r.json();
+  if(!d.ok){st.textContent="❌ Error: "+d.error;return;}
+  st.textContent=`✅ ${Object.keys(d.resultados).length} programas · ${d.total_usuarios} usuarios`;
+  renderPreeval(d);
+  goStep(3);
+}
+
+function renderPreeval(d){
+  const SEGMENT={
+    PRIMERA_INFANCIA:"📋 Cursos de Vida",INFANCIA:"📋 Cursos de Vida",ADOLESCENCIA:"📋 Cursos de Vida",
+    JOVENES:"📋 Cursos de Vida",ADULTEZ:"📋 Cursos de Vida",VEJEZ:"📋 Cursos de Vida",
+  };
+  const COLORS={
+    "📋 Cursos de Vida":"#1E40AF","🤰 Ruta Materna":"#9D174D",
+    "🔁 Demanda Inducida":"#065F46","❤️ RCV":"#92400E"
+  };
+  const body=document.getElementById("preeval-body");
+  let html=`<div style="margin-bottom:10px;display:flex;gap:12px;flex-wrap:wrap">
+    <div class="stat-card" style="flex:1;min-width:120px"><div class="sc-label">Usuarios</div><div class="sc-val">${(d.total_usuarios||0).toLocaleString("es-CO")}</div></div>`;
+  for(const[g,n] of Object.entries(d.cobertura||{})){
+    const lbl={PRIMERA_INFANCIA:"1ra Inf",INFANCIA:"Infancia",ADOLESCENCIA:"Adolesc.",JOVENES:"Jóvenes",ADULTEZ:"Adultez",VEJEZ:"Vejez"}[g]||g;
+    html+=`<div class="cob-card" style="min-width:70px"><div class="cc-num">${n.toLocaleString("es-CO")}</div><div class="cc-label">${lbl}</div></div>`;
+  }
+  html+="</div>";
+  // Tabla por programa
+  const grupos={};
+  for(const[pid,prog] of Object.entries(d.resultados||{})){
+    let seg="📋 Cursos de Vida";
+    if(pid.startsWith("RUTA_MATERNA")) seg="🤰 Ruta Materna";
+    else if(pid.startsWith("DI")||pid==="DI_SALUD_MENTAL") seg="🔁 Demanda Inducida";
+    else if(pid.startsWith("RCV")) seg="❤️ RCV";
+    (grupos[seg]=grupos[seg]||[]).push([pid,prog]);
+  }
+  for(const[seg,progs] of Object.entries(grupos)){
+    const col=COLORS[seg]||"#374151";
+    html+=`<div style="margin-bottom:14px">
+      <div style="padding:6px 10px;background:${col};color:#fff;border-radius:8px 8px 0 0;font-size:11px;font-weight:700">${seg}</div>
+      <table style="width:100%;border-collapse:collapse;font-size:11px">
+        <thead><tr style="background:var(--gris1)">
+          <th style="padding:6px 8px;text-align:left;font-weight:600;color:var(--gris3)">Actividad</th>
+          <th style="padding:6px 8px;text-align:left;font-weight:600;color:var(--gris3)">Archivo</th>
+          <th style="padding:6px 8px;text-align:center;font-weight:600;color:var(--gris3)">Encontrados</th>
+        </tr></thead><tbody>`;
+    for(const[pid,prog] of progs){
+      html+=`<tr style="background:var(--azul4);border-bottom:1px solid var(--gris1)">
+        <td colspan="3" style="padding:5px 8px;font-weight:700;color:var(--azul);font-size:10.5px">${prog.nombre||pid} — Total: ${prog.total}</td></tr>`;
+      for(const[aid,act] of Object.entries(prog.actividades||{})){
+        const found=act.encontrados||0;
+        const color=found>0?"var(--verde2)":"var(--gris3)";
+        html+=`<tr style="border-bottom:1px solid var(--gris1)">
+          <td style="padding:4px 8px 4px 16px;font-size:10.5px">${act.descripcion}</td>
+          <td style="padding:4px 8px;font-size:10px;color:var(--gris3)">${act.archivo}</td>
+          <td style="padding:4px 8px;text-align:center;font-weight:700;color:${color}">${found.toLocaleString("es-CO")}</td>
+        </tr>`;
+      }
+    }
+    html+=`</tbody></table></div>`;
+  }
+  if(!Object.keys(d.resultados||{}).length){
+    html+=`<div class="alert alert-info">No se encontraron actividades. Verifica que los archivos RIPS estén cargados correctamente.</div>`;
+  }
+  body.innerHTML=html;
 }
 
 async function subirNT(file){
@@ -1490,7 +1591,7 @@ async function evaluarAhora(){
   const d=await r.json();
   btn.innerHTML="⚡ Evaluar";btn.disabled=false;
   if(!d.ok){alert("Error: "+(d.error||"desconocido"));return;}
-  S.resultados=d;S._resultados=d;renderResultados(d);goStep(3);
+  S.resultados=d;S._resultados=d;renderResultados(d);goStep(4);
 }
 
 function renderResultados(data){
