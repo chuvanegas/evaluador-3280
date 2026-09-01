@@ -1538,7 +1538,15 @@ async function preevaluar(){
   const d=await r.json();
   if(!d.ok){st.textContent="❌ Error: "+d.error;return;}
   st.textContent=`✅ ${Object.keys(d.resultados).length} programas · ${d.total_usuarios} usuarios`;
-  if(d.debug_grupos) console.log("DEBUG conteos grupos por archivo:", JSON.stringify(d.debug_grupos,null,2));
+  if(d.debug_grupos){
+    console.log("DEBUG conteos grupos por archivo:", JSON.stringify(d.debug_grupos,null,2));
+    // Mostrar en UI temporalmente
+    const dbg=document.getElementById("preeval-debug")||document.createElement("div");
+    dbg.id="preeval-debug";
+    dbg.style.cssText="margin:8px 0;padding:8px 12px;background:#fef3c7;border:1px solid #f59e0b;border-radius:6px;font-size:10px;font-family:monospace;white-space:pre-wrap";
+    dbg.textContent="DEBUG grupos en conteos:\n"+JSON.stringify(d.debug_grupos,null,2);
+    document.getElementById("preeval-body").prepend(dbg);
+  }
   renderPreeval(d);
   goStep(3);
 }
