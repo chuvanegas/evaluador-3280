@@ -804,8 +804,11 @@ def preeval():
                     "total": sum(v["encontrados"] for v in acts.values())
                 }
 
+        # Resumen de debug: grupos presentes en conteos por archivo
+        debug_grupos = {arch: list(grps.keys()) for arch, grps in conteos.items()}
         return jsonify({"ok": True, "resultados": resultados, "cobertura": cobertura,
-                        "archivos": {}, "total_usuarios": total_usuarios})
+                        "archivos": {}, "total_usuarios": total_usuarios,
+                        "debug_grupos": debug_grupos})
 
     # ── Fallback: usar archivos en sesión (caso local/dev) ───────────────
     periodo_str = body.get("periodo_fin", sd.get("info_acta", {}).get("periodo_fin", ""))

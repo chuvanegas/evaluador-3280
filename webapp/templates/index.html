@@ -1522,13 +1522,23 @@ async function preevaluar(){
   }
 
   const body={periodo_fin:document.getElementById("periodo_fin")?.value||""};
-  if(conteos) body.conteos=conteos;
+  if(conteos){
+    body.conteos=conteos;
+    // Debug: mostrar grupos presentes en cada archivo
+    const resumen={};
+    for(const[arch,gmap] of Object.entries(conteos)){
+      resumen[arch]={};
+      for(const[g,ck] of Object.entries(gmap)) resumen[arch][g]=Object.keys(ck).length+' CUPS';
+    }
+    console.log("DEBUG conteos browser resumen:", JSON.stringify(resumen,null,2));
+  }
 
   const r=await fetch("/api/preeval",{method:"POST",headers:{"Content-Type":"application/json"},
     body:JSON.stringify(body)});
   const d=await r.json();
   if(!d.ok){st.textContent="❌ Error: "+d.error;return;}
   st.textContent=`✅ ${Object.keys(d.resultados).length} programas · ${d.total_usuarios} usuarios`;
+  if(d.debug_grupos) console.log("DEBUG conteos grupos por archivo:", JSON.stringify(d.debug_grupos,null,2));
   renderPreeval(d);
   goStep(3);
 }
