@@ -1538,12 +1538,13 @@ async function preevaluar(){
   const d=await r.json();
   if(!d.ok){st.textContent="❌ Error: "+d.error;return;}
   st.textContent=`✅ ${Object.keys(d.resultados).length} programas · ${d.total_usuarios} usuarios`;
-  if(d.debug_grupos) console.log("DEBUG conteos grupos por archivo:", JSON.stringify(d.debug_grupos,null,2));
-  renderPreeval(d,d.debug_grupos);
+  if(d.debug_grupos) console.log("DEBUG conteos grupos:", JSON.stringify(d.debug_grupos,null,2));
+  if(d.debug_pi_cups) console.log("DEBUG PRIMERA_INFANCIA CUPS:", JSON.stringify(d.debug_pi_cups,null,2));
+  renderPreeval(d,d.debug_grupos,d.debug_pi_cups);
   goStep(3);
 }
 
-function renderPreeval(d,debugGrupos){
+function renderPreeval(d,debugGrupos,debugPiCups){
   const SEGMENT={
     PRIMERA_INFANCIA:"📋 Cursos de Vida",INFANCIA:"📋 Cursos de Vida",ADOLESCENCIA:"📋 Cursos de Vida",
     JOVENES:"📋 Cursos de Vida",ADULTEZ:"📋 Cursos de Vida",VEJEZ:"📋 Cursos de Vida",
@@ -1597,11 +1598,19 @@ function renderPreeval(d,debugGrupos){
   if(!Object.keys(d.resultados||{}).length){
     html+=`<div class="alert alert-info">No se encontraron actividades. Verifica que los archivos RIPS estén cargados correctamente.</div>`;
   }
-  // Debug box: grupos presentes en conteos
-  if(debugGrupos){
-    const filas=Object.entries(debugGrupos).map(([arch,gs])=>`<b>${arch}</b>: ${gs.join(', ')||'(ninguno)'}`).join('<br>');
-    html=`<div style="margin-bottom:10px;padding:8px 12px;background:#fef3c7;border:1px solid #f59e0b;border-radius:6px;font-size:10px">
-      <b>DEBUG — grupos en conteos recibidos por servidor:</b><br>${filas}</div>`+html;
+  // Debug box
+  if(debugGrupos||debugPiCups){
+    let dbgHtml=`<div style="margin-bottom:10px;padding:8px 12px;background:#fef3c7;border:1px solid #f59e0b;border-radius:6px;font-size:10px">`;
+    if(debugGrupos){
+      const filas=Object.entries(debugGrupos).map(([arch,gs])=>`<b>${arch}</b>: ${gs.join(', ')||'(ninguno)'}`).join('<br>');
+      dbgHtml+=`<b>Grupos en conteos:</b><br>${filas}`;
+    }
+    if(debugPiCups){
+      const piFilas=Object.entries(debugPiCups).map(([arch,cups])=>`<b>${arch}</b>: ${cups.join(', ')}`).join('<br>');
+      dbgHtml+=`<br><br><b>CUPS de PRIMERA_INFANCIA:</b><br>${piFilas}`;
+    }
+    dbgHtml+=`</div>`;
+    html=dbgHtml+html;
   }
   body.innerHTML=html;
 }
