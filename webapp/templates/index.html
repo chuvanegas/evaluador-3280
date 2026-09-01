@@ -1839,22 +1839,29 @@ function renderMantConfig(cfg){
       <div style="font-size:10px;color:var(--gris3)">${(p.actividades||[]).length} actividades</div>
     </div>`).join("");
 
-  // ── CUPS por actividad (agrupado por actividad, no por CUPS individual) ─
+  // ── CUPS por actividad — agrupado por segmento con encabezados ──────────
   const cupstb=document.getElementById("cups-tbody");
   if(!cupstb) return;
   _cupsRows=[];
-  // Agrupar: una fila por actividad, listando todos sus CUPS
-  const actVistas=new Set();
+  const CV_IDS=new Set(['PRIMERA_INFANCIA','INFANCIA','ADOLESCENCIA','JOVENES','ADULTEZ','VEJEZ']);
+  function _segProg(pid){
+    if(CV_IDS.has(pid)) return {key:'cv',label:'📋 Cursos de Vida — Res. 3280/2018',color:'#1E40AF'};
+    if(pid.startsWith('RUTA_MATERNA')) return {key:'materna',label:'🤰 Ruta Materno Perinatal',color:'#9D174D'};
+    if(pid.startsWith('DI')||pid==='DI_SALUD_MENTAL') return {key:'di',label:'🔁 Ruta Integral Demanda Inducida',color:'#065F46'};
+    if(pid.startsWith('RCV')) return {key:'rcv',label:'❤️ Ruta Cerebrovascular y Metabólica',color:'#92400E'};
+    return {key:'otros',label:'📌 Otros',color:'#374151'};
+  }
+  // Una fila por (prog, act) — mostrar todas las actividades por programa
+  let lastSeg=null;
   for(const prog of (cfg.programas||[])){
+    const seg=_segProg(prog.id);
     for(const act_id of (prog.actividades||[])){
-      if(actVistas.has(act_id)){continue;}
-      actVistas.add(act_id);
       const act=cfg.actividades_base?.[act_id];if(!act) continue;
       const cups=(act.cups||[]);
       const fins=(act.finalidad||act.finalidades||[]);
       const aplica=(act.aplica_a||[prog.id]);
       const archivo=act.archivo||"consultas";
-      _cupsRows.push({act_id,act,prog,cups,fins,aplica,archivo});
+      _cupsRows.push({act_id,act,prog,cups,fins,aplica,archivo,seg});
     }
   }
   renderCUPSRows(_cupsRows, cfg);
@@ -1867,25 +1874,37 @@ function renderCUPSRows(rows, cfg){
     cupstb.innerHTML='<tr><td colspan="6" style="text-align:center;padding:18px;color:var(--gris3)">No hay actividades configuradas</td></tr>';
     return;
   }
-  cupstb.innerHTML=rows.map(({act_id,act,prog,cups,fins,aplica,archivo})=>{
+  let lastSegKey=null, lastProgId=null, html="";
+  for(const {act_id,act,prog,cups,fins,aplica,archivo,seg} of rows){
+    const s=seg||{key:'otros',label:'📌 Otros',color:'#374151'};
+    // Encabezado de segmento nuevo
+    if(s.key!==lastSegKey){
+      html+=`<tr><td colspan="6" style="padding:8px 10px;background:${s.color};color:#fff;font-size:11px;font-weight:700;letter-spacing:.3px">${s.label}</td></tr>`;
+      lastSegKey=s.key; lastProgId=null;
+    }
+    // Encabezado de programa nuevo dentro del segmento
+    if(prog.id!==lastProgId){
+      html+=`<tr><td colspan="6" style="padding:5px 14px;background:var(--azul4);font-size:10.5px;font-weight:700;color:var(--azul);border-bottom:1px solid var(--azul3)">${prog.nombre||prog.id}</td></tr>`;
+      lastProgId=prog.id;
+    }
     const tipoBg=TIPO_COLORS[archivo]||"#f9f9f9";
     const tipoTc=TIPO_TC[archivo]||"#333";
     const tipoLabel=TIPO_LABELS[archivo]||archivo;
     const cupsHtml=cups.map(c=>`<code style="background:var(--azul4);padding:1px 5px;border-radius:4px;font-size:10.5px;font-weight:700;margin:1px">${c}</code>`).join(" ");
     const finHtml=fins.map(f=>`<span style="background:#EDE9FE;color:#6D28D9;padding:1px 6px;border-radius:10px;font-size:10px;font-weight:600;margin:1px">${f}${finMap[f]?" · "+String(finMap[f]).substring(0,20):""}...</span>`).join(" ")||'<span style="color:var(--gris3);font-size:10.5px">—</span>';
-    const cvHtml=aplica.map(c=>`<span style="font-size:9px;background:var(--gris1);padding:1px 5px;border-radius:8px;margin:1px">${c.replace("_"," ")}</span>`).join(" ");
-    return `<tr>
+    const cvHtml=aplica.map(c=>`<span style="font-size:9px;background:var(--gris1);padding:1px 5px;border-radius:8px;margin:1px">${c.replace(/_/g," ")}</span>`).join(" ");
+    html+=`<tr>
       <td style="font-size:10.5px;line-height:1.6">${cupsHtml||'<span style="color:var(--gris3)">—</span>'}</td>
       <td>
         <div style="font-size:11.5px;font-weight:600;color:var(--text)">${act.descripcion||act_id}</div>
-        <div style="font-size:10px;color:var(--azul2);margin-top:2px">${prog.nombre||prog.id}</div>
       </td>
       <td><span style="background:${tipoBg};color:${tipoTc};padding:2px 8px;border-radius:10px;font-size:10.5px;font-weight:600;white-space:nowrap">${tipoLabel}</span></td>
       <td style="font-size:10.5px;line-height:1.8">${finHtml}</td>
       <td style="font-size:9.5px;line-height:1.8">${cvHtml}</td>
       <td><button style="background:none;border:none;cursor:pointer;font-size:14px;padding:2px 5px" title="Editar" onclick="abrirEditCUPS('${act_id}')">✏️</button></td>
     </tr>`;
-  }).join("");
+  }
+  cupstb.innerHTML=html;
 }
 
 function filtrarCUPS(q){
