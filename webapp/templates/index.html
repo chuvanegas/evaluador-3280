@@ -661,6 +661,14 @@ html.dark .it-btn.active{color:var(--azul2)}
           <button class="btn btn-primary" style="font-size:11px;padding:5px 11px;white-space:nowrap" onclick="abrirNuevaActividad()">+ Nueva actividad</button>
         </div>
       </div>
+      <!-- Filtros rápidos por segmento -->
+      <div style="padding:8px 14px;border-bottom:1px solid var(--gris1);display:flex;gap:6px;flex-wrap:wrap">
+        <button onclick="filtrarSegCUPS('')" id="fseg-all" style="padding:3px 10px;border-radius:12px;font-size:11px;font-weight:600;border:1.5px solid var(--azul2);background:var(--azul2);color:#fff;cursor:pointer">Todos</button>
+        <button onclick="filtrarSegCUPS('cv')" id="fseg-cv" style="padding:3px 10px;border-radius:12px;font-size:11px;font-weight:600;border:1.5px solid #1E40AF;background:none;color:#1E40AF;cursor:pointer">📋 Cursos de Vida</button>
+        <button onclick="filtrarSegCUPS('materna')" id="fseg-materna" style="padding:3px 10px;border-radius:12px;font-size:11px;font-weight:600;border:1.5px solid #9D174D;background:none;color:#9D174D;cursor:pointer">🤰 Ruta Materna</button>
+        <button onclick="filtrarSegCUPS('di')" id="fseg-di" style="padding:3px 10px;border-radius:12px;font-size:11px;font-weight:600;border:1.5px solid #065F46;background:none;color:#065F46;cursor:pointer">🔁 Demanda Inducida</button>
+        <button onclick="filtrarSegCUPS('rcv')" id="fseg-rcv" style="padding:3px 10px;border-radius:12px;font-size:11px;font-weight:600;border:1.5px solid #92400E;background:none;color:#92400E;cursor:pointer">❤️ RCV</button>
+      </div>
       <div style="padding:0;overflow-x:auto">
         <table class="users-table" id="cups-table">
           <thead><tr>
@@ -1907,16 +1915,35 @@ function renderCUPSRows(rows, cfg){
   cupstb.innerHTML=html;
 }
 
+let _activeSeg='';
 function filtrarCUPS(q){
-  if(!q){renderCUPSRows(_cupsRows,S.config);return;}
+  document.getElementById("cups-search").value=q||"";
+  let rows=_cupsRows;
+  if(_activeSeg) rows=rows.filter(r=>(r.seg?.key||'otros')===_activeSeg);
+  if(!q){renderCUPSRows(rows,S.config);return;}
   const lq=q.toLowerCase();
-  const f=_cupsRows.filter(r=>
+  const f=rows.filter(r=>
     r.cups.some(c=>c.toLowerCase().includes(lq))||
     (r.act.descripcion||"").toLowerCase().includes(lq)||
     (r.prog.nombre||"").toLowerCase().includes(lq)||
     r.archivo.includes(lq)
   );
   renderCUPSRows(f,S.config);
+}
+
+function filtrarSegCUPS(seg){
+  _activeSeg=seg;
+  // Resaltar botón activo
+  ['all','cv','materna','di','rcv'].forEach(k=>{
+    const btn=document.getElementById(`fseg-${k}`);if(!btn) return;
+    const isActive=(k==='all'&&!seg)||(k===seg);
+    const colors={all:'var(--azul2)',cv:'#1E40AF',materna:'#9D174D',di:'#065F46',rcv:'#92400E'};
+    const c=colors[k]||'var(--azul2)';
+    btn.style.background=isActive?c:'none';
+    btn.style.color=isActive?'#fff':c;
+  });
+  const q=document.getElementById("cups-search").value||"";
+  filtrarCUPS(q);
 }
 
 function abrirEditCUPS(act_id){
