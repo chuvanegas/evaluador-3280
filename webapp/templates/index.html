@@ -1466,11 +1466,66 @@ async function subirRIPS(files,hint){
   }
 }
 
+// Pre-agrega RIPS en browser: {archivo:{grupo:{cups|finalidad: unique_users}}}
+function _preAgregar(archivos,usuariosGrupos){
+  const CUPS_KEY={
+    consultas:'codConsulta',procedimientos:'codProcedimiento',
+    medicamentos:'codTecnologiaSalud',otrosServicios:'codServicio'
+  };
+  const FIN_KEY={
+    consultas:'finalidadTecnologiaSalud',procedimientos:'finalidadTecnologiaSalud',
+    medicamentos:'',otrosServicios:''
+  };
+  const result={};
+  for(const[arch,cupsKey] of Object.entries(CUPS_KEY)){
+    const finKey=FIN_KEY[arch];
+    result[arch]={};
+    for(const r of (archivos[arch]||[])){
+      const num=(r.numDocumentoIdentificacion||'').trim();
+      const tipo=(r.tipoDocumentoIdentificacion||'').trim();
+      const cups=(r[cupsKey]||'').trim().toUpperCase();
+      const fin=finKey?(r[finKey]||'').trim():'';
+      const grupo=usuariosGrupos[num]||null;
+      if(!cups||!grupo) continue;
+      const ckey=fin?cups+'|'+fin:cups;
+      if(!result[arch][grupo]) result[arch][grupo]={};
+      if(!result[arch][grupo][ckey]) result[arch][grupo][ckey]=new Set();
+      result[arch][grupo][ckey].add(tipo+'|'+num);
+    }
+  }
+  // Sets → counts
+  const counts={};
+  for(const[arch,gs] of Object.entries(result)){
+    counts[arch]={};
+    for(const[g,ck] of Object.entries(gs)){
+      counts[arch][g]={};
+      for(const[k,s] of Object.entries(ck)) counts[arch][g][k]=s.size;
+    }
+  }
+  return counts;
+}
+
 async function preevaluar(){
   const st=document.getElementById("preeval-status");
   st.textContent="⏳ Procesando...";
+
+  // Construir mapa numDoc → grupo desde _calcularCobertura (ya hecho al procesar)
+  const archivos=window._ripsDatos||{};
+  let conteos=null;
+  if(Object.keys(archivos).length>0){
+    // Reconstruir mapa numDoc→grupo a partir de los datos del browser
+    const usuariosGrupos={};
+    if(window._usuariosDetalle){
+      for(const u of window._usuariosDetalle) if(u.grupo) usuariosGrupos[u.num_doc]=u.grupo;
+    }
+    conteos=_preAgregar(archivos,usuariosGrupos);
+  }
+
+  const body={periodo_fin:document.getElementById("periodo_fin")?.value||""};
+  if(conteos) body.conteos=conteos;
+
   const r=await fetch("/api/preeval",{method:"POST",headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({periodo_fin:document.getElementById("periodo_fin")?.value||""})});
+    body:JSON.stringify(body)});
   const d=await r.json();
   if(!d.ok){st.textContent="❌ Error: "+d.error;return;}
   st.textContent=`✅ ${Object.keys(d.resultados).length} programas · ${d.total_usuarios} usuarios`;
@@ -2746,8 +2801,9 @@ async function dashProcesarRIPS(){
   const {cobertura,usuarios_detalle,total_usuarios}=_calcularCobertura(archivos);
   // Enviar solo el resumen compacto al servidor (para sesión y evaluación)
   try{
-    // Guardar archivos en memoria del browser para pre-evaluación posterior
+    // Guardar archivos y detalle de usuarios en memoria del browser para pre-evaluación
     window._ripsDatos=archivos;
+    window._usuariosDetalle=usuarios_detalle;
     // Solo enviar el resumen compacto al servidor (NO los archivos completos)
     const r=await fetch('/api/procesar-rips',{method:'POST',
       headers:{'Content-Type':'application/json'},

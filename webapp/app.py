@@ -735,9 +735,67 @@ def evaluar():
 @app.route("/api/preeval", methods=["POST"])
 @login_required
 def preeval():
-    """Pre-evaluación: cuenta actividades encontradas en los RIPS cargados sin necesitar metas."""
+    """Pre-evaluación usando datos pre-agregados del browser o archivos en sesión."""
     sd = _session_data()
     body = request.get_json() or {}
+    conteos = body.get("conteos")  # {archivo:{grupo:{cups|finalidad:count}}} del browser
+
+    cfg = RIPSEvaluator().cfg  # solo para acceder a la config, sin datos
+
+    if conteos:
+        # ── Modo rápido: usar conteos pre-calculados en el browser ──────────
+        resultados = {}
+        total_usuarios = sum(
+            sum(c for cups_map in grupo_map.values() for c in cups_map.values())
+            for grupo_map in conteos.values()
+        ) // max(len(conteos), 1)  # estimación aproximada
+
+        # Recuperar cobertura del resumen de sesión
+        cobertura = sd.get("cobertura", {})
+        total_usuarios = sd.get("total_usuarios", 0)
+
+        for prog in cfg.get("programas", []):
+            pid = prog["id"]
+            acts = {}
+            for aid in prog.get("actividades", []):
+                act_cfg = cfg["actividades_base"].get(aid)
+                if not act_cfg: continue
+                archivo = act_cfg.get("archivo", "")
+                cups_list = [str(c).strip().upper() for c in act_cfg.get("cups", [])]
+                finalidades = [str(f).strip() for f in act_cfg.get("finalidad", [])]
+                grupo_map = conteos.get(archivo, {})
+
+                encontrados = 0
+                for grupo, cups_map in grupo_map.items():
+                    if not grupo.startswith(pid.split("_")[0]) and pid not in [
+                        "PRIMERA_INFANCIA","INFANCIA","ADOLESCENCIA","JOVENES","ADULTEZ","VEJEZ",
+                        "RUTA_MATERNA","DI","DI_SALUD_MENTAL","RCV"
+                    ]:
+                        pass
+                    for ckey, count in cups_map.items():
+                        cups_val = ckey.split("|")[0]
+                        fin_val = ckey.split("|")[1] if "|" in ckey else ""
+                        if cups_val not in cups_list: continue
+                        if finalidades and fin_val not in finalidades: continue
+                        encontrados += count
+
+                acts[aid] = {
+                    "descripcion": act_cfg.get("descripcion", aid),
+                    "archivo": archivo,
+                    "cups": act_cfg.get("cups", []),
+                    "encontrados": encontrados
+                }
+            if any(v["encontrados"] > 0 for v in acts.values()):
+                resultados[pid] = {
+                    "nombre": prog.get("nombre", pid),
+                    "actividades": acts,
+                    "total": sum(v["encontrados"] for v in acts.values())
+                }
+
+        return jsonify({"ok": True, "resultados": resultados, "cobertura": cobertura,
+                        "archivos": {}, "total_usuarios": total_usuarios})
+
+    # ── Fallback: usar archivos en sesión (caso local/dev) ───────────────
     periodo_str = body.get("periodo_fin", sd.get("info_acta", {}).get("periodo_fin", ""))
     periodo_ref = None
     if periodo_str:
@@ -750,15 +808,13 @@ def preeval():
         ev.cargar_archivo(nombre, data)
     ev._calcular_grupos()
 
-    cfg = ev.cfg
     resultados = {}
     for prog in cfg.get("programas", []):
         pid = prog["id"]
         acts = {}
         for aid in prog.get("actividades", []):
             act_cfg = cfg["actividades_base"].get(aid)
-            if not act_cfg:
-                continue
+            if not act_cfg: continue
             total = ev._contar_actividad(act_cfg, pid)
             acts[aid] = {
                 "descripcion": act_cfg.get("descripcion", aid),
@@ -778,9 +834,9 @@ def preeval():
         g = info.get("grupo")
         if g: cobertura[g] = cobertura.get(g, 0) + 1
 
-    archivos_resumen = {k: len(v) for k, v in sd["archivos"].items()}
     return jsonify({"ok": True, "resultados": resultados, "cobertura": cobertura,
-                    "archivos": archivos_resumen, "total_usuarios": len(ev._usuarios)})
+                    "archivos": {k: len(v) for k, v in sd["archivos"].items()},
+                    "total_usuarios": len(ev._usuarios)})
 
 @app.route("/api/actas", methods=["GET"])
 @login_required
