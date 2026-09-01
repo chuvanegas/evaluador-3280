@@ -179,9 +179,23 @@ class RIPSEvaluator:
         tipo_doc_key    = fm.get("tipo_doc", "tipoDocumentoIdentificacion")
         num_doc_key     = fm.get("num_doc",  "numDocumentoIdentificacion")
 
+        # Determinar filtro de población: por grupo exacto (CVs) o por rango de edad (DI/RCV)
+        cvs_ids = {cv["id"] for cv in self.cfg.get("cursos_de_vida", [])}
+        if grupo_id in cvs_ids:
+            # Cursos de vida estándar: filtrar por __grupo
+            def _ok_grupo(r): return r.get("__grupo") == grupo_id
+        else:
+            # DI, RCV, Ruta Materna, etc.: filtrar por rango de edad del programa
+            prog_cfg = next((p for p in self.cfg.get("programas", []) if p["id"] == grupo_id), {})
+            edad_min = prog_cfg.get("edad_min", 0)
+            edad_max = prog_cfg.get("edad_max", 200)
+            def _ok_grupo(r):
+                e = r.get("__edad")
+                return e is not None and edad_min <= e <= edad_max
+
         for r in registros:
-            # Filtro por grupo de vida
-            if r.get("__grupo") != grupo_id:
+            # Filtro por grupo de vida / edad
+            if not _ok_grupo(r):
                 continue
 
             # Filtro por CUPS (si aplica)

@@ -754,8 +754,25 @@ def preeval():
         cobertura = sd.get("cobertura", {})
         total_usuarios = sd.get("total_usuarios", 0)
 
+        cvs_ids = {cv["id"] for cv in cfg.get("cursos_de_vida", [])}
+        # Mapa grupo_id → grupos del browser que aplican
+        def _grupos_para_prog(prog):
+            pid = prog["id"]
+            if pid in cvs_ids:
+                return [pid]  # Curso de vida exacto
+            # DI/RCV/Materna → todos los grupos cuya edad caiga en rango
+            edad_min = prog.get("edad_min", 0)
+            edad_max = prog.get("edad_max", 200)
+            EDAD_CV = {
+                "PRIMERA_INFANCIA": (0, 5), "INFANCIA": (6, 11),
+                "ADOLESCENCIA": (12, 17), "JOVENES": (18, 28),
+                "ADULTEZ": (29, 59), "VEJEZ": (60, 200)
+            }
+            return [g for g, (mn, mx) in EDAD_CV.items() if mn <= edad_max and mx >= edad_min]
+
         for prog in cfg.get("programas", []):
             pid = prog["id"]
+            grupos_aplicables = _grupos_para_prog(prog)
             acts = {}
             for aid in prog.get("actividades", []):
                 act_cfg = cfg["actividades_base"].get(aid)
@@ -766,13 +783,8 @@ def preeval():
                 grupo_map = conteos.get(archivo, {})
 
                 encontrados = 0
-                for grupo, cups_map in grupo_map.items():
-                    if not grupo.startswith(pid.split("_")[0]) and pid not in [
-                        "PRIMERA_INFANCIA","INFANCIA","ADOLESCENCIA","JOVENES","ADULTEZ","VEJEZ",
-                        "RUTA_MATERNA","DI","DI_SALUD_MENTAL","RCV"
-                    ]:
-                        pass
-                    for ckey, count in cups_map.items():
+                for grupo in grupos_aplicables:
+                    for ckey, count in grupo_map.get(grupo, {}).items():
                         cups_val = ckey.split("|")[0]
                         fin_val = ckey.split("|")[1] if "|" in ckey else ""
                         if cups_val not in cups_list: continue
