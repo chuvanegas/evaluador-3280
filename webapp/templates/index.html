@@ -2678,27 +2678,33 @@ function _parsearRipsTxt(text){
     }else if(sec&&l&&!l.startsWith('°')) raw[sec].push(l);
   }
   const c=(l,i)=>(l.split(',')[i]||'').trim();
+  // Extrae CUPS limpio (sin |finalidad embebida) y retorna {cups, fin}
+  const cCups=(l,i)=>{const raw=(l.split(',')[i]||'').trim();const p=raw.split('|');return{cups:p[0].toUpperCase(),fin:p[1]||''};};
   const r={};
   if(raw['USUARIOS']){r.usuarios=raw['USUARIOS'].map(l=>({
     tipoDocumentoIdentificacion:c(l,0),numDocumentoIdentificacion:c(l,1),
     fechaNacimiento:c(l,3),codSexo:c(l,4)
   })).filter(x=>x.numDocumentoIdentificacion);}
-  if(raw['CONSULTAS']){r.consultas=raw['CONSULTAS'].map(l=>({
-    tipoDocumentoIdentificacion:c(l,1),numDocumentoIdentificacion:c(l,2),
-    fechaInicioAtencion:c(l,4).slice(0,10),codConsulta:c(l,6),finalidadTecnologiaSalud:c(l,20)
-  })).filter(x=>x.numDocumentoIdentificacion);}
-  if(raw['PROCEDIMIENTOS']){r.procedimientos=raw['PROCEDIMIENTOS'].map(l=>({
-    tipoDocumentoIdentificacion:c(l,1),numDocumentoIdentificacion:c(l,2),
-    fechaInicioAtencion:c(l,4).slice(0,10),codProcedimiento:c(l,7),finalidadTecnologiaSalud:c(l,19)
-  })).filter(x=>x.numDocumentoIdentificacion);}
-  if(raw['MEDICAMENTOS']){r.medicamentos=raw['MEDICAMENTOS'].map(l=>({
-    tipoDocumentoIdentificacion:c(l,1),numDocumentoIdentificacion:c(l,2),
-    fechaDispensacionMedicamento:c(l,6).slice(0,10),codTecnologiaSalud:c(l,10)
-  })).filter(x=>x.numDocumentoIdentificacion);}
-  if(raw['OTROS SERVICIOS']){r.otrosServicios=raw['OTROS SERVICIOS'].map(l=>({
-    tipoDocumentoIdentificacion:c(l,1),numDocumentoIdentificacion:c(l,2),
-    fechaInicioAtencion:c(l,6).slice(0,10),codServicio:c(l,8)
-  })).filter(x=>x.numDocumentoIdentificacion);}
+  if(raw['CONSULTAS']){r.consultas=raw['CONSULTAS'].map(l=>{
+    const {cups,fin}=cCups(l,6);const finCol=c(l,20);
+    return{tipoDocumentoIdentificacion:c(l,1),numDocumentoIdentificacion:c(l,2),
+      fechaInicioAtencion:c(l,4).slice(0,10),codConsulta:cups,finalidadTecnologiaSalud:finCol||fin};
+  }).filter(x=>x.numDocumentoIdentificacion&&x.codConsulta);}
+  if(raw['PROCEDIMIENTOS']){r.procedimientos=raw['PROCEDIMIENTOS'].map(l=>{
+    const {cups,fin}=cCups(l,7);const finCol=c(l,19);
+    return{tipoDocumentoIdentificacion:c(l,1),numDocumentoIdentificacion:c(l,2),
+      fechaInicioAtencion:c(l,4).slice(0,10),codProcedimiento:cups,finalidadTecnologiaSalud:finCol||fin};
+  }).filter(x=>x.numDocumentoIdentificacion&&x.codProcedimiento);}
+  if(raw['MEDICAMENTOS']){r.medicamentos=raw['MEDICAMENTOS'].map(l=>{
+    const {cups}=cCups(l,10);
+    return{tipoDocumentoIdentificacion:c(l,1),numDocumentoIdentificacion:c(l,2),
+      fechaDispensacionMedicamento:c(l,6).slice(0,10),codTecnologiaSalud:cups};
+  }).filter(x=>x.numDocumentoIdentificacion&&x.codTecnologiaSalud);}
+  if(raw['OTROS SERVICIOS']){r.otrosServicios=raw['OTROS SERVICIOS'].map(l=>{
+    const {cups}=cCups(l,8);
+    return{tipoDocumentoIdentificacion:c(l,1),numDocumentoIdentificacion:c(l,2),
+      fechaInicioAtencion:c(l,6).slice(0,10),codServicio:cups};
+  }).filter(x=>x.numDocumentoIdentificacion&&x.codServicio);}
   return r;
 }
 
