@@ -438,9 +438,10 @@ def upload_rips():
         except Exception as e:
             info.append({"archivo": nombre, "error": str(e), "ok": False})
 
-    # Calcular cobertura usando RIPSEvaluator (usa fecha máx de atención, igual que Excel)
+    # Calcular cobertura y detalle de usuarios usando RIPSEvaluator
     cobertura = {}
     total_usuarios = 0
+    usuarios_detalle = []
     try:
         from evaluator import RIPSEvaluator
         ev = RIPSEvaluator()
@@ -451,10 +452,44 @@ def upload_rips():
         for info_u in ev._usuarios.values():
             g = info_u.get("grupo")
             if g: cobertura[g] = cobertura.get(g, 0) + 1
+
+        # Detalle por usuario: actividades (CUPS) y cuántas veces aparece
+        ARCH_CUPS = {
+            "consultas":      ("codConsulta",        "fechaInicioAtencion"),
+            "procedimientos": ("codProcedimiento",   "fechaInicioAtencion"),
+            "medicamentos":   ("codTecnologiaSalud", "fechaDispensacionMedicamento"),
+            "otrosServicios": ("codTecnologiaSalud", "fechaInicioAtencion"),
+        }
+        # Índice numDoc → lista de (cups, fecha, archivo)
+        actos_por_num: dict = {}
+        for arch, (cups_key, fecha_key) in ARCH_CUPS.items():
+            for r in ev._archivos.get(arch, []):
+                num = str(r.get("numDocumentoIdentificacion","") or "").strip()
+                cups = str(r.get(cups_key,"") or "").strip()
+                fecha = str(r.get(fecha_key,"") or "")[:10]
+                if num and cups:
+                    actos_por_num.setdefault(num, []).append({"cups": cups, "fecha": fecha, "archivo": arch})
+
+        for (tipo, num), info_u in ev._usuarios.items():
+            actos = actos_por_num.get(num, [])
+            # Contar repeticiones por CUPS
+            cups_count: dict = {}
+            for a in actos:
+                cups_count[a["cups"]] = cups_count.get(a["cups"], 0) + 1
+            repetidos = {k: v for k, v in cups_count.items() if v > 1}
+            usuarios_detalle.append({
+                "tipo_doc": tipo, "num_doc": num,
+                "edad": info_u.get("edad"), "sexo": info_u.get("sexo"),
+                "grupo": info_u.get("grupo"),
+                "total_actos": len(actos),
+                "cups_repetidos": repetidos,
+            })
+        usuarios_detalle.sort(key=lambda x: (x.get("grupo") or "", x["num_doc"]))
     except Exception as e:
         cobertura = {"error": str(e)}
     return jsonify({"archivos_cargados": list(sd["archivos"].keys()), "detalle": info,
-                    "cobertura_poblacion": cobertura, "total_usuarios": total_usuarios})
+                    "cobertura_poblacion": cobertura, "total_usuarios": total_usuarios,
+                    "usuarios_detalle": usuarios_detalle})
 
 def _canonicalizar_nombre(nombre):
     nombre = nombre.lower()
