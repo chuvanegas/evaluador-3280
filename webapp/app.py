@@ -804,26 +804,27 @@ def preeval():
                     "total": sum(v["encontrados"] for v in acts.values())
                 }
 
-        # Debug: para PRIMERA_INFANCIA, mostrar CUPS presentes y matching
-        debug_pi = {}
-        for arch, gmap in conteos.items():
-            pi_cups = list(gmap.get("PRIMERA_INFANCIA", {}).keys())[:20]
-            if pi_cups:
-                debug_pi[arch] = pi_cups
-        # Debug matching: para edu_individual en PI
-        debug_match = []
-        pi_proc = conteos.get("procedimientos", {}).get("PRIMERA_INFANCIA", {})
-        cups_test = ['990201','990202','990203','990204','990205','990206']
-        for ckey, cnt in list(pi_proc.items())[:10]:
-            cv = ckey.split("|")[0]
-            fv = ckey.split("|")[1] if "|" in ckey else ""
-            match = cv in cups_test
-            debug_match.append(f"{ckey} → cv={cv} match={match} cnt={cnt}")
+        # Debug: desglose PRIMERA_INFANCIA
+        debug_pi_acts = {}
+        pi_prog = next((p for p in cfg.get("programas",[]) if p["id"]=="PRIMERA_INFANCIA"), {})
+        for aid in pi_prog.get("actividades", []):
+            act_cfg2 = cfg["actividades_base"].get(aid)
+            if not act_cfg2: debug_pi_acts[aid]="no-config"; continue
+            arch2 = act_cfg2.get("archivo","")
+            cl2 = [str(c).strip().upper() for c in act_cfg2.get("cups",[])]
+            fin2 = [str(f).strip() for f in act_cfg2.get("finalidad",[])]
+            gmap2 = conteos.get(arch2,{}).get("PRIMERA_INFANCIA",{})
+            enc2 = 0
+            for ck,cnt in gmap2.items():
+                cv=ck.split("|")[0]; fv=ck.split("|")[1] if "|" in ck else ""
+                if cv not in cl2: continue
+                if fin2 and fv not in fin2: continue
+                enc2 += cnt
+            debug_pi_acts[aid] = enc2
         debug_grupos = {arch: list(grps.keys()) for arch, grps in conteos.items()}
         return jsonify({"ok": True, "resultados": resultados, "cobertura": cobertura,
                         "archivos": {}, "total_usuarios": total_usuarios,
-                        "debug_grupos": debug_grupos, "debug_pi_cups": debug_pi,
-                        "debug_match": debug_match})
+                        "debug_grupos": debug_grupos, "debug_pi_acts": debug_pi_acts})
 
     # ── Fallback: usar archivos en sesión (caso local/dev) ───────────────
     periodo_str = body.get("periodo_fin", sd.get("info_acta", {}).get("periodo_fin", ""))

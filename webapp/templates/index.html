@@ -1538,14 +1538,13 @@ async function preevaluar(){
   const d=await r.json();
   if(!d.ok){st.textContent="❌ Error: "+d.error;return;}
   st.textContent=`✅ ${Object.keys(d.resultados).length} programas · ${d.total_usuarios} usuarios`;
-  if(d.debug_grupos) console.log("DEBUG conteos grupos:", JSON.stringify(d.debug_grupos,null,2));
-  if(d.debug_pi_cups) console.log("DEBUG PI CUPS:", JSON.stringify(d.debug_pi_cups,null,2));
-  if(d.debug_match) console.log("DEBUG match:", d.debug_match.join('\n'));
-  renderPreeval(d,d.debug_grupos,d.debug_pi_cups,d.debug_match);
+  if(d.debug_grupos) console.log("DEBUG grupos:", JSON.stringify(d.debug_grupos));
+  if(d.debug_pi_acts) console.log("DEBUG PI acts:", JSON.stringify(d.debug_pi_acts));
+  renderPreeval(d,d.debug_grupos,d.debug_pi_acts);
   goStep(3);
 }
 
-function renderPreeval(d,debugGrupos,debugPiCups,debugMatch){
+function renderPreeval(d,debugGrupos,debugPiActs){
   const SEGMENT={
     PRIMERA_INFANCIA:"📋 Cursos de Vida",INFANCIA:"📋 Cursos de Vida",ADOLESCENCIA:"📋 Cursos de Vida",
     JOVENES:"📋 Cursos de Vida",ADULTEZ:"📋 Cursos de Vida",VEJEZ:"📋 Cursos de Vida",
@@ -1606,12 +1605,9 @@ function renderPreeval(d,debugGrupos,debugPiCups,debugMatch){
       const filas=Object.entries(debugGrupos).map(([arch,gs])=>`<b>${arch}</b>: ${gs.join(', ')||'(ninguno)'}`).join('<br>');
       dbgHtml+=`<b>Grupos en conteos:</b><br>${filas}`;
     }
-    if(debugPiCups){
-      const piFilas=Object.entries(debugPiCups).map(([arch,cups])=>`<b>${arch}</b>: ${cups.join(', ')}`).join('<br>');
-      dbgHtml+=`<br><br><b>CUPS de PRIMERA_INFANCIA:</b><br>${piFilas}`;
-    }
-    if(debugMatch){
-      dbgHtml+=`<br><br><b>Match test edu_individual PI:</b><br>${debugMatch.join('<br>')}`;
+    if(debugPiActs){
+      const piFilas=Object.entries(debugPiActs).map(([aid,enc])=>`<b>${aid}</b>: ${enc}`).join(', ');
+      dbgHtml+=`<br><br><b>PRIMERA_INFANCIA encontrados por actividad:</b><br>${piFilas}`;
     }
     dbgHtml+=`</div>`;
     html=dbgHtml+html;
