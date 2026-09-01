@@ -332,6 +332,7 @@ html.dark .it-btn.active{color:var(--azul2)}
           </label>
         </div>
         <div id="dash-rips-status" style="font-size:11px;color:var(--gris3);text-align:center;margin-bottom:10px;min-height:16px"></div>
+        <div id="dash-cob-tabla" style="display:none;margin-bottom:12px;border:1px solid var(--gris1);border-radius:8px;overflow:hidden;font-size:11.5px"></div>
         <div style="display:grid;grid-template-columns:1fr auto;gap:8px">
           <button class="btn btn-primary" style="justify-content:center;font-size:13px;padding:9px 0" onclick="dashProcesarRIPS()">
             ⬆️ Procesar Data
@@ -2608,9 +2609,43 @@ async function dashProcesarRIPS(){
     const d=await r.json();
     if(d.archivos_cargados){
       const ok=d.detalle.filter(x=>x.ok).length;
-      const usu=d.cobertura_poblacion?Object.values(d.cobertura_poblacion).reduce((a,b)=>a+b,0):null;
-      st.textContent=`✅ ${ok} sección(es) cargadas${usu?` · ${usu} usuarios`:''}`;
+      const cob=d.cobertura_poblacion||{};
+      const total=Object.values(cob).reduce((a,b)=>a+b,0);
+      st.textContent=`✅ ${ok} sección(es) cargadas · ${total} usuarios`;
       st.style.color='var(--verde)';
+      // renderizar tabla de cobertura
+      const grupos=[
+        {key:'PRIMERA INFANCIA',label:'Primera Infancia',sub:'0–5 años',color:'#6366F1'},
+        {key:'INFANCIA',label:'Infancia',sub:'6–11 años',color:'#8B5CF6'},
+        {key:'ADOLESCENCIA',label:'Adolescencia',sub:'12–17 años',color:'#EC4899'},
+        {key:'JOVENES',label:'Jóvenes',sub:'18–26 años',color:'#F59E0B'},
+        {key:'ADULTEZ',label:'Adultez',sub:'27–59 años',color:'#10B981'},
+        {key:'VEJEZ',label:'Vejez',sub:'60+ años',color:'#64748B'},
+      ];
+      const seccs=d.detalle.filter(x=>x.ok).map(x=>x.archivo);
+      const tieneConsultas=seccs.some(s=>s.includes('consul'));
+      const tieneProced=seccs.some(s=>s.includes('proced'));
+      let html=`<div style="background:var(--azul);color:#fff;padding:7px 12px;font-weight:700;font-size:11px">📊 COBERTURA POBLACIONAL — ${total} usuarios</div>`;
+      html+=`<div style="display:grid;grid-template-columns:repeat(3,1fr)">`;
+      grupos.forEach((g,i)=>{
+        const n=cob[g.key]||0;
+        const pct=total?Math.round(n/total*100):0;
+        const bg=i%2===0?'var(--gris0)':'var(--card-bg)';
+        html+=`<div style="padding:8px 10px;background:${bg};border-bottom:1px solid var(--gris1)">
+          <div style="color:${g.color};font-weight:700;font-size:13px">${n.toLocaleString('es-CO')}</div>
+          <div style="font-weight:600;font-size:10.5px">${g.label}</div>
+          <div style="color:var(--gris3);font-size:9.5px">${g.sub} · ${pct}%</div>
+        </div>`;
+      });
+      html+='</div>';
+      // secciones cargadas
+      html+=`<div style="padding:6px 12px;border-top:1px solid var(--gris1);background:var(--gris0);display:flex;gap:6px;flex-wrap:wrap">`;
+      d.detalle.filter(x=>x.ok).forEach(s=>{
+        html+=`<span style="background:var(--azul3);color:var(--azul);padding:2px 7px;border-radius:10px;font-size:10px;font-weight:600">${s.archivo} <b>${s.registros}</b></span>`;
+      });
+      html+='</div>';
+      const tabla=document.getElementById('dash-cob-tabla');
+      tabla.innerHTML=html; tabla.style.display='block';
       ['dash-btn-preeval','dash-btn-evaluar'].forEach(id=>{
         const b=document.getElementById(id);
         b.style.opacity='1';b.style.pointerEvents='auto';
@@ -2629,6 +2664,7 @@ function dashLimpiarRIPS(){
   });
   const st=document.getElementById('dash-rips-status');
   st.textContent='';st.style.color='var(--gris3)';
+  const t=document.getElementById('dash-cob-tabla');if(t){t.innerHTML='';t.style.display='none';}
   ['dash-btn-preeval','dash-btn-evaluar'].forEach(id=>{
     const b=document.getElementById(id);
     b.style.opacity='.5';b.style.pointerEvents='none';
