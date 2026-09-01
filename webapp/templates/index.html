@@ -1715,7 +1715,7 @@ async function descargarActa(){
 let _mantLoaded=false;
 function switchMantTab(e,id){
   document.querySelectorAll(".mant-pane").forEach(p=>{p.style.display="none";});
-  document.getElementById(id).style.display="flex";
+  document.getElementById(id).style.display=(id==="mant-cups"||id==="mant-tipos"||id==="mant-usuarios")?"block":"flex";
   const subnav=e.target.closest("div");
   subnav.querySelectorAll(".it-btn").forEach(b=>b.classList.remove("active"));
   e.target.classList.add("active");
