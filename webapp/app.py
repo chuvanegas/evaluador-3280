@@ -102,9 +102,13 @@ def _load_ips():
                 return [{
                     "id": r["id"], "nombre": r["nombre"], "nit": r.get("nit",""),
                     "num_contrato": r.get("num_contrato",""), "regimen": r.get("regimen",""),
-                    "municipio": r.get("municipio",""), "rep_legal": r.get("rep_legal",""),
-                    "num_actas": r.get("num_actas", 0), "activo": r.get("activo", True),
-                    "creado_por": r.get("creado_por","")
+                    "departamento": r.get("departamento",""), "municipio": r.get("municipio",""),
+                    "rep_legal": r.get("rep_legal",""), "num_actas": r.get("num_actas", 0),
+                    "activo": r.get("activo", True), "creado_por": r.get("creado_por",""),
+                    "vigencia_inicio": r.get("vigencia_inicio",""),
+                    "vigencia_fin": r.get("vigencia_fin",""),
+                    "tipo_contrato": r.get("tipo_contrato","ASISTENCIAL"),
+                    "lma": r.get("lma", {}), "metas": r.get("metas", {}),
                 } for r in rows]
         except Exception:
             pass
@@ -121,9 +125,13 @@ def _save_ips(ips):
                 sb.table("prestadores").upsert({
                     "id": p["id"], "nombre": p["nombre"], "nit": p.get("nit",""),
                     "num_contrato": p.get("num_contrato",""), "regimen": p.get("regimen",""),
-                    "municipio": p.get("municipio",""), "rep_legal": p.get("rep_legal",""),
-                    "num_actas": p.get("num_actas", 0), "activo": p.get("activo", True),
-                    "creado_por": p.get("creado_por","")
+                    "departamento": p.get("departamento",""), "municipio": p.get("municipio",""),
+                    "rep_legal": p.get("rep_legal",""), "num_actas": p.get("num_actas", 0),
+                    "activo": p.get("activo", True), "creado_por": p.get("creado_por",""),
+                    "vigencia_inicio": p.get("vigencia_inicio",""),
+                    "vigencia_fin": p.get("vigencia_fin",""),
+                    "tipo_contrato": p.get("tipo_contrato","ASISTENCIAL"),
+                    "lma": p.get("lma", {}), "metas": p.get("metas", {}),
                 }, on_conflict="id").execute()
             return
         except Exception:
@@ -285,7 +293,7 @@ def create_ips():
         return jsonify({"error": "El nombre es requerido"}), 400
     ips_list = _load_ips()
     new_ips = {
-        "id": str(uuid.uuid4())[:8],
+        "id": str(uuid.uuid4()),
         "nombre": body.get("nombre","").upper(),
         "nit": body.get("nit",""),
         "departamento": body.get("departamento",""),
@@ -383,7 +391,7 @@ def create_usuario():
     if any(u["username"] == body["username"] for u in users):
         return jsonify({"error": "El usuario ya existe"}), 400
     new_user = {
-        "id": str(uuid.uuid4())[:8],
+        "id": str(uuid.uuid4()),
         "nombre": body.get("nombre", body["username"]),
         "username": body["username"],
         "password": _hash(body["password"]),
@@ -728,7 +736,7 @@ def create_acta():
     resultados = sd.get("resultados") or {}
     actas = _load_actas()
     new_acta = {
-        "id": str(uuid.uuid4())[:8],
+        "id": str(uuid.uuid4()),
         "ips_id": body.get("ips_id", ""),
         "acta_num": body.get("acta_num", ""),
         "fecha_eval": body.get("fecha_eval", ""),
