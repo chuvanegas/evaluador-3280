@@ -2594,6 +2594,7 @@ async function dashProcesarRIPS(){
   _dashFiles.forEach(f=>fd.append('files',f));
   try{
     const r=await fetch('/api/upload-rips',{method:'POST',body:fd});
+    if(!r.ok){const txt=await r.text();st.textContent='❌ Error HTTP '+r.status+': '+txt.slice(0,120);st.style.color='#dc2626';return;}
     const d=await r.json();
     if(d.archivos_cargados){
       const ok=d.detalle.filter(x=>x.ok).length;
@@ -2675,7 +2676,7 @@ async function dashProcesarRIPS(){
       st.textContent='❌ Error: '+(d.error||'desconocido');
       st.style.color='#dc2626';
     }
-  } catch(e){st.textContent='❌ Error de conexión';st.style.color='#dc2626';}
+  } catch(e){st.textContent='❌ Error: '+e.message;st.style.color='#dc2626';}
 }
 function dashLimpiarRIPS(){
   _dashFiles=[];
