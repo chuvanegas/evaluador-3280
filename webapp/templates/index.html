@@ -360,29 +360,16 @@ html.dark .it-btn.active{color:var(--azul2)}
 <div id="tab-evaluacion" class="tab-content">
 <div class="split">
   <div class="panel-left">
-    <div class="pl-header"><span>📂</span><div class="pl-title">RIPS Cargados</div></div>
-    <div style="padding:10px">
-      <div style="display:flex;flex-direction:column;gap:7px">
-        {% for nombre,icon,desc in [('usuarios','👥','Población'),('consultas','🩺','Consultas'),('procedimientos','⚕️','Procedimientos'),('medicamentos','💊','Medicamentos'),('otrosServicios','🔬','Otros servicios')] %}
-        <label style="border:1.5px dashed var(--gris2);border-radius:8px;padding:9px 11px;display:flex;align-items:center;gap:9px;cursor:pointer;transition:.15s;background:var(--gris0)" id="lbl-{{ nombre }}"
-          ondragover="event.preventDefault();this.style.borderColor='var(--azul2)'"
-          ondragleave="this.style.borderColor=''"
-          ondrop="event.preventDefault();subirRIPS(event.dataTransfer.files)">
-          <input type="file" accept=".json,.txt" style="display:none" onchange="subirRIPS(this.files,'{{ nombre }}')">
-          <span style="font-size:16px">{{ icon }}</span>
-          <div style="flex:1"><div style="font-size:11px;font-weight:700;color:var(--azul)">{{ nombre }} (.json / .txt)</div>
-          <div style="font-size:10px;color:var(--gris3)" id="sub-{{ nombre }}">{{ desc }}</div></div>
-          <span id="chk-{{ nombre }}" style="font-size:13px;color:var(--gris2)">○</span>
-        </label>
-        {% endfor %}
+    <div class="pl-header"><span>📂</span><div class="pl-title">RIPS en sesión</div></div>
+    <div style="padding:12px;display:flex;flex-direction:column;gap:8px">
+      <div id="eval-rips-resumen" style="font-size:11px;color:var(--gris3);text-align:center;padding:18px 10px">
+        Sin archivos cargados.<br>Ve al Dashboard para cargar RIPS.
       </div>
       <div class="cob-grid" id="cob-grid"></div>
-      <div style="margin-top:10px;display:flex;flex-direction:column;gap:7px">
-        <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="preevaluar()">
-          🔍 Pre-evaluar RIPS
-        </button>
-        <div id="preeval-status" style="font-size:10.5px;color:var(--gris3);text-align:center"></div>
-      </div>
+      <button class="btn btn-primary" style="width:100%;justify-content:center;margin-top:4px" onclick="preevaluar()">
+        🔍 Pre-evaluar RIPS
+      </button>
+      <div id="preeval-status" style="font-size:10.5px;color:var(--gris3);text-align:center"></div>
     </div>
   </div>
   <div class="panel-right">

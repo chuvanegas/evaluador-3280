@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """
-Evaluador Res. 3280 – DUSAKAWI EPSI  v0.1
+Evaluador Res. 3280 – DUSAKAWI EPSI  v0.2
 Servidor Flask con autenticación, roles y gestión de prestadores
+Persistencia: Supabase (con fallback a JSON local)
 """
 import json, os, datetime, uuid, hashlib
 from pathlib import Path
@@ -31,7 +32,22 @@ app.config["MAX_CONTENT_LENGTH"] = 200 * 1024 * 1024  # 200 MB
 # ── Almacén en memoria ─────────────────────────────────────────────────────
 _sessions = {}
 
-# ── Persistencia simple (JSON) – en v0.2 migrar a Supabase ────────────────
+# ── Supabase ────────────────────────────────────────────────────────────────
+SUPA_URL = os.environ.get("SUPABASE_URL", "")
+SUPA_KEY = os.environ.get("SUPABASE_KEY", "")
+
+_sb = None
+def _get_sb():
+    global _sb
+    if _sb is None:
+        try:
+            from supabase import create_client
+            _sb = create_client(SUPA_URL, SUPA_KEY)
+        except Exception:
+            pass
+    return _sb
+
+# ── Persistencia JSON (fallback local) ──────────────────────────────────────
 USERS_FILE  = DATA_PATH / "users.json"
 IPS_FILE    = DATA_PATH / "ips.json"
 ACTAS_FILE  = DATA_PATH / "actas.json"
@@ -39,10 +55,20 @@ ACTAS_FILE  = DATA_PATH / "actas.json"
 def _hash(pwd): return hashlib.sha256(pwd.encode()).hexdigest()
 
 def _load_users():
+    sb = _get_sb()
+    if sb:
+        try:
+            rows = sb.table("usuarios").select("*").execute().data
+            if rows:
+                return [{"id": r["id"], "nombre": r["nombre"], "username": r["username"],
+                         "password": r["password_hash"], "rol": r["rol"], "activo": r["activo"]}
+                        for r in rows]
+        except Exception:
+            pass
+    # Fallback JSON
     if USERS_FILE.exists():
         with open(USERS_FILE, encoding="utf-8") as f:
             return json.load(f)
-    # Usuarios por defecto
     default = [
         {"id": "1", "nombre": "Administrador", "username": "admin",
          "password": _hash("admin123"), "rol": "admin", "activo": True},
@@ -53,26 +79,97 @@ def _load_users():
     return default
 
 def _save_users(users):
+    sb = _get_sb()
+    if sb:
+        try:
+            for u in users:
+                sb.table("usuarios").upsert({
+                    "id": u["id"], "nombre": u["nombre"], "username": u["username"],
+                    "password_hash": u["password"], "rol": u["rol"], "activo": u.get("activo", True)
+                }, on_conflict="username").execute()
+            return
+        except Exception:
+            pass
     with open(USERS_FILE, "w", encoding="utf-8") as f:
         json.dump(users, f, ensure_ascii=False, indent=2)
 
 def _load_ips():
+    sb = _get_sb()
+    if sb:
+        try:
+            rows = sb.table("prestadores").select("*").order("creado_en").execute().data
+            if rows is not None:
+                return [{
+                    "id": r["id"], "nombre": r["nombre"], "nit": r.get("nit",""),
+                    "num_contrato": r.get("num_contrato",""), "regimen": r.get("regimen",""),
+                    "municipio": r.get("municipio",""), "rep_legal": r.get("rep_legal",""),
+                    "num_actas": r.get("num_actas", 0), "activo": r.get("activo", True),
+                    "creado_por": r.get("creado_por","")
+                } for r in rows]
+        except Exception:
+            pass
     if IPS_FILE.exists():
         with open(IPS_FILE, encoding="utf-8") as f:
             return json.load(f)
     return []
 
 def _save_ips(ips):
+    sb = _get_sb()
+    if sb:
+        try:
+            for p in ips:
+                sb.table("prestadores").upsert({
+                    "id": p["id"], "nombre": p["nombre"], "nit": p.get("nit",""),
+                    "num_contrato": p.get("num_contrato",""), "regimen": p.get("regimen",""),
+                    "municipio": p.get("municipio",""), "rep_legal": p.get("rep_legal",""),
+                    "num_actas": p.get("num_actas", 0), "activo": p.get("activo", True),
+                    "creado_por": p.get("creado_por","")
+                }, on_conflict="id").execute()
+            return
+        except Exception:
+            pass
     with open(IPS_FILE, "w", encoding="utf-8") as f:
         json.dump(ips, f, ensure_ascii=False, indent=2)
 
 def _load_actas():
+    sb = _get_sb()
+    if sb:
+        try:
+            rows = sb.table("evaluaciones").select("*").order("creado_en", desc=True).execute().data
+            if rows is not None:
+                return [{
+                    "id": r["id"], "prestador_id": r.get("prestador_id"),
+                    "periodo": r.get("periodo",""), "fecha": str(r.get("fecha","")),
+                    "total_exigido": float(r.get("total_exigido",0)),
+                    "total_reconocido": float(r.get("total_reconocido",0)),
+                    "total_descuento": float(r.get("total_descuento",0)),
+                    "pct": float(r.get("pct_cumplimiento",0)),
+                    "detalle": r.get("detalle_json"), "creado_por": r.get("creado_por","")
+                } for r in rows]
+        except Exception:
+            pass
     if ACTAS_FILE.exists():
         with open(ACTAS_FILE, encoding="utf-8") as f:
             return json.load(f)
     return []
 
 def _save_actas(actas):
+    sb = _get_sb()
+    if sb:
+        try:
+            for a in actas:
+                sb.table("evaluaciones").upsert({
+                    "id": a["id"], "prestador_id": a.get("prestador_id"),
+                    "periodo": a.get("periodo",""), "fecha": a.get("fecha"),
+                    "total_exigido": a.get("total_exigido",0),
+                    "total_reconocido": a.get("total_reconocido",0),
+                    "total_descuento": a.get("total_descuento",0),
+                    "pct_cumplimiento": a.get("pct",0),
+                    "detalle_json": a.get("detalle"), "creado_por": a.get("creado_por","")
+                }, on_conflict="id").execute()
+            return
+        except Exception:
+            pass
     with open(ACTAS_FILE, "w", encoding="utf-8") as f:
         json.dump(actas, f, ensure_ascii=False, indent=2)
 
