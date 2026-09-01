@@ -108,7 +108,8 @@ def _load_ips():
                     "vigencia_inicio": r.get("vigencia_inicio",""),
                     "vigencia_fin": r.get("vigencia_fin",""),
                     "tipo_contrato": r.get("tipo_contrato","ASISTENCIAL"),
-                    "lma": r.get("lma", {}), "metas": r.get("metas", {}),
+                    "lma": r.get("lma", {}),
+                    "metas": _cargar_metas_supabase(r["id"]),
                 } for r in rows]
         except Exception:
             pass
@@ -180,6 +181,45 @@ def _save_actas(actas):
             pass
     with open(ACTAS_FILE, "w", encoding="utf-8") as f:
         json.dump(actas, f, ensure_ascii=False, indent=2)
+
+def _guardar_metas_supabase(prestador_id: str, metas: dict):
+    """Guarda metas en tabla metas de Supabase (upsert por prestador+programa+actividad)."""
+    sb = _get_sb()
+    if not sb: return
+    try:
+        # Borrar metas anteriores de este prestador y reinsertar
+        sb.table("metas").delete().eq("prestador_id", prestador_id).execute()
+        rows = []
+        for prog_id, acts in metas.items():
+            if not isinstance(acts, dict): continue
+            for act_id, valor in acts.items():
+                rows.append({
+                    "id": str(uuid.uuid4()),
+                    "prestador_id": prestador_id,
+                    "programa_id": prog_id,
+                    "actividad_id": act_id,
+                    "meta_upc": float(valor) if valor else 0,
+                    "activo": True
+                })
+        if rows:
+            sb.table("metas").insert(rows).execute()
+    except Exception:
+        pass
+
+def _cargar_metas_supabase(prestador_id: str) -> dict:
+    """Carga metas desde Supabase para un prestador."""
+    sb = _get_sb()
+    if not sb: return {}
+    try:
+        rows = sb.table("metas").select("*").eq("prestador_id", prestador_id).eq("activo", True).execute().data
+        metas: dict = {}
+        for r in rows:
+            prog = r["programa_id"]
+            act  = r["actividad_id"]
+            metas.setdefault(prog, {})[act] = r.get("meta_upc", 0)
+        return metas
+    except Exception:
+        return {}
 
 # ── Auth helpers ───────────────────────────────────────────────────────────
 class SimpleUser:
@@ -333,7 +373,7 @@ def update_ips(ips_id):
 @app.route("/api/ips/<ips_id>/metas", methods=["POST"])
 @login_required
 def set_metas_ips(ips_id):
-    """Guarda metas asociadas a una IPS (manual o desde archivo nota técnica)."""
+    """Guarda metas asociadas a una IPS."""
     user = _get_current_user()
     if user.rol not in ["admin", "evaluador"]:
         return jsonify({"error": "Sin permisos"}), 403
@@ -352,16 +392,15 @@ def set_metas_ips(ips_id):
             metas = RIPSEvaluator.parsear_nota_tecnica(str(tmp))
         else:
             return jsonify({"error": "Formato no soportado para nota técnica"}), 400
-        target["metas"] = metas
-        _save_ips(ips_list)
-        resumen = {prog: sum(acts.values()) for prog, acts in metas.items()}
-        return jsonify({"ok": True, "metas": resumen})
+    else:
+        body = request.get_json() or {}
+        metas = body.get("metas", {})
 
-    # Carga manual (JSON)
-    body = request.get_json() or {}
-    target["metas"] = body.get("metas", {})
+    target["metas"] = metas
     _save_ips(ips_list)
-    return jsonify({"ok": True})
+    _guardar_metas_supabase(ips_id, metas)
+    resumen = {prog: sum(acts.values()) if isinstance(acts, dict) else 0 for prog, acts in metas.items()}
+    return jsonify({"ok": True, "metas": resumen})
 
 # ══════════════════════════════════════════════════════════════════════════
 # RUTAS USUARIOS
