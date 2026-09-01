@@ -1522,21 +1522,12 @@ async function preevaluar(){
   }
 
   const body={periodo_fin:document.getElementById("periodo_fin")?.value||""};
-  if(conteos){
-    body.conteos=conteos;
-    // Debug: mostrar grupos presentes en cada archivo
-    const resumen={};
-    for(const[arch,gmap] of Object.entries(conteos)){
-      resumen[arch]={};
-      for(const[g,ck] of Object.entries(gmap)) resumen[arch][g]=Object.keys(ck).length+' CUPS';
-    }
-    console.log("DEBUG conteos browser resumen:", JSON.stringify(resumen,null,2));
-  }
+  if(conteos) body.conteos=conteos;
 
   const r=await fetch("/api/preeval",{method:"POST",headers:{"Content-Type":"application/json"},
     body:JSON.stringify(body)});
   const d=await r.json();
-  if(!d.ok){st.textContent="❌ Error: "+d.error;return;}
+  if(!d.ok){st.textContent="❌ Error: "+d.error;goStep(3);return;}
   st.textContent=`✅ ${Object.keys(d.resultados).length} programas · ${d.total_usuarios} usuarios`;
   renderPreeval(d);
   goStep(3);
@@ -2989,6 +2980,7 @@ function dashIrEvaluacion(){
   document.getElementById('tab-evaluacion').classList.add('active');
   document.querySelectorAll('.nav-tab').forEach(b=>b.classList.remove('active'));
   document.querySelectorAll('.nav-tab').forEach(b=>{if(b.textContent.includes('Evaluación'))b.classList.add('active');});
+  goStep(3);
   preevaluar();
 }
 </script>
