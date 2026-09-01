@@ -804,16 +804,26 @@ def preeval():
                     "total": sum(v["encontrados"] for v in acts.values())
                 }
 
-        # Debug: para PRIMERA_INFANCIA, mostrar CUPS presentes por archivo
+        # Debug: para PRIMERA_INFANCIA, mostrar CUPS presentes y matching
         debug_pi = {}
         for arch, gmap in conteos.items():
             pi_cups = list(gmap.get("PRIMERA_INFANCIA", {}).keys())[:20]
             if pi_cups:
                 debug_pi[arch] = pi_cups
+        # Debug matching: para edu_individual en PI
+        debug_match = []
+        pi_proc = conteos.get("procedimientos", {}).get("PRIMERA_INFANCIA", {})
+        cups_test = ['990201','990202','990203','990204','990205','990206']
+        for ckey, cnt in list(pi_proc.items())[:10]:
+            cv = ckey.split("|")[0]
+            fv = ckey.split("|")[1] if "|" in ckey else ""
+            match = cv in cups_test
+            debug_match.append(f"{ckey} → cv={cv} match={match} cnt={cnt}")
         debug_grupos = {arch: list(grps.keys()) for arch, grps in conteos.items()}
         return jsonify({"ok": True, "resultados": resultados, "cobertura": cobertura,
                         "archivos": {}, "total_usuarios": total_usuarios,
-                        "debug_grupos": debug_grupos, "debug_pi_cups": debug_pi})
+                        "debug_grupos": debug_grupos, "debug_pi_cups": debug_pi,
+                        "debug_match": debug_match})
 
     # ── Fallback: usar archivos en sesión (caso local/dev) ───────────────
     periodo_str = body.get("periodo_fin", sd.get("info_acta", {}).get("periodo_fin", ""))
