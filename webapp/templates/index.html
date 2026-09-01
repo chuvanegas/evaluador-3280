@@ -669,7 +669,7 @@ html.dark .it-btn.active{color:var(--azul2)}
         <button onclick="filtrarSegCUPS('di')" id="fseg-di" style="padding:3px 10px;border-radius:12px;font-size:11px;font-weight:600;border:1.5px solid #065F46;background:none;color:#065F46;cursor:pointer">🔁 Demanda Inducida</button>
         <button onclick="filtrarSegCUPS('rcv')" id="fseg-rcv" style="padding:3px 10px;border-radius:12px;font-size:11px;font-weight:600;border:1.5px solid #92400E;background:none;color:#92400E;cursor:pointer">❤️ RCV</button>
       </div>
-      <div style="padding:0;overflow-x:auto">
+      <div style="padding:0;overflow-x:auto;overflow-y:auto;max-height:calc(100vh - 280px)">
         <table class="users-table" id="cups-table">
           <thead><tr>
             <th style="width:100px">CUPS</th>
