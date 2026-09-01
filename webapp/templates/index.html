@@ -1538,13 +1538,11 @@ async function preevaluar(){
   const d=await r.json();
   if(!d.ok){st.textContent="❌ Error: "+d.error;return;}
   st.textContent=`✅ ${Object.keys(d.resultados).length} programas · ${d.total_usuarios} usuarios`;
-  if(d.debug_grupos) console.log("DEBUG grupos:", JSON.stringify(d.debug_grupos));
-  if(d.debug_pi_acts) console.log("DEBUG PI acts:", JSON.stringify(d.debug_pi_acts));
-  renderPreeval(d,d.debug_grupos,d.debug_pi_acts);
+  renderPreeval(d);
   goStep(3);
 }
 
-function renderPreeval(d,debugGrupos,debugPiActs){
+function renderPreeval(d){const debugGrupos=null,debugPiActs=null;
   const SEGMENT={
     PRIMERA_INFANCIA:"📋 Cursos de Vida",INFANCIA:"📋 Cursos de Vida",ADOLESCENCIA:"📋 Cursos de Vida",
     JOVENES:"📋 Cursos de Vida",ADULTEZ:"📋 Cursos de Vida",VEJEZ:"📋 Cursos de Vida",
@@ -1561,9 +1559,19 @@ function renderPreeval(d,debugGrupos,debugPiActs){
     html+=`<div class="cob-card" style="min-width:70px"><div class="cc-num">${n.toLocaleString("es-CO")}</div><div class="cc-label">${lbl}</div></div>`;
   }
   html+="</div>";
-  // Tabla por programa
+  // Tabla por programa — orden fijo por edad
+  const ORDEN_PROG=['PRIMERA_INFANCIA','INFANCIA','ADOLESCENCIA','JOVENES','ADULTEZ','VEJEZ',
+    'RUTA_MATERNA','DI_PRIMERA_INFANCIA','DI_INFANCIA','DI_ADOLESCENCIA','DI_JOVENES','DI_ADULTEZ','DI_VEJEZ','DI_SALUD_MENTAL',
+    'RCV_JOVENES','RCV_ADULTEZ','RCV_VEJEZ'];
+  const resultEntries=Object.entries(d.resultados||{});
+  resultEntries.sort(([a],[b])=>{
+    const ia=ORDEN_PROG.indexOf(a),ib=ORDEN_PROG.indexOf(b);
+    if(ia<0&&ib<0) return a.localeCompare(b);
+    if(ia<0) return 1; if(ib<0) return -1;
+    return ia-ib;
+  });
   const grupos={};
-  for(const[pid,prog] of Object.entries(d.resultados||{})){
+  for(const[pid,prog] of resultEntries){
     let seg="📋 Cursos de Vida";
     if(pid.startsWith("RUTA_MATERNA")) seg="🤰 Ruta Materna";
     else if(pid.startsWith("DI")||pid==="DI_SALUD_MENTAL") seg="🔁 Demanda Inducida";
