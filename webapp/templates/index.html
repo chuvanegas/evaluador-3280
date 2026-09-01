@@ -2739,9 +2739,12 @@ async function dashProcesarRIPS(){
   const {cobertura,usuarios_detalle,total_usuarios}=_calcularCobertura(archivos);
   // Enviar solo el resumen compacto al servidor (para sesión y evaluación)
   try{
+    // Guardar archivos en memoria del browser para pre-evaluación posterior
+    window._ripsDatos=archivos;
+    // Solo enviar el resumen compacto al servidor (NO los archivos completos)
     const r=await fetch('/api/procesar-rips',{method:'POST',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({archivos,detalle,cobertura_poblacion:cobertura,usuarios_detalle,total_usuarios})});
+      body:JSON.stringify({detalle,cobertura_poblacion:cobertura,usuarios_detalle,total_usuarios})});
     if(!r.ok){const txt=await r.text();st.textContent='❌ Error HTTP '+r.status+': '+txt.slice(0,120);st.style.color='#dc2626';return;}
     const d=await r.json();
     if(d.archivos_cargados){
