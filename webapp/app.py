@@ -5,10 +5,6 @@ Servidor Flask con autenticación, roles y gestión de prestadores
 Persistencia: Supabase (con fallback a JSON local)
 """
 import json, os, datetime, uuid, hashlib
-try:
-    import drive_backup as _drive
-except Exception:
-    _drive = None
 from pathlib import Path
 from functools import wraps
 from flask import (Flask, request, jsonify, render_template, send_file,
@@ -84,7 +80,6 @@ def _load_users():
     return default
 
 def _save_users(users):
-    # Siempre intenta ambos destinos: Supabase + Drive
     sb = _get_sb()
     sb_ok = False
     if sb:
@@ -100,9 +95,6 @@ def _save_users(users):
     if not sb_ok:
         with open(USERS_FILE, "w", encoding="utf-8") as f:
             json.dump(users, f, ensure_ascii=False, indent=2)
-    if _drive and _drive.disponible():
-        safe = [{k: v for k, v in u.items() if k != "password"} for u in users]
-        _drive.subir_json("usuarios.json", safe, subfolder="usuarios")
 
 def _load_ips():
     sb = _get_sb()
@@ -124,18 +116,12 @@ def _load_ips():
                 } for r in rows]
         except Exception:
             pass
-    # Fallback: Drive
-    if _drive and _drive.disponible():
-        data = _drive.leer_json("prestadores.json", subfolder="prestadores")
-        if data:
-            return data
     if IPS_FILE.exists():
         with open(IPS_FILE, encoding="utf-8") as f:
             return json.load(f)
     return []
 
 def _save_ips(ips):
-    # Siempre intenta ambos destinos: Supabase + Drive
     sb = _get_sb()
     sb_ok = False
     if sb:
@@ -158,8 +144,6 @@ def _save_ips(ips):
     if not sb_ok:
         with open(IPS_FILE, "w", encoding="utf-8") as f:
             json.dump(ips, f, ensure_ascii=False, indent=2)
-    if _drive and _drive.disponible():
-        _drive.subir_json("prestadores.json", ips, subfolder="prestadores")
 
 def _load_actas():
     sb = _get_sb()
@@ -178,19 +162,12 @@ def _load_actas():
                 } for r in rows]
         except Exception:
             pass
-    # Fallback: Drive (busca el actas más reciente)
-    if _drive and _drive.disponible():
-        fecha = datetime.datetime.now().strftime("%Y-%m-%d")
-        data = _drive.leer_json(f"actas_{fecha}.json", subfolder="actas")
-        if data:
-            return data
     if ACTAS_FILE.exists():
         with open(ACTAS_FILE, encoding="utf-8") as f:
             return json.load(f)
     return []
 
 def _save_actas(actas):
-    # Siempre intenta ambos destinos: Supabase + Drive
     sb = _get_sb()
     sb_ok = False
     if sb:
@@ -211,10 +188,6 @@ def _save_actas(actas):
     if not sb_ok:
         with open(ACTAS_FILE, "w", encoding="utf-8") as f:
             json.dump(actas, f, ensure_ascii=False, indent=2)
-    # Drive siempre (independiente de Supabase)
-    if _drive and _drive.disponible():
-        fecha = datetime.datetime.now().strftime("%Y-%m-%d")
-        _drive.subir_json(f"actas_{fecha}.json", actas, subfolder="actas")
 
 def _guardar_metas_supabase(prestador_id: str, metas: dict):
     """Guarda metas en tabla metas de Supabase (upsert por prestador+programa+actividad)."""
@@ -1050,72 +1023,8 @@ def preeval_exportar():
     buf.seek(0)
     nombre_archivo = f"preeval_{fecha}_{prestador_nombre[:20].replace(' ','_') if prestador_nombre else 'sin_prestador'}.xlsx"
 
-    # Backup JSON en Drive
-    if _drive and _drive.disponible():
-        snapshot = {
-            "fecha": fecha, "prestador": prestador_nombre,
-            "usar_fin": usar_fin, "sumar_sin_fin": list(sumar_sin_fin),
-            "resultados": resultados, "cobertura": cobertura,
-            "total_usuarios": total_usuarios,
-            "generado": datetime.datetime.now().isoformat()
-        }
-        _drive.subir_json(
-            f"preeval_{fecha}_{(prestador_nombre[:20].replace(' ','_') if prestador_nombre else 'sin_prestador')}.json",
-            snapshot, subfolder="pre-evaluaciones"
-        )
-
     return send_file(buf, as_attachment=True, download_name=nombre_archivo,
                      mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
-
-@app.route("/api/drive/status", methods=["GET"])
-@login_required
-def drive_status():
-    drive_ok = bool(_drive and _drive.disponible())
-    sb_ok = False
-    try:
-        sb = _get_sb()
-        if sb:
-            sb.table("usuarios").select("id").limit(1).execute()
-            sb_ok = True
-    except Exception:
-        pass
-    return jsonify({"ok": drive_ok, "drive": drive_ok, "supabase": sb_ok})
-
-@app.route("/api/drive/backup", methods=["POST"])
-@login_required
-def drive_backup_manual():
-    """Fuerza backup completo de usuarios, actas y prestadores en Drive."""
-    user = _get_current_user()
-    if user.rol != "admin":
-        return jsonify({"error": "Solo administradores"}), 403
-    if not (_drive and _drive.disponible()):
-        return jsonify({"error": "Drive no configurado (faltan GOOGLE_DRIVE_CREDENTIALS o GOOGLE_DRIVE_FOLDER_ID)"}), 400
-    fecha = datetime.datetime.now().strftime("%Y-%m-%d")
-    resultados = []
-    # Usuarios (sin passwords)
-    try:
-        users = _load_users()
-        safe = [{k: v for k, v in u.items() if k != "password"} for u in users]
-        ok = _drive.subir_json("usuarios.json", safe, subfolder="usuarios")
-        resultados.append({"archivo": "usuarios/usuarios.json", "ok": ok})
-    except Exception as e:
-        resultados.append({"archivo": "usuarios/usuarios.json", "ok": False, "error": str(e)})
-    # Actas
-    try:
-        actas = _load_actas()
-        ok = _drive.subir_json(f"actas_{fecha}.json", actas, subfolder="actas")
-        resultados.append({"archivo": f"actas/actas_{fecha}.json", "ok": ok})
-    except Exception as e:
-        resultados.append({"archivo": f"actas/actas_{fecha}.json", "ok": False, "error": str(e)})
-    # Prestadores
-    try:
-        ips = _load_ips()
-        ok = _drive.subir_json("prestadores.json", ips, subfolder="prestadores")
-        resultados.append({"archivo": "prestadores/prestadores.json", "ok": ok})
-    except Exception as e:
-        resultados.append({"archivo": "prestadores/prestadores.json", "ok": False, "error": str(e)})
-    todos_ok = all(r["ok"] for r in resultados)
-    return jsonify({"ok": todos_ok, "resultados": resultados})
 
 @app.route("/api/actas", methods=["GET"])
 @login_required
