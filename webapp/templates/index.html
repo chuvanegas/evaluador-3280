@@ -3002,7 +3002,7 @@ function _parsearRipsTxt(text){
   const r={};
   if(raw['USUARIOS']){r.usuarios=raw['USUARIOS'].map(l=>({
     tipoDocumentoIdentificacion:c(l,0),numDocumentoIdentificacion:c(l,1),
-    fechaNacimiento:c(l,3),codSexo:c(l,4)
+    fechaNacimiento:c(l,2),codSexo:c(l,3)
   })).filter(x=>x.numDocumentoIdentificacion);}
   if(raw['CONSULTAS']){r.consultas=raw['CONSULTAS'].map(l=>{
     const {cups,fin}=cCups(l,6);const finCol=c(l,10);
