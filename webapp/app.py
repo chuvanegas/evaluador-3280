@@ -759,9 +759,12 @@ def preeval():
         # Mapa grupo_id → grupos del browser que aplican
         def _grupos_para_prog(prog):
             pid = prog["id"]
+            # Si tiene aplica_a explícito, usarlo directamente (DX groups: EMBARAZADA, DM, etc.)
+            if "aplica_a" in prog and prog["aplica_a"]:
+                return list(prog["aplica_a"])
             if pid in cvs_ids:
                 return [pid]  # Curso de vida exacto
-            # DI/RCV/Materna → todos los grupos cuya edad caiga en rango
+            # DI sin aplica_a → todos los cursos de vida cuya edad caiga en rango
             edad_min = prog.get("edad_min", 0)
             edad_max = prog.get("edad_max", 200)
             EDAD_CV = {

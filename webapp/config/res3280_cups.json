@@ -2277,6 +2277,9 @@
         "proc_asesoria_pre_vih",
         "proc_asesoria_pos_vih",
         "materna_acido_folico"
+      ],
+      "aplica_a": [
+        "PRECONCEPCIONAL"
       ]
     },
     {
@@ -2292,6 +2295,9 @@
         "materna_ive_medicamento",
         "materna_ive_seguimiento",
         "materna_ive_edu"
+      ],
+      "aplica_a": [
+        "PRECONCEPCIONAL"
       ]
     },
     {
@@ -2334,6 +2340,9 @@
         "materna_prenatal_desparasitacion",
         "materna_prenatal_acido_folico",
         "materna_prenatal_sulfato_ferroso"
+      ],
+      "aplica_a": [
+        "EMBARAZADA"
       ]
     },
     {
@@ -2345,6 +2354,9 @@
       "actividades": [
         "materna_parto_vaginal",
         "materna_recien_nacido"
+      ],
+      "aplica_a": [
+        "EMBARAZADA"
       ]
     },
     {
@@ -2357,6 +2369,9 @@
         "materna_posparto_consulta",
         "materna_posparto_hemoclasif",
         "materna_posparto_tsh"
+      ],
+      "aplica_a": [
+        "EMBARAZADA"
       ]
     },
     {
@@ -2478,6 +2493,10 @@
         "di_canalizacion_preconcepcion",
         "di_canalizacion_prenatal",
         "di_seguimiento_rmnp"
+      ],
+      "aplica_a": [
+        "EMBARAZADA",
+        "PRECONCEPCIONAL"
       ]
     },
     {
@@ -2537,6 +2556,10 @@
         "rcv_consulta_nutricion_1vez",
         "rcv_consulta_psicologia_1vez",
         "rcv_edu_grupal"
+      ],
+      "aplica_a": [
+        "DM",
+        "HIPERTENSION"
       ]
     },
     {
@@ -2581,6 +2604,9 @@
         "rcv_consulta_nutricion_1vez",
         "rcv_consulta_psicologia_1vez",
         "rcv_edu_grupal"
+      ],
+      "aplica_a": [
+        "DM"
       ]
     },
     {
@@ -2625,6 +2651,10 @@
         "rcv_consulta_nutricion_1vez",
         "rcv_consulta_psicologia_1vez",
         "rcv_edu_grupal"
+      ],
+      "aplica_a": [
+        "DM",
+        "HIPERTENSION"
       ]
     }
   ]

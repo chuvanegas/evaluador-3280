@@ -1487,17 +1487,20 @@ function _preAgregar(archivos,usuariosGrupos){
       const tipo=(r.tipoDocumentoIdentificacion||'').trim();
       const cups=(r[cupsKey]||'').trim().toUpperCase();
       const fin=finKey?String(r[finKey]||'').trim():'';
-      const grupo=usuariosGrupos[num]||null;
-      if(!cups||!grupo) continue;
+      const graw=usuariosGrupos[num]||null;
+      if(!cups||!graw) continue;
+      const grupos_arr=Array.isArray(graw)?graw:[graw];
       const ckey=fin?cups+'|'+fin:cups;
-      // índice con finalidad
-      if(!result[arch][grupo]) result[arch][grupo]={};
-      if(!result[arch][grupo][ckey]) result[arch][grupo][ckey]=new Set();
-      result[arch][grupo][ckey].add(tipo+'|'+num);
-      // índice solo CUPS (deduplicado por paciente, sin importar finalidad)
-      if(!resultCups[arch][grupo]) resultCups[arch][grupo]={};
-      if(!resultCups[arch][grupo][cups]) resultCups[arch][grupo][cups]=new Set();
-      resultCups[arch][grupo][cups].add(tipo+'|'+num);
+      for(const grupo of grupos_arr){
+        // índice con finalidad
+        if(!result[arch][grupo]) result[arch][grupo]={};
+        if(!result[arch][grupo][ckey]) result[arch][grupo][ckey]=new Set();
+        result[arch][grupo][ckey].add(tipo+'|'+num);
+        // índice solo CUPS (deduplicado por paciente, sin importar finalidad)
+        if(!resultCups[arch][grupo]) resultCups[arch][grupo]={};
+        if(!resultCups[arch][grupo][cups]) resultCups[arch][grupo][cups]=new Set();
+        resultCups[arch][grupo][cups].add(tipo+'|'+num);
+      }
     }
   }
   // Medicamentos: agregar también por nombre (para matching por keyword)
@@ -1506,11 +1509,13 @@ function _preAgregar(archivos,usuariosGrupos){
     const num=(r.numDocumentoIdentificacion||'').trim();
     const tipo=(r.tipoDocumentoIdentificacion||'').trim();
     const nombre=String(r.nombreTecnologiaSalud||'').trim().toUpperCase();
-    const grupo=usuariosGrupos[num]||null;
-    if(!nombre||!grupo) continue;
-    if(!medNombres[grupo]) medNombres[grupo]={};
-    if(!medNombres[grupo][nombre]) medNombres[grupo][nombre]=new Set();
-    medNombres[grupo][nombre].add(tipo+'|'+num);
+    const graw=usuariosGrupos[num]||null;
+    if(!nombre||!graw) continue;
+    for(const grupo of(Array.isArray(graw)?graw:[graw])){
+      if(!medNombres[grupo]) medNombres[grupo]={};
+      if(!medNombres[grupo][nombre]) medNombres[grupo][nombre]=new Set();
+      medNombres[grupo][nombre].add(tipo+'|'+num);
+    }
   }
 
   // Sets → counts
@@ -1544,14 +1549,15 @@ function _preAgregar(archivos,usuariosGrupos){
       const tipo=(r.tipoDocumentoIdentificacion||'').trim();
       const cups=(r[cupsKey]||'').trim().toUpperCase();
       const fin=finKey?String(r[finKey]||'').trim():'';
-      const grupo=usuariosGrupos[num]||null;
-      if(!cups||!grupo) continue;
+      const graw=usuariosGrupos[num]||null;
+      if(!cups||!graw) continue;
       const ckey=fin?cups+'|'+fin:cups;
-      if(!resultReg[arch][grupo]) resultReg[arch][grupo]={};
-      if(!resultReg[arch][grupo][ckey]) resultReg[arch][grupo][ckey]={};
-      // contar records por paciente (num)
       const pid=tipo+'|'+num;
-      resultReg[arch][grupo][ckey][pid]=(resultReg[arch][grupo][ckey][pid]||0)+1;
+      for(const grupo of(Array.isArray(graw)?graw:[graw])){
+        if(!resultReg[arch][grupo]) resultReg[arch][grupo]={};
+        if(!resultReg[arch][grupo][ckey]) resultReg[arch][grupo][ckey]={};
+        resultReg[arch][grupo][ckey][pid]=(resultReg[arch][grupo][ckey][pid]||0)+1;
+      }
     }
   }
   // Convertir a {cups|fin: {pid: count}} → para que servidor aplique max por paciente
@@ -1576,7 +1582,12 @@ async function preevaluar(){
     // Reconstruir mapa numDoc→grupo a partir de los datos del browser
     const usuariosGrupos={};
     if(window._usuariosDetalle){
-      for(const u of window._usuariosDetalle) if(u.grupo) usuariosGrupos[u.num_doc]=u.grupo;
+      for(const u of window._usuariosDetalle){
+        const grupos=[];
+        if(u.grupo) grupos.push(u.grupo);
+        if(u.dxGrupos) for(const g of u.dxGrupos) grupos.push(g);
+        if(grupos.length) usuariosGrupos[u.num_doc]=grupos.length===1?grupos[0]:grupos;
+      }
     }
     conteos=_preAgregar(archivos,usuariosGrupos);
   }
@@ -2732,6 +2743,25 @@ function dashCargarRIPS(files,tipo){
   document.getElementById('dash-rips-status').textContent=`${_dashFiles.length} archivo(s) seleccionado(s) — pendiente procesar`;
 }
 
+// Clasificación por diagnóstico (Ruta Materna, RCV)
+const _DX_GRUPOS={
+  EMBARAZADA:{exact:new Set(['Z321','Z33X','Z340','Z341','Z342','Z343','Z344','Z345','Z346','Z347','Z348','Z349','Z350','Z351','Z352','Z353','Z354','Z355','Z356','Z357','Z358','Z359'])},
+  PRECONCEPCIONAL:{exact:new Set(['Z316','Z318','Z319'])},
+  PLANIFICACION:{exact:new Set(['Z309','Z300','Z304'])},
+  DM:{prefix:['E10','E11','E12','E13','E14'],exact:new Set(['E232','N251'])},
+  HIPERTENSION:{prefix:[],exact:new Set(['G932','I10X','I150','I151','I152','I158','I159','I270','I272','K766','O100','O104','O109','O13X','O16X','P292','R030'])},
+};
+function _getDxGrupos(dx){
+  if(!dx) return[];
+  const d=dx.trim().toUpperCase();
+  const out=[];
+  for(const[g,r] of Object.entries(_DX_GRUPOS)){
+    if(r.exact&&r.exact.has(d)){out.push(g);continue;}
+    if(r.prefix&&r.prefix.some(p=>d.startsWith(p))) out.push(g);
+  }
+  return out;
+}
+
 // Parsea TXT RIPS (Res. 3374) en el navegador — evita límite 4.5MB de Vercel
 function _parsearRipsTxt(text){
   const lines=text.replace(/\r/g,'').split('\n').map(l=>l.replace(/\|+$/,'').trim());
@@ -2751,14 +2781,16 @@ function _parsearRipsTxt(text){
     fechaNacimiento:c(l,3),codSexo:c(l,4)
   })).filter(x=>x.numDocumentoIdentificacion);}
   if(raw['CONSULTAS']){r.consultas=raw['CONSULTAS'].map(l=>{
-    const {cups,fin}=cCups(l,6);const finCol=c(l,20);
+    const {cups,fin}=cCups(l,6);const finCol=c(l,10);
     return{tipoDocumentoIdentificacion:c(l,1),numDocumentoIdentificacion:c(l,2),
-      fechaInicioAtencion:c(l,4).slice(0,10),codConsulta:cups,finalidadTecnologiaSalud:finCol||fin};
+      fechaInicioAtencion:c(l,4).slice(0,10),codConsulta:cups,
+      finalidadTecnologiaSalud:finCol||fin,codDiagnosticoPrincipal:c(l,12)};
   }).filter(x=>x.numDocumentoIdentificacion&&x.codConsulta);}
   if(raw['PROCEDIMIENTOS']){r.procedimientos=raw['PROCEDIMIENTOS'].map(l=>{
-    const {cups,fin}=cCups(l,7);const finCol=c(l,19);
+    const {cups,fin}=cCups(l,7);const finCol=c(l,12);
     return{tipoDocumentoIdentificacion:c(l,1),numDocumentoIdentificacion:c(l,2),
-      fechaInicioAtencion:c(l,4).slice(0,10),codProcedimiento:cups,finalidadTecnologiaSalud:finCol||fin};
+      fechaInicioAtencion:c(l,4).slice(0,10),codProcedimiento:cups,
+      finalidadTecnologiaSalud:finCol||fin,codDiagnosticoPrincipal:c(l,15)};
   }).filter(x=>x.numDocumentoIdentificacion&&x.codProcedimiento);}
   if(raw['MEDICAMENTOS']){r.medicamentos=raw['MEDICAMENTOS'].map(l=>{
     const {cups}=cCups(l,10);
@@ -2835,6 +2867,19 @@ function _calcularCobertura(archivos){
     if(edad<=59) return'ADULTEZ';
     return'VEJEZ';
   }
+  // Construir mapa numDoc → Set<DX_grupo> de todas las consultas/procedimientos
+  const _dxGruposPorPac={};
+  for(const arch of['consultas','procedimientos']){
+    for(const r of(archivos[arch]||[])){
+      const num=(r.numDocumentoIdentificacion||'').trim();
+      const dxGs=_getDxGrupos(r.codDiagnosticoPrincipal||'');
+      if(num&&dxGs.length){
+        if(!_dxGruposPorPac[num]) _dxGruposPorPac[num]=new Set();
+        for(const g of dxGs) _dxGruposPorPac[num].add(g);
+      }
+    }
+  }
+
   const cobertura={};
   const detalle=[];
   for(const[num,meta] of Object.entries(usuariosMeta)){
@@ -2856,7 +2901,8 @@ function _calcularCobertura(archivos){
     for(const[k,n] of Object.entries(cupsPerFecha)){
       if(n>1){const cups=k.split('|')[0];repetidos[cups]=(repetidos[cups]||0)+(n-1);}
     }
-    detalle.push({tipo_doc:meta.tipo,num_doc:num,edad,sexo:meta.sexo,grupo:g,total_actos:actos.length,cups_repetidos:repetidos});
+    const dxGrupos=[...(_dxGruposPorPac[num]||[])];
+    detalle.push({tipo_doc:meta.tipo,num_doc:num,edad,sexo:meta.sexo,grupo:g,dxGrupos,total_actos:actos.length,cups_repetidos:repetidos});
   }
   detalle.sort((a,b)=>((a.grupo||'')>(b.grupo||'')?1:-1)||((a.num_doc>b.num_doc)?1:-1));
   return{cobertura,usuarios_detalle:detalle,total_usuarios:detalle.length};
