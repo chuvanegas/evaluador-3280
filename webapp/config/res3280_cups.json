@@ -169,7 +169,7 @@
       "cups": [
         "902213"
       ],
-      "finalidad": [],
+      "finalidad": ["14"],
       "deduplicar": true,
       "aplica_a": [
         "PRIMERA_INFANCIA"
