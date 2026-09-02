@@ -3,6 +3,41 @@
 
 ---
 
+## [v0.4.0] — 2026-09-02 · Finalidad correcta + Clasificación por Diagnóstico
+
+### Correcciones críticas
+- **Bug de columnas de finalidad en TXT (Res. 3374)**: el parser leía la columna equivocada para `finalidadTecnologiaSalud`
+  - Consultas: corregido de columna 20 a columna **10** — ahora `"11"` (preventiva) coincide correctamente
+  - Procedimientos: corregido de columna 19 a columna **12** — ahora `"14"` (detección temprana) coincide
+  - Efecto: todas las actividades con filtro de finalidad (medicina general, enfermería, odontología, barniz de flúor, profilaxis) antes mostraban 0 en "Con finalidad"; ahora cuentan los pacientes correctos
+- **Orden de actividades en pre-eval**: Flask ordenaba las claves del JSON alfabéticamente; corregido con `app.json.sort_keys = False` — las actividades aparecen en el orden definido por la configuración (medicina general primero, luego enfermería, etc.)
+- **Toggle "Sin finalidad"**: la columna "Sin final." ahora refleja correctamente cuántos registros tienen el CUPS pero con finalidad incorrecta o ausente
+
+### Nuevas funciones
+- **Clasificación por diagnóstico (DX)**: el parser ahora extrae `codDiagnosticoPrincipal` de cada consulta y procedimiento. Cada paciente queda asignado automáticamente a uno o más grupos DX según sus diagnósticos:
+  | Diagnósticos | Grupo DX |
+  |---|---|
+  | Z316, Z318, Z319 | `PRECONCEPCIONAL` |
+  | Z321, Z33X, Z340–Z359 | `EMBARAZADA` |
+  | Z309, Z300, Z304 | `PLANIFICACION` |
+  | E100–E149, E232, N251 | `DM` |
+  | I10X, G932, I150–I159, I270, I272, K766, O100, O104, O109, O13X, O16X, P292, R030 | `HIPERTENSION` |
+- **Pre-eval Ruta Materna y RCV por DX**: los programas Materna y RCV ahora cuentan únicamente los pacientes que tienen diagnósticos de la ruta, no todos los pacientes en el rango de edad:
+  - `RUTA_MATERNA_PRECONCEPCION` / `RUTA_MATERNA_IVE` → grupo `PRECONCEPCIONAL`
+  - `RUTA_MATERNA_PRENATAL` / `PARTO` / `POSPARTO` → grupo `EMBARAZADA`
+  - `DI00011` → `EMBARAZADA` + `PRECONCEPCIONAL`
+  - `RCV_DM` → `DM`
+  - `RCV_RIESGO` / `RCV_DM_HTA` → `DM` + `HIPERTENSION`
+- **Soporte multi-grupo por paciente**: un paciente puede pertenecer simultáneamente a su curso de vida (por edad) y a uno o más grupos DX — todos se contabilizan en las rutas correspondientes sin duplicación dentro de cada ruta
+
+### Arquitectura
+- `_getDxGrupos(dx)` — función de clasificación DX en el browser, basada en tabla `_DX_GRUPOS` con listas `exact` y `prefix` por grupo
+- `_dxGruposPorPac` — mapa pre-calculado `numDoc → Set<DX_grupo>` construido en O(N) antes del loop de pacientes
+- `_preAgregar` acepta arrays de grupos por paciente (antes solo aceptaba un string); itera sobre todos los grupos para construir los índices de conteo
+- `_grupos_para_prog` en `app.py` respeta el campo `aplica_a` del programa cuando existe, antes de caer al cálculo por rango de edad
+
+---
+
 ## [v0.3.0] — 2026-09-01 · Pre-evaluación completa por grupos de edad
 
 ### Nuevas funciones
