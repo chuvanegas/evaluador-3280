@@ -746,12 +746,6 @@ def preeval():
     if conteos:
         # ── Modo rápido: usar conteos pre-calculados en el browser ──────────
         resultados = {}
-        total_usuarios = sum(
-            sum(c for cups_map in grupo_map.values() for c in cups_map.values())
-            for grupo_map in conteos.values()
-        ) // max(len(conteos), 1)  # estimación aproximada
-
-        # Recuperar cobertura del resumen de sesión
         cobertura = sd.get("cobertura", {})
         total_usuarios = sd.get("total_usuarios", 0)
 
