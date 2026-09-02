@@ -1622,26 +1622,34 @@ async function preevaluar(){
   const archivos=window._ripsDatos||{};
   let conteos=null;
   if(Object.keys(archivos).length>0){
-    // Reconstruir mapa numDoc→grupo a partir de los datos del browser
-    const usuariosGrupos={};
-    if(window._usuariosDetalle){
-      for(const u of window._usuariosDetalle){
-        const grupos=[];
-        if(u.grupo) grupos.push(u.grupo);
-        if(u.dxGrupos) for(const g of u.dxGrupos) grupos.push(g);
-        if(grupos.length) usuariosGrupos[u.num_doc]=grupos.length===1?grupos[0]:grupos;
+    try{
+      const usuariosGrupos={};
+      if(window._usuariosDetalle){
+        for(const u of window._usuariosDetalle){
+          const grupos=[];
+          if(u.grupo) grupos.push(u.grupo);
+          if(u.dxGrupos) for(const g of u.dxGrupos) grupos.push(g);
+          if(grupos.length) usuariosGrupos[u.num_doc]=grupos.length===1?grupos[0]:grupos;
+        }
       }
+      conteos=_preAgregar(archivos,usuariosGrupos);
+    }catch(err){
+      st.textContent="❌ Error JS: "+err.message;
+      console.error("_preAgregar falló:",err);
+      goStep(3);return;
     }
-    conteos=_preAgregar(archivos,usuariosGrupos);
   }
 
   const body={periodo_fin:document.getElementById("periodo_fin")?.value||""};
   if(conteos) body.conteos=conteos;
 
-  const r=await fetch("/api/preeval",{method:"POST",headers:{"Content-Type":"application/json"},
-    body:JSON.stringify(body)});
-  const d=await r.json();
-  if(!d.ok){st.textContent="❌ Error: "+d.error;goStep(3);return;}
+  let r,d;
+  try{
+    r=await fetch("/api/preeval",{method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify(body)});
+    d=await r.json();
+  }catch(err){st.textContent="❌ Error red: "+err.message;goStep(3);return;}
+  if(!d.ok){st.textContent="❌ Error API: "+d.error;goStep(3);return;}
   st.textContent=`✅ ${Object.keys(d.resultados).length} programas · ${d.total_usuarios} usuarios`;
   renderPreeval(d);
   goStep(3);
