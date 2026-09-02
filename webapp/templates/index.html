@@ -3117,6 +3117,7 @@ function _calcularCobertura(archivos){
     medicamentos:'codTecnologiaSalud',otrosServicios:'codServicio'
   };
   const fechaMax={};// numDoc → fecha ISO max
+  let globalFechaMax='';// fecha de referencia global para calcular grupos (como periodo_fin en Excel)
   const actosPorNum={};// numDoc → [{cups,fecha,archivo}]
   for(const[arch,fk] of Object.entries(FECHA_KEYS)){
     for(const r of (archivos[arch]||[])){
@@ -3125,6 +3126,7 @@ function _calcularCobertura(archivos){
       const cups=(r[CUPS_KEYS[arch]]||'').trim();
       if(num&&f){
         if(!fechaMax[num]||f>fechaMax[num]) fechaMax[num]=f;
+        if(f>globalFechaMax) globalFechaMax=f;
         if(cups) (actosPorNum[num]=actosPorNum[num]||[]).push({cups,fecha:f,archivo:arch});
       }
     }
@@ -3178,10 +3180,11 @@ function _calcularCobertura(archivos){
     if(/^\d{8}$/.test(fNac)) return fNac.slice(0,4)+'-'+fNac.slice(4,6)+'-'+fNac.slice(6,8);
     return fNac;
   }
+  // Fecha de referencia global = max actividad en todo el RIPS (aproxima periodo_fin, igual que Excel)
+  const refGlobal=globalFechaMax||null;
   for(const r of (archivos.usuarios||[])){
     const num=(r.numDocumentoIdentificacion||'').trim();
-    const refFecha=fechaMax[num]||null;
-    const edad=calcEdad(_normFecha(r.fechaNacimiento||''),refFecha);
+    const edad=calcEdad(_normFecha(r.fechaNacimiento||''),refGlobal);
     const g=grupo(edad);
     if(g) cobertura[g]=(cobertura[g]||0)+1;
     // DX: también con duplicados
@@ -3191,8 +3194,7 @@ function _calcularCobertura(archivos){
   // DETALLE: pacientes únicos (para pre-eval y tabla de repetidos)
   const detalle=[];
   for(const[num,meta] of Object.entries(usuariosMeta)){
-    const refFecha=fechaMax[num]||null;
-    const edad=calcEdad(_normFecha(meta.fechaNac),refFecha);
+    const edad=calcEdad(_normFecha(meta.fechaNac),refGlobal);
     const g=grupo(edad);
     const actos=actosPorNum[num]||[];
     const cupsPerFecha={};
