@@ -2890,6 +2890,9 @@ function _calcularCobertura(archivos){
     const edad=calcEdad(fNac,refFecha);
     const g=grupo(edad);
     if(g) cobertura[g]=(cobertura[g]||0)+1;
+    // Contar también grupos DX (Materna, RCV)
+    const dxGs=[...(_dxGruposPorPac[num]||[])];
+    for(const dg of dxGs) cobertura[dg]=(cobertura[dg]||0)+1;
     const actos=actosPorNum[num]||[];
     // Solo contar como repetido si mismo CUPS en la MISMA fecha (facturación duplicada)
     const cupsPerFecha={};// "CUPS|fecha" → conteo
@@ -2974,7 +2977,7 @@ async function dashProcesarRIPS(){
     if(d.archivos_cargados){
       const ok=d.detalle.filter(x=>x.ok).length;
       const cob=d.cobertura_poblacion||{};
-      const total=Object.values(cob).reduce((a,b)=>a+b,0);
+      const total=d.total_usuarios||grupos.reduce((a,g)=>a+(cob[g.key]||0),0);
       st.textContent=`✅ ${ok} sección(es) cargadas · ${total} usuarios`;
       st.style.color='var(--verde)';
       // renderizar tabla de cobertura
@@ -2986,14 +2989,22 @@ async function dashProcesarRIPS(){
         {key:'ADULTEZ',label:'Adultez',sub:'29–59 años',color:'#10B981'},
         {key:'VEJEZ',label:'Vejez',sub:'60+ años',color:'#64748B'},
       ];
+      const gruposDX=[
+        {key:'EMBARAZADA',label:'Embarazadas',sub:'Control prenatal',color:'#DB2777'},
+        {key:'PRECONCEPCIONAL',label:'Preconcepcional',sub:'Z316/318/319',color:'#9333EA'},
+        {key:'PLANIFICACION',label:'Planificación Fam.',sub:'Z309/300/304',color:'#7C3AED'},
+        {key:'DM',label:'Diabetes Mellitus',sub:'E10x–E14x',color:'#DC2626'},
+        {key:'HIPERTENSION',label:'Hipertensión',sub:'I10X / HTA',color:'#B45309'},
+      ];
+      const totalCV=grupos.reduce((a,g)=>a+(cob[g.key]||0),0);
       const seccs=d.detalle.filter(x=>x.ok).map(x=>x.archivo);
       const tieneConsultas=seccs.some(s=>s.includes('consul'));
       const tieneProced=seccs.some(s=>s.includes('proced'));
-      let html=`<div style="background:var(--azul);color:#fff;padding:7px 12px;font-weight:700;font-size:11px">📊 COBERTURA POBLACIONAL — ${total} usuarios</div>`;
+      let html=`<div style="background:var(--azul);color:#fff;padding:7px 12px;font-weight:700;font-size:11px">📊 COBERTURA POBLACIONAL — ${totalCV} usuarios (cursos de vida)</div>`;
       html+=`<div style="display:grid;grid-template-columns:repeat(3,1fr)">`;
       grupos.forEach((g,i)=>{
         const n=cob[g.key]||0;
-        const pct=total?Math.round(n/total*100):0;
+        const pct=totalCV?Math.round(n/totalCV*100):0;
         const bg=i%2===0?'var(--gris0)':'var(--card-bg)';
         html+=`<div style="padding:8px 10px;background:${bg};border-bottom:1px solid var(--gris1)">
           <div style="color:${g.color};font-weight:700;font-size:13px">${n.toLocaleString('es-CO')}</div>
@@ -3002,6 +3013,22 @@ async function dashProcesarRIPS(){
         </div>`;
       });
       html+='</div>';
+      // Grupos DX (Materna / RCV) — solo si hay alguno
+      const hayDX=gruposDX.some(g=>(cob[g.key]||0)>0);
+      if(hayDX){
+        html+=`<div style="background:#6D28D9;color:#fff;padding:5px 12px;font-weight:700;font-size:10.5px">🩺 RUTAS ESPECÍFICAS — por diagnóstico en RIPS</div>`;
+        html+=`<div style="display:grid;grid-template-columns:repeat(${gruposDX.length},1fr)">`;
+        gruposDX.forEach((g,i)=>{
+          const n=cob[g.key]||0;
+          const bg=i%2===0?'var(--gris0)':'var(--card-bg)';
+          html+=`<div style="padding:7px 10px;background:${bg};border-bottom:1px solid var(--gris1)">
+            <div style="color:${g.color};font-weight:700;font-size:13px">${n.toLocaleString('es-CO')}</div>
+            <div style="font-weight:600;font-size:10px">${g.label}</div>
+            <div style="color:var(--gris3);font-size:9px">${g.sub}</div>
+          </div>`;
+        });
+        html+='</div>';
+      }
       // secciones consolidadas (totales por tipo)
       const totalesSec={};
       d.detalle.filter(x=>x.ok).forEach(s=>{totalesSec[s.archivo]=(totalesSec[s.archivo]||0)+s.registros;});
