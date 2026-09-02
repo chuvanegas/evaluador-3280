@@ -3073,6 +3073,9 @@ function _calcularCobertura(archivos){
   for(const num of Object.keys(fechaMax)){
     if(!usuariosMeta[num]) usuariosMeta[num]={tipo:'',fechaNac:'',sexo:''};
   }
+  // Fecha de referencia global: la mayor fecha de actividad en todos los archivos
+  const _fechaRefGlobal = Object.values(fechaMax).filter(Boolean).sort().pop() || new Date().toISOString().slice(0,10);
+
   // Calcular edad y grupo
   function calcEdad(fechaNac,refFecha){
     if(!fechaNac||!refFecha) return null;
@@ -3107,7 +3110,7 @@ function _calcularCobertura(archivos){
   const cobertura={};
   const detalle=[];
   for(const[num,meta] of Object.entries(usuariosMeta)){
-    const refFecha=fechaMax[num]||null;
+    const refFecha=fechaMax[num]||_fechaRefGlobal;
     let fNac=meta.fechaNac;
     // normalizar dd/mm/yyyy → yyyy-mm-dd
     if(fNac&&fNac.includes('/')){const p=fNac.split('/');fNac=p[2]+'-'+p[1].padStart(2,'0')+'-'+p[0].padStart(2,'0');}
