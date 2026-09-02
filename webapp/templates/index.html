@@ -1476,21 +1476,28 @@ function _preAgregar(archivos,usuariosGrupos){
     consultas:'finalidadTecnologiaSalud',procedimientos:'finalidadTecnologiaSalud',
     medicamentos:'',otrosServicios:''
   };
-  const result={};
+  const result={};      // {arch: {grupo: {cups|fin: Set}}} — para filtro finalidad
+  const resultCups={};  // {arch: {grupo: {cups: Set}}}     — para total sin duplicar por finalidad
   for(const[arch,cupsKey] of Object.entries(CUPS_KEY)){
     const finKey=FIN_KEY[arch];
     result[arch]={};
+    resultCups[arch]={};
     for(const r of (archivos[arch]||[])){
       const num=(r.numDocumentoIdentificacion||'').trim();
       const tipo=(r.tipoDocumentoIdentificacion||'').trim();
       const cups=(r[cupsKey]||'').trim().toUpperCase();
-      const fin=finKey?(r[finKey]||'').trim():'';
+      const fin=finKey?String(r[finKey]||'').trim():'';
       const grupo=usuariosGrupos[num]||null;
       if(!cups||!grupo) continue;
       const ckey=fin?cups+'|'+fin:cups;
+      // índice con finalidad
       if(!result[arch][grupo]) result[arch][grupo]={};
       if(!result[arch][grupo][ckey]) result[arch][grupo][ckey]=new Set();
       result[arch][grupo][ckey].add(tipo+'|'+num);
+      // índice solo CUPS (deduplicado por paciente, sin importar finalidad)
+      if(!resultCups[arch][grupo]) resultCups[arch][grupo]={};
+      if(!resultCups[arch][grupo][cups]) resultCups[arch][grupo][cups]=new Set();
+      resultCups[arch][grupo][cups].add(tipo+'|'+num);
     }
   }
   // Medicamentos: agregar también por nombre (para matching por keyword)
@@ -1515,6 +1522,16 @@ function _preAgregar(archivos,usuariosGrupos){
       for(const[k,s] of Object.entries(ck)) counts[arch][g][k]=s.size;
     }
   }
+  // Totales por CUPS sin duplicar por finalidad
+  const countsCups={};
+  for(const[arch,gs] of Object.entries(resultCups)){
+    countsCups[arch]={};
+    for(const[g,ck] of Object.entries(gs)){
+      countsCups[arch][g]={};
+      for(const[k,s] of Object.entries(ck)) countsCups[arch][g][k]=s.size;
+    }
+  }
+  counts['__cups_only']=countsCups;
   // Nombres de medicamentos
   counts['__med_nombres']={};
   for(const[g,nombres] of Object.entries(medNombres)){

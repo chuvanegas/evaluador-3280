@@ -795,12 +795,18 @@ def preeval():
                                 encontrados_total += count
                                 encontrados_fin += count
                 else:
+                    # Total sin duplicar por finalidad: usar índice cups_only
+                    cups_only_map = conteos.get("__cups_only", {}).get(archivo, {})
+                    for grupo in grupos_aplicables:
+                        for cups_val, count in cups_only_map.get(grupo, {}).items():
+                            if cups_val in cups_list:
+                                encontrados_total += count
+                    # Con finalidad: usar índice cups|fin
                     for grupo in grupos_aplicables:
                         for ckey, count in grupo_map.get(grupo, {}).items():
                             cups_val = ckey.split("|")[0]
                             fin_val = ckey.split("|")[1] if "|" in ckey else ""
                             if cups_val not in cups_list: continue
-                            encontrados_total += count
                             if not finalidades or fin_val in finalidades:
                                 encontrados_fin += count
 
