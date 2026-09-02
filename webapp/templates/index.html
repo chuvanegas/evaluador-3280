@@ -1576,27 +1576,11 @@ function _preAgregar(archivos,usuariosGrupos,fechaNacPorPac){
     if(/^\d{8}$/.test(f)) return f.slice(0,4)+'-'+f.slice(4,6)+'-'+f.slice(6,8);
     return f;
   }
-  function _getGruposActo(num,fechaActo){
-    // Si hay fechaNac del paciente y fecha del acto, calculamos edad en esa fecha
-    const fNac=fechaNacPorPac&&fechaNacPorPac[num];
-    let gEdad=null;
-    const fechaNorm=_normActoFecha(fechaActo);
-    if(fNac&&fechaNorm){
-      const edad=_calcEdadLocal(fNac,fechaNorm);
-      gEdad=_grupoLocal(edad);
-    }
-    // Grupos por diagnóstico (DX) siempre vienen del mapa usuariosGrupos
+  function _getGruposActo(num){
+    // Grupo fijo del paciente desde RIPS usuarios (igual que BUSCARV en Excel col L/X)
     const graw=usuariosGrupos[num]||null;
-    const dxGrupos=(Array.isArray(graw)?graw:[graw]).filter(g=>g&&g.startsWith('DX_')||g==='MATERNA'||g==='PLANIFICACION');
-    if(!gEdad&&!graw) return null;
-    const gs=new Set();
-    if(gEdad) gs.add(gEdad);
-    for(const g of dxGrupos) gs.add(g);
-    if(!gEdad&&graw){
-      // fallback: usar lo que haya en usuariosGrupos
-      for(const g of(Array.isArray(graw)?graw:[graw])) gs.add(g);
-    }
-    return gs.size?[...gs]:null;
+    if(!graw) return null;
+    return Array.isArray(graw)?graw:[graw];
   }
   // Igual que Excel: clave única = tipoDoc+numDoc+fecha+CUPS+diag (sin finalidad).
   // El "Valor único" en Excel es global: si la PRIMERA fila con esa clave tiene fin≠14,
@@ -1617,7 +1601,7 @@ function _preAgregar(archivos,usuariosGrupos,fechaNacPorPac){
       const cups=(r[cupsKey]||'').trim().toUpperCase();
       const fin=finKey?String(r[finKey]||'').trim():'';
       const fechaActo=fechaKey?(r[fechaKey]||''):'';
-      const grupos_arr=_getGruposActo(num,fechaActo);
+      const grupos_arr=_getGruposActo(num);
       if(!cups||!grupos_arr) continue;
       const ckey=fin?cups+'|'+fin:cups;
       const diag=(r.codDiagnosticoPrincipal||r.codDiagnostico||'').trim().toUpperCase();
@@ -1644,7 +1628,7 @@ function _preAgregar(archivos,usuariosGrupos,fechaNacPorPac){
     const tipo=(r.tipoDocumentoIdentificacion||'').trim();
     const nombre=String(r.nombreTecnologiaSalud||'').trim().toUpperCase();
     const fechaActo=r.fechaDispensacionMedicamento||'';
-    const grupos_arr=_getGruposActo(num,fechaActo);
+    const grupos_arr=_getGruposActo(num);
     if(!nombre||!grupos_arr) continue;
     for(const grupo of grupos_arr){
       if(!medNombres[grupo]) medNombres[grupo]={};
@@ -1685,7 +1669,7 @@ function _preAgregar(archivos,usuariosGrupos,fechaNacPorPac){
       const cups=(r[cupsKey]||'').trim().toUpperCase();
       const fin=finKey?String(r[finKey]||'').trim():'';
       const fechaActo=fechaKey?(r[fechaKey]||''):'';
-      const grupos_arr=_getGruposActo(num,fechaActo);
+      const grupos_arr=_getGruposActo(num);
       if(!cups||!grupos_arr) continue;
       const ckey=fin?cups+'|'+fin:cups;
       const pid=tipo+'|'+num;
