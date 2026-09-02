@@ -26,6 +26,7 @@ UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 DATA_PATH.mkdir(parents=True, exist_ok=True)
 
 app = Flask(__name__)
+app.json.sort_keys = False  # preservar orden de actividades según config
 app.secret_key = os.environ.get("SECRET_KEY", "dusakawi_3280_secret_2026")
 app.config["MAX_CONTENT_LENGTH"] = 200 * 1024 * 1024  # 200 MB
 
