@@ -782,24 +782,31 @@ def preeval():
                 finalidades = [str(f).strip() for f in act_cfg.get("finalidad", [])]
                 grupo_map = conteos.get(archivo, {})
 
-                encontrados = 0
+                encontrados_total = 0   # sin filtro finalidad
+                encontrados_fin = 0     # con finalidad correcta
                 for grupo in grupos_aplicables:
                     for ckey, count in grupo_map.get(grupo, {}).items():
                         cups_val = ckey.split("|")[0]
+                        fin_val = ckey.split("|")[1] if "|" in ckey else ""
                         if cups_val not in cups_list: continue
-                        encontrados += count
+                        encontrados_total += count
+                        if not finalidades or fin_val in finalidades:
+                            encontrados_fin += count
 
                 acts[aid] = {
                     "descripcion": act_cfg.get("descripcion", aid),
                     "archivo": archivo,
                     "cups": act_cfg.get("cups", []),
-                    "encontrados": encontrados
+                    "encontrados": encontrados_total,
+                    "encontrados_fin": encontrados_fin,
+                    "tiene_finalidad": bool(finalidades),
                 }
             if any(v["encontrados"] > 0 for v in acts.values()):
                 resultados[pid] = {
                     "nombre": prog.get("nombre", pid),
                     "actividades": acts,
-                    "total": sum(v["encontrados"] for v in acts.values())
+                    "total": sum(v["encontrados"] for v in acts.values()),
+                    "total_fin": sum(v["encontrados_fin"] for v in acts.values()),
                 }
 
         return jsonify({"ok": True, "resultados": resultados, "cobertura": cobertura,

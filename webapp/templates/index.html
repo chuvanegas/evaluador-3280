@@ -1533,23 +1533,38 @@ async function preevaluar(){
   goStep(3);
 }
 
+let _preevalDatos=null;
+let _preevalConFin=false; // false = sin filtro finalidad (por defecto)
+
+function togglePreevalFin(){
+  _preevalConFin=!_preevalConFin;
+  if(_preevalDatos) renderPreeval(_preevalDatos);
+}
+
 function renderPreeval(d){
-  const SEGMENT={
-    PRIMERA_INFANCIA:"📋 Cursos de Vida",INFANCIA:"📋 Cursos de Vida",ADOLESCENCIA:"📋 Cursos de Vida",
-    JOVENES:"📋 Cursos de Vida",ADULTEZ:"📋 Cursos de Vida",VEJEZ:"📋 Cursos de Vida",
-  };
+  _preevalDatos=d;
+  const usarFin=_preevalConFin;
   const COLORS={
     "📋 Cursos de Vida":"#1E40AF","🤰 Ruta Materna":"#9D174D",
     "🔁 Demanda Inducida":"#065F46","❤️ RCV":"#92400E"
   };
   const body=document.getElementById("preeval-body");
-  let html=`<div style="margin-bottom:10px;display:flex;gap:12px;flex-wrap:wrap">
+  // Cabecera: usuarios + cobertura
+  let html=`<div style="margin-bottom:10px;display:flex;gap:12px;flex-wrap:wrap;align-items:center">
     <div class="stat-card" style="flex:1;min-width:120px"><div class="sc-label">Usuarios</div><div class="sc-val">${(d.total_usuarios||0).toLocaleString("es-CO")}</div></div>`;
   for(const[g,n] of Object.entries(d.cobertura||{})){
     const lbl={PRIMERA_INFANCIA:"1ra Inf",INFANCIA:"Infancia",ADOLESCENCIA:"Adolesc.",JOVENES:"Jóvenes",ADULTEZ:"Adultez",VEJEZ:"Vejez"}[g]||g;
     html+=`<div class="cob-card" style="min-width:70px"><div class="cc-num">${n.toLocaleString("es-CO")}</div><div class="cc-label">${lbl}</div></div>`;
   }
-  html+="</div>";
+  html+=`</div>`;
+  // Toggle finalidad
+  html+=`<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;padding:8px 12px;background:var(--gris0);border-radius:8px;border:1px solid var(--gris1)">
+    <span style="font-size:11px;font-weight:600;color:var(--gris3)">Conteo:</span>
+    <button onclick="togglePreevalFin()" style="padding:4px 14px;border-radius:6px;border:1.5px solid ${usarFin?'var(--verde2)':'var(--azul2)'};background:${usarFin?'var(--verde3)':'var(--azul4)'};color:${usarFin?'var(--verde)':'var(--azul2)'};font-size:11px;font-weight:700;cursor:pointer">
+      ${usarFin?'✅ Con finalidad correcta':'📊 Sin filtro de finalidad'}
+    </button>
+    <span style="font-size:10px;color:var(--gris3)">${usarFin?'Solo actividades con finalidad según parametrización':'Todos los registros con CUPS coincidente (igual que Excel)'}</span>
+  </div>`;
   // Tabla por programa — orden fijo por edad
   const ORDEN_PROG=['PRIMERA_INFANCIA','INFANCIA','ADOLESCENCIA','JOVENES','ADULTEZ','VEJEZ',
     'RUTA_MATERNA','DI_PRIMERA_INFANCIA','DI_INFANCIA','DI_ADOLESCENCIA','DI_JOVENES','DI_ADULTEZ','DI_VEJEZ','DI_SALUD_MENTAL',
@@ -1578,17 +1593,22 @@ function renderPreeval(d){
           <th style="padding:6px 8px;text-align:left;font-weight:600;color:var(--gris3)">Actividad</th>
           <th style="padding:6px 8px;text-align:left;font-weight:600;color:var(--gris3)">Archivo</th>
           <th style="padding:6px 8px;text-align:center;font-weight:600;color:var(--gris3)">Encontrados</th>
+          <th style="padding:6px 8px;text-align:center;font-weight:600;color:var(--gris3)" title="Registros sin finalidad correcta">Sin final.</th>
         </tr></thead><tbody>`;
     for(const[pid,prog] of progs){
+      const total=usarFin?(prog.total_fin||0):(prog.total||0);
       html+=`<tr style="background:var(--azul4);border-bottom:1px solid var(--gris1)">
-        <td colspan="3" style="padding:5px 8px;font-weight:700;color:var(--azul);font-size:10.5px">${prog.nombre||pid} — Total: ${prog.total}</td></tr>`;
+        <td colspan="4" style="padding:5px 8px;font-weight:700;color:var(--azul);font-size:10.5px">${prog.nombre||pid} — Total: ${total.toLocaleString("es-CO")}</td></tr>`;
       for(const[aid,act] of Object.entries(prog.actividades||{})){
-        const found=act.encontrados||0;
+        const found=usarFin?(act.encontrados_fin||0):(act.encontrados||0);
+        const sinFin=(act.encontrados||0)-(act.encontrados_fin||0);
         const color=found>0?"var(--verde2)":"var(--gris3)";
+        const sinFinColor=sinFin>0?"#d97706":"var(--gris2)";
         html+=`<tr style="border-bottom:1px solid var(--gris1)">
           <td style="padding:4px 8px 4px 16px;font-size:10.5px">${act.descripcion}</td>
           <td style="padding:4px 8px;font-size:10px;color:var(--gris3)">${act.archivo}</td>
           <td style="padding:4px 8px;text-align:center;font-weight:700;color:${color}">${found.toLocaleString("es-CO")}</td>
+          <td style="padding:4px 8px;text-align:center;font-size:10px;color:${sinFinColor}">${act.tiene_finalidad&&sinFin>0?'+'+sinFin.toLocaleString("es-CO"):''}</td>
         </tr>`;
       }
     }
