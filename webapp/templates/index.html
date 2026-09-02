@@ -1598,15 +1598,19 @@ function _preAgregar(archivos,usuariosGrupos,fechaNacPorPac){
     }
     return gs.size?[...gs]:null;
   }
-  // Igual que Excel: clave única = tipoDoc+numDoc+fecha+CUPS+diag → un paciente con
-  // la misma actividad en 2 fechas distintas se cuenta 2 veces (como en Excel)
+  // Igual que Excel: clave única = tipoDoc+numDoc+fecha+CUPS+diag (sin finalidad).
+  // El "Valor único" en Excel es global: si la PRIMERA fila con esa clave tiene fin≠14,
+  // una fila posterior con fin=14 queda "Duplicado" y no se cuenta. Implementamos
+  // el mismo dedup global por (arch, grupo) para que los conteos sean idénticos.
   const result={};      // {arch: {grupo: {cups|fin: Set<rowKey>}}}
   const resultCups={};  // {arch: {grupo: {cups: Set<rowKey>}}} — sin filtro de finalidad
+  const seenRowKeys={};  // {arch: {grupo: Set<rowKey>}} — dedup global igual que Excel
   for(const[arch,cupsKey] of Object.entries(CUPS_KEY)){
     const finKey=FIN_KEY[arch];
     const fechaKey=FECHA_ACT_KEY[arch];
     result[arch]={};
     resultCups[arch]={};
+    seenRowKeys[arch]={};
     for(const r of (archivos[arch]||[])){
       const num=(r.numDocumentoIdentificacion||'').trim();
       const tipo=(r.tipoDocumentoIdentificacion||'').trim();
@@ -1617,9 +1621,13 @@ function _preAgregar(archivos,usuariosGrupos,fechaNacPorPac){
       if(!cups||!grupos_arr) continue;
       const ckey=fin?cups+'|'+fin:cups;
       const diag=(r.codDiagnosticoPrincipal||r.codDiagnostico||'').trim().toUpperCase();
-      // Clave única por fila (como Excel): paciente+fecha+CUPS+diagnóstico
+      // Clave única global por fila (como Excel col AB/AC): paciente+fecha+CUPS+diagnóstico
       const rowKey=tipo+'|'+num+'|'+_normActoFecha(fechaActo)+'|'+cups+'|'+diag;
       for(const grupo of grupos_arr){
+        // Dedup global: si ya se vio esta clave en este grupo, ignorar (= "Duplicado" en Excel)
+        if(!seenRowKeys[arch][grupo]) seenRowKeys[arch][grupo]=new Set();
+        if(seenRowKeys[arch][grupo].has(rowKey)) continue;
+        seenRowKeys[arch][grupo].add(rowKey);
         if(!result[arch][grupo]) result[arch][grupo]={};
         if(!result[arch][grupo][ckey]) result[arch][grupo][ckey]=new Set();
         result[arch][grupo][ckey].add(rowKey);
