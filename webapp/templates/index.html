@@ -1532,6 +1532,30 @@ function _preAgregar(archivos,usuariosGrupos){
     }
   }
   counts['__cups_only']=countsCups;
+
+  // Totales por registro (no deduplicados): {arch: {grupo: {cups: {num: count}}}}
+  // Para sellantes y fortif que cuentan cada aplicación
+  const resultReg={};
+  for(const[arch,cupsKey] of Object.entries(CUPS_KEY)){
+    const finKey=FIN_KEY[arch];
+    resultReg[arch]={};
+    for(const r of (archivos[arch]||[])){
+      const num=(r.numDocumentoIdentificacion||'').trim();
+      const tipo=(r.tipoDocumentoIdentificacion||'').trim();
+      const cups=(r[cupsKey]||'').trim().toUpperCase();
+      const fin=finKey?String(r[finKey]||'').trim():'';
+      const grupo=usuariosGrupos[num]||null;
+      if(!cups||!grupo) continue;
+      const ckey=fin?cups+'|'+fin:cups;
+      if(!resultReg[arch][grupo]) resultReg[arch][grupo]={};
+      if(!resultReg[arch][grupo][ckey]) resultReg[arch][grupo][ckey]={};
+      // contar records por paciente (num)
+      const pid=tipo+'|'+num;
+      resultReg[arch][grupo][ckey][pid]=(resultReg[arch][grupo][ckey][pid]||0)+1;
+    }
+  }
+  // Convertir a {cups|fin: {pid: count}} → para que servidor aplique max por paciente
+  counts['__por_registro']=resultReg;
   // Nombres de medicamentos
   counts['__med_nombres']={};
   for(const[g,nombres] of Object.entries(medNombres)){

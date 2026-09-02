@@ -781,21 +781,42 @@ def preeval():
                 cups_list = [str(c).strip().upper() for c in act_cfg.get("cups", [])]
                 finalidades = [str(f).strip() for f in act_cfg.get("finalidad", [])]
                 nombres_kw = [str(n).strip().upper() for n in act_cfg.get("nombres", [])]
+                por_registro = act_cfg.get("por_registro", False)
+                max_pac = act_cfg.get("max_por_paciente", {})
                 grupo_map = conteos.get(archivo, {})
 
-                encontrados_total = 0   # sin filtro finalidad
-                encontrados_fin = 0     # con finalidad correcta
+                encontrados_total = 0
+                encontrados_fin = 0
 
                 if nombres_kw and not cups_list:
                     # Medicamentos: matching por nombre (keyword substring)
+                    # Para medicamentos siempre es por_registro (cada dispensación cuenta)
+                    reg_map = conteos.get("__por_registro", {}).get("medicamentos", {})
                     nombre_map = conteos.get("__med_nombres", {})
                     for grupo in grupos_aplicables:
+                        max_n = max_pac.get(grupo, max_pac.get("default", 9999))
                         for nombre_val, count in nombre_map.get(grupo, {}).items():
                             if any(kw in nombre_val for kw in nombres_kw):
                                 encontrados_total += count
                                 encontrados_fin += count
+
+                elif por_registro:
+                    # Contar registros totales por paciente, aplicar max por paciente/grupo
+                    reg_map = conteos.get("__por_registro", {}).get(archivo, {})
+                    for grupo in grupos_aplicables:
+                        max_n = max_pac.get(grupo, max_pac.get("default", 9999))
+                        for ckey, pids in reg_map.get(grupo, {}).items():
+                            cups_val = ckey.split("|")[0]
+                            fin_val = ckey.split("|")[1] if "|" in ckey else ""
+                            if cups_val not in cups_list: continue
+                            for cnt in pids.values():
+                                encontrados_total += min(cnt, max_n)
+                            if not finalidades or fin_val in finalidades:
+                                for cnt in pids.values():
+                                    encontrados_fin += min(cnt, max_n)
+
                 else:
-                    # Total sin duplicar por finalidad: usar índice cups_only
+                    # Pacientes únicos por CUPS (sin duplicar por finalidad)
                     cups_only_map = conteos.get("__cups_only", {}).get(archivo, {})
                     for grupo in grupos_aplicables:
                         for cups_val, count in cups_only_map.get(grupo, {}).items():

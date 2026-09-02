@@ -269,7 +269,13 @@
         "PRIMERA_INFANCIA",
         "INFANCIA",
         "ADOLESCENCIA"
-      ]
+      ],
+      "por_registro": true,
+      "max_por_paciente": {
+        "PRIMERA_INFANCIA": 8,
+        "INFANCIA": 12,
+        "default": 16
+      }
     },
     "proc_fortificacion_micronutrientes": {
       "descripcion": "Fortificación casera con micronutrientes en polvo",
@@ -281,7 +287,8 @@
       "deduplicar": true,
       "aplica_a": [
         "PRIMERA_INFANCIA"
-      ]
+      ],
+      "por_registro": true
     },
     "med_vitamina_a": {
       "descripcion": "Suplementación con micronutrientes (vitamina A)",
@@ -298,7 +305,8 @@
       ],
       "nombres": [
         "VITAMINA A"
-      ]
+      ],
+      "por_registro": true
     },
     "med_hierro": {
       "descripcion": "Suplementación con hierro",
@@ -316,7 +324,8 @@
       "nombres": [
         "FERROSO",
         "HIERRO"
-      ]
+      ],
+      "por_registro": true
     },
     "med_desparasitacion": {
       "descripcion": "Desparasitación Antihelmíntica con Albendazol dosis única 400mg vía oral",
@@ -338,7 +347,8 @@
         "PIRANTEL",
         "PAMOATO",
         "OXANTEL"
-      ]
+      ],
+      "por_registro": true
     },
     "edu_individual": {
       "descripcion": "Educación individual",
@@ -523,7 +533,8 @@
       "nombres": [
         "ANTICONCEP",
         "ANTICONCEPTIV"
-      ]
+      ],
+      "por_registro": true
     },
     "med_preservativos": {
       "descripcion": "Suministro de preservativos",
@@ -546,7 +557,8 @@
         "PRESERVATIVO",
         "CONDON",
         "CONDÓN"
-      ]
+      ],
+      "por_registro": true
     },
     "proc_anticoncepcion_subdermico": {
       "descripcion": "Inserción de anticonceptivos subdérmicos",
@@ -933,7 +945,8 @@
         "ACIDO FOLICO",
         "ÁCIDO FÓLICO",
         "FOLICO"
-      ]
+      ],
+      "por_registro": true
     },
     "materna_ive_consulta": {
       "descripcion": "Consulta medicina general inicial",
@@ -982,7 +995,8 @@
       "nombres": [
         "MISOPROSTOL",
         "MIFEPRISTONA"
-      ]
+      ],
+      "por_registro": true
     },
     "materna_ive_seguimiento": {
       "descripcion": "Seguimiento Clínico Medicina General",
@@ -1290,7 +1304,8 @@
       "aplica_a": [],
       "nombres": [
         "CALCIO"
-      ]
+      ],
+      "por_registro": true
     },
     "materna_prenatal_desparasitacion": {
       "descripcion": "Desparasitación Antihelmíntica con Albendazol dosis única 400mg vía oral",
@@ -1307,7 +1322,8 @@
         "PIRANTEL",
         "PAMOATO",
         "OXANTEL"
-      ]
+      ],
+      "por_registro": true
     },
     "materna_prenatal_acido_folico": {
       "descripcion": "Suministro de ácido fólico (1 tab 5 mg día)",
@@ -1324,7 +1340,8 @@
         "ACIDO FOLICO",
         "ÁCIDO FÓLICO",
         "FOLICO"
-      ]
+      ],
+      "por_registro": true
     },
     "materna_prenatal_sulfato_ferroso": {
       "descripcion": "Suministro de sulfato ferroso tabletas (1 tab 200 mg día)",
@@ -1341,7 +1358,8 @@
         "FERROSO",
         "HIERRO",
         "SULFATO FERROSO"
-      ]
+      ],
+      "por_registro": true
     },
     "materna_parto_vaginal": {
       "descripcion": "Atención parto vaginal",
