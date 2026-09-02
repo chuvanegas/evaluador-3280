@@ -3180,8 +3180,10 @@ function _calcularCobertura(archivos){
     if(/^\d{8}$/.test(fNac)) return fNac.slice(0,4)+'-'+fNac.slice(4,6)+'-'+fNac.slice(6,8);
     return fNac;
   }
-  // Fecha de referencia global = max actividad en todo el RIPS (aproxima periodo_fin, igual que Excel)
-  const refGlobal=globalFechaMax||null;
+  // Fecha de referencia = periodo_fin del formulario (igual que columna L del Excel de usuarios)
+  // Si no está definido, usar la fecha máxima de actividad del RIPS como aproximación
+  const periodoFinVal=(document.getElementById('periodo_fin')?.value||'').slice(0,10);
+  const refGlobal=periodoFinVal||globalFechaMax||null;
   for(const r of (archivos.usuarios||[])){
     const num=(r.numDocumentoIdentificacion||'').trim();
     const edad=calcEdad(_normFecha(r.fechaNacimiento||''),refGlobal);
