@@ -1598,9 +1598,10 @@ function _preAgregar(archivos,usuariosGrupos,fechaNacPorPac){
     }
     return gs.size?[...gs]:null;
   }
-  // Pacientes únicos por CUPS — igual que Excel CONTAR.SI.CONJUNTO con "Valor único"
-  const result={};      // {arch: {grupo: {cups|fin: Set<pid>}}}
-  const resultCups={};  // {arch: {grupo: {cups: Set<pid>}}} — sin filtro de finalidad
+  // Igual que Excel: clave única = tipoDoc+numDoc+fecha+CUPS+diag → un paciente con
+  // la misma actividad en 2 fechas distintas se cuenta 2 veces (como en Excel)
+  const result={};      // {arch: {grupo: {cups|fin: Set<rowKey>}}}
+  const resultCups={};  // {arch: {grupo: {cups: Set<rowKey>}}} — sin filtro de finalidad
   for(const[arch,cupsKey] of Object.entries(CUPS_KEY)){
     const finKey=FIN_KEY[arch];
     const fechaKey=FECHA_ACT_KEY[arch];
@@ -1615,14 +1616,16 @@ function _preAgregar(archivos,usuariosGrupos,fechaNacPorPac){
       const grupos_arr=_getGruposActo(num,fechaActo);
       if(!cups||!grupos_arr) continue;
       const ckey=fin?cups+'|'+fin:cups;
-      const pid=tipo+'|'+num;
+      const diag=(r.codDiagnosticoPrincipal||r.codDiagnostico||'').trim().toUpperCase();
+      // Clave única por fila (como Excel): paciente+fecha+CUPS+diagnóstico
+      const rowKey=tipo+'|'+num+'|'+_normActoFecha(fechaActo)+'|'+cups+'|'+diag;
       for(const grupo of grupos_arr){
         if(!result[arch][grupo]) result[arch][grupo]={};
         if(!result[arch][grupo][ckey]) result[arch][grupo][ckey]=new Set();
-        result[arch][grupo][ckey].add(pid);
+        result[arch][grupo][ckey].add(rowKey);
         if(!resultCups[arch][grupo]) resultCups[arch][grupo]={};
         if(!resultCups[arch][grupo][cups]) resultCups[arch][grupo][cups]=new Set();
-        resultCups[arch][grupo][cups].add(pid);
+        resultCups[arch][grupo][cups].add(rowKey);
       }
     }
   }
