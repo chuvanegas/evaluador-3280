@@ -263,9 +263,7 @@
       "cups": [
         "997107"
       ],
-      "finalidad": [
-        "14"
-      ],
+      "finalidad": [],
       "deduplicar": true,
       "aplica_a": [
         "PRIMERA_INFANCIA",
@@ -297,6 +295,9 @@
       "deduplicar": true,
       "aplica_a": [
         "PRIMERA_INFANCIA"
+      ],
+      "nombres": [
+        "VITAMINA A"
       ]
     },
     "med_hierro": {
@@ -311,6 +312,10 @@
       "deduplicar": true,
       "aplica_a": [
         "PRIMERA_INFANCIA"
+      ],
+      "nombres": [
+        "FERROSO",
+        "HIERRO"
       ]
     },
     "med_desparasitacion": {
@@ -327,6 +332,12 @@
       "deduplicar": true,
       "aplica_a": [
         "PRIMERA_INFANCIA"
+      ],
+      "nombres": [
+        "ALBENDAZOL",
+        "PIRANTEL",
+        "PAMOATO",
+        "OXANTEL"
       ]
     },
     "edu_individual": {
@@ -508,6 +519,10 @@
         "ADOLESCENCIA",
         "JOVENES",
         "ADULTEZ"
+      ],
+      "nombres": [
+        "ANTICONCEP",
+        "ANTICONCEPTIV"
       ]
     },
     "med_preservativos": {
@@ -526,6 +541,11 @@
         "JOVENES",
         "ADULTEZ",
         "VEJEZ"
+      ],
+      "nombres": [
+        "PRESERVATIVO",
+        "CONDON",
+        "CONDÓN"
       ]
     },
     "proc_anticoncepcion_subdermico": {
@@ -908,7 +928,12 @@
       "finalidad": [],
       "ruta": "PRECONCEPCIONAL",
       "deduplicar": false,
-      "aplica_a": []
+      "aplica_a": [],
+      "nombres": [
+        "ACIDO FOLICO",
+        "ÁCIDO FÓLICO",
+        "FOLICO"
+      ]
     },
     "materna_ive_consulta": {
       "descripcion": "Consulta medicina general inicial",
@@ -953,7 +978,11 @@
       ],
       "finalidad": [],
       "deduplicar": false,
-      "aplica_a": []
+      "aplica_a": [],
+      "nombres": [
+        "MISOPROSTOL",
+        "MIFEPRISTONA"
+      ]
     },
     "materna_ive_seguimiento": {
       "descripcion": "Seguimiento Clínico Medicina General",
@@ -1258,7 +1287,10 @@
       ],
       "finalidad": [],
       "deduplicar": false,
-      "aplica_a": []
+      "aplica_a": [],
+      "nombres": [
+        "CALCIO"
+      ]
     },
     "materna_prenatal_desparasitacion": {
       "descripcion": "Desparasitación Antihelmíntica con Albendazol dosis única 400mg vía oral",
@@ -1269,7 +1301,13 @@
       ],
       "finalidad": [],
       "deduplicar": false,
-      "aplica_a": []
+      "aplica_a": [],
+      "nombres": [
+        "ALBENDAZOL",
+        "PIRANTEL",
+        "PAMOATO",
+        "OXANTEL"
+      ]
     },
     "materna_prenatal_acido_folico": {
       "descripcion": "Suministro de ácido fólico (1 tab 5 mg día)",
@@ -1281,7 +1319,12 @@
       ],
       "finalidad": [],
       "deduplicar": false,
-      "aplica_a": []
+      "aplica_a": [],
+      "nombres": [
+        "ACIDO FOLICO",
+        "ÁCIDO FÓLICO",
+        "FOLICO"
+      ]
     },
     "materna_prenatal_sulfato_ferroso": {
       "descripcion": "Suministro de sulfato ferroso tabletas (1 tab 200 mg día)",
@@ -1293,7 +1336,12 @@
       ],
       "finalidad": [],
       "deduplicar": false,
-      "aplica_a": []
+      "aplica_a": [],
+      "nombres": [
+        "FERROSO",
+        "HIERRO",
+        "SULFATO FERROSO"
+      ]
     },
     "materna_parto_vaginal": {
       "descripcion": "Atención parto vaginal",

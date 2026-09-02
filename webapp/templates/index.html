@@ -1493,6 +1493,19 @@ function _preAgregar(archivos,usuariosGrupos){
       result[arch][grupo][ckey].add(tipo+'|'+num);
     }
   }
+  // Medicamentos: agregar también por nombre (para matching por keyword)
+  const medNombres={};
+  for(const r of (archivos['medicamentos']||[])){
+    const num=(r.numDocumentoIdentificacion||'').trim();
+    const tipo=(r.tipoDocumentoIdentificacion||'').trim();
+    const nombre=String(r.nombreTecnologiaSalud||'').trim().toUpperCase();
+    const grupo=usuariosGrupos[num]||null;
+    if(!nombre||!grupo) continue;
+    if(!medNombres[grupo]) medNombres[grupo]={};
+    if(!medNombres[grupo][nombre]) medNombres[grupo][nombre]=new Set();
+    medNombres[grupo][nombre].add(tipo+'|'+num);
+  }
+
   // Sets → counts
   const counts={};
   for(const[arch,gs] of Object.entries(result)){
@@ -1501,6 +1514,12 @@ function _preAgregar(archivos,usuariosGrupos){
       counts[arch][g]={};
       for(const[k,s] of Object.entries(ck)) counts[arch][g][k]=s.size;
     }
+  }
+  // Nombres de medicamentos
+  counts['__med_nombres']={};
+  for(const[g,nombres] of Object.entries(medNombres)){
+    counts['__med_nombres'][g]={};
+    for(const[nombre,s] of Object.entries(nombres)) counts['__med_nombres'][g][nombre]=s.size;
   }
   return counts;
 }
@@ -2703,8 +2722,9 @@ function _parsearRipsTxt(text){
   if(raw['MEDICAMENTOS']){r.medicamentos=raw['MEDICAMENTOS'].map(l=>{
     const {cups}=cCups(l,10);
     return{tipoDocumentoIdentificacion:c(l,1),numDocumentoIdentificacion:c(l,2),
-      fechaDispensacionMedicamento:c(l,6).slice(0,10),codTecnologiaSalud:cups};
-  }).filter(x=>x.numDocumentoIdentificacion&&x.codTecnologiaSalud);}
+      fechaDispensacionMedicamento:c(l,6).slice(0,10),codTecnologiaSalud:cups,
+      nombreTecnologiaSalud:c(l,11)};
+  }).filter(x=>x.numDocumentoIdentificacion);}
   if(raw['OTROS SERVICIOS']){r.otrosServicios=raw['OTROS SERVICIOS'].map(l=>{
     const {cups}=cCups(l,8);
     return{tipoDocumentoIdentificacion:c(l,1),numDocumentoIdentificacion:c(l,2),

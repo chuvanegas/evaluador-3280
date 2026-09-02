@@ -780,18 +780,29 @@ def preeval():
                 archivo = act_cfg.get("archivo", "")
                 cups_list = [str(c).strip().upper() for c in act_cfg.get("cups", [])]
                 finalidades = [str(f).strip() for f in act_cfg.get("finalidad", [])]
+                nombres_kw = [str(n).strip().upper() for n in act_cfg.get("nombres", [])]
                 grupo_map = conteos.get(archivo, {})
 
                 encontrados_total = 0   # sin filtro finalidad
                 encontrados_fin = 0     # con finalidad correcta
-                for grupo in grupos_aplicables:
-                    for ckey, count in grupo_map.get(grupo, {}).items():
-                        cups_val = ckey.split("|")[0]
-                        fin_val = ckey.split("|")[1] if "|" in ckey else ""
-                        if cups_val not in cups_list: continue
-                        encontrados_total += count
-                        if not finalidades or fin_val in finalidades:
-                            encontrados_fin += count
+
+                if nombres_kw and not cups_list:
+                    # Medicamentos: matching por nombre (keyword substring)
+                    nombre_map = conteos.get("__med_nombres", {})
+                    for grupo in grupos_aplicables:
+                        for nombre_val, count in nombre_map.get(grupo, {}).items():
+                            if any(kw in nombre_val for kw in nombres_kw):
+                                encontrados_total += count
+                                encontrados_fin += count
+                else:
+                    for grupo in grupos_aplicables:
+                        for ckey, count in grupo_map.get(grupo, {}).items():
+                            cups_val = ckey.split("|")[0]
+                            fin_val = ckey.split("|")[1] if "|" in ckey else ""
+                            if cups_val not in cups_list: continue
+                            encontrados_total += count
+                            if not finalidades or fin_val in finalidades:
+                                encontrados_fin += count
 
                 acts[aid] = {
                     "descripcion": act_cfg.get("descripcion", aid),
