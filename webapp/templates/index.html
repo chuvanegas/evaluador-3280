@@ -362,11 +362,23 @@ html.dark .it-btn.active{color:var(--azul2)}
   <div class="panel-left">
     <div class="pl-header"><span>📂</span><div class="pl-title">RIPS en sesión</div></div>
     <div style="padding:12px;display:flex;flex-direction:column;gap:8px">
-      <div id="eval-rips-resumen" style="font-size:11px;color:var(--gris3);text-align:center;padding:18px 10px">
-        Sin archivos cargados.<br>Ve al Dashboard para cargar RIPS.
+      <!-- Zona carga rápida (visible solo si no hay archivos) -->
+      <div id="eval-rips-upload" style="display:none;flex-direction:column;gap:6px">
+        <label for="eval-rips-input" style="display:block;border:2px dashed var(--azul);border-radius:8px;padding:14px 10px;text-align:center;cursor:pointer;font-size:11px;color:var(--azul)">
+          📁 Seleccionar TXT o JSON RIPS<br>
+          <span id="eval-rips-label" style="font-size:10px;color:var(--gris3)">Sin archivos</span>
+        </label>
+        <input type="file" id="eval-rips-input" multiple accept=".txt,.json" style="display:none" onchange="evalRipsSeleccionar(this.files)">
+        <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="evalCargarYPreevaluar()">
+          ⚡ Cargar y Pre-evaluar
+        </button>
+      </div>
+      <!-- Resumen cuando ya hay archivos cargados -->
+      <div id="eval-rips-resumen" style="font-size:11px;color:var(--gris3);text-align:center;padding:8px 0;display:none">
+        Sin archivos cargados.
       </div>
       <div class="cob-grid" id="cob-grid"></div>
-      <button class="btn btn-primary" style="width:100%;justify-content:center;margin-top:4px" onclick="preevaluar()">
+      <button id="btn-preevaluar" class="btn btn-primary" style="width:100%;justify-content:center;margin-top:4px;display:none" onclick="preevaluar()">
         🔍 Pre-evaluar RIPS
       </button>
       <div id="preeval-status" style="font-size:10.5px;color:var(--gris3);text-align:center"></div>
@@ -1030,6 +1042,7 @@ function switchTab(e,id){
   document.querySelectorAll(".tab-content").forEach(p=>p.classList.remove("active"));
   e.target.closest(".nav-tab").classList.add("active");
   document.getElementById(id).classList.add("active");
+  if(id==='tab-evaluacion') _evalSidebarSync();
 }
 
 function switchInnerTab(e,id){
@@ -1569,6 +1582,36 @@ function _preAgregar(archivos,usuariosGrupos){
     for(const[nombre,s] of Object.entries(nombres)) counts['__med_nombres'][g][nombre]=s.size;
   }
   return counts;
+}
+
+// Actualiza sidebar de Evaluación según si hay archivos cargados
+function _evalSidebarSync(){
+  const tieneArchivos=window._ripsDatos&&Object.keys(window._ripsDatos).length>0;
+  document.getElementById('eval-rips-upload').style.display=tieneArchivos?'none':'flex';
+  document.getElementById('eval-rips-resumen').style.display=tieneArchivos?'block':'none';
+  document.getElementById('btn-preevaluar').style.display=tieneArchivos?'block':'none';
+  if(tieneArchivos){
+    const secs=Object.entries(window._ripsDatos).map(([k,v])=>`${k}: ${v.length}`).join(' · ');
+    document.getElementById('eval-rips-resumen').textContent=secs;
+  }
+}
+
+let _evalFiles=[];
+function evalRipsSeleccionar(files){
+  for(const f of files){
+    if(!_evalFiles.find(x=>x.name===f.name)) _evalFiles.push(f);
+  }
+  document.getElementById('eval-rips-label').textContent=`${_evalFiles.length} archivo(s) seleccionado(s)`;
+}
+
+async function evalCargarYPreevaluar(){
+  if(!_evalFiles.length){alert('Selecciona al menos un archivo TXT o JSON.');return;}
+  // Reusar la misma lógica del Dashboard
+  _dashFiles=[..._evalFiles];
+  await dashProcesarRIPS();
+  _evalFiles=[];
+  document.getElementById('eval-rips-label').textContent='Sin archivos';
+  document.getElementById('eval-rips-input').value='';
 }
 
 async function preevaluar(){
@@ -2968,6 +3011,7 @@ async function dashProcesarRIPS(){
     // Guardar archivos y detalle de usuarios en memoria del browser para pre-evaluación
     window._ripsDatos=archivos;
     window._usuariosDetalle=usuarios_detalle;
+    _evalSidebarSync();
     // Solo enviar el resumen compacto al servidor (NO los archivos completos)
     const r=await fetch('/api/procesar-rips',{method:'POST',
       headers:{'Content-Type':'application/json'},
@@ -3120,6 +3164,7 @@ function dashIrEvaluacion(){
   document.getElementById('tab-evaluacion').classList.add('active');
   document.querySelectorAll('.nav-tab').forEach(b=>b.classList.remove('active'));
   document.querySelectorAll('.nav-tab').forEach(b=>{if(b.textContent.includes('Evaluación'))b.classList.add('active');});
+  _evalSidebarSync();
   goStep(3);
   preevaluar();
 }
