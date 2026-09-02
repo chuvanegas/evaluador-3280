@@ -7,7 +7,7 @@ Persistencia: Supabase (con fallback a JSON local)
 import json, os, datetime, uuid, hashlib
 try:
     import drive_backup as _drive
-except ImportError:
+except Exception:
     _drive = None
 from pathlib import Path
 from functools import wraps
