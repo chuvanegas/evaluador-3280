@@ -244,7 +244,7 @@ html.dark .it-btn.active{color:var(--azul2)}
     <span class="brand-icon">📋</span>
     <div>
       <div class="brand-name">Evaluador Resolución 3280</div>
-      <div class="brand-sub">DUSAKAWI EPSI · Seguimiento Metas Res. 3280/2018 · v0.3.0</div>
+      <div class="brand-sub">DUSAKAWI EPSI · Seguimiento Metas Res. 3280/2018 · v0.4.1</div>
     </div>
   </div>
   <div class="header-actions">
@@ -475,6 +475,14 @@ html.dark .it-btn.active{color:var(--azul2)}
             <div style="font-size:11.5px">El sistema contará las actividades encontradas por programa según el config.</div>
           </div>
         </div>
+        <!-- Barra de acciones post-preeval -->
+        <div id="preeval-acciones" style="display:none;padding:10px 16px;gap:8px;align-items:center;border-top:1px solid var(--gris1);flex-wrap:wrap">
+          <button id="btn-exportar-preeval" onclick="exportarPreeval()"
+            style="padding:7px 16px;border-radius:8px;border:none;background:#16A34A;color:#fff;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px">
+            📥 Exportar Excel
+          </button>
+          <span style="font-size:10.5px;color:var(--gris3)">Descarga la pre-evaluación con los conteos actuales (con/sin finalidad según la vista)</span>
+        </div>
         <div style="padding:11px 16px">
           <div class="btn-row">
             <button class="btn btn-outline" onclick="goStep(2)">← Metas</button>
@@ -671,6 +679,7 @@ html.dark .it-btn.active{color:var(--azul2)}
     <button class="it-btn" style="padding:10px 15px;font-size:12px" onclick="switchMantTab(event,'mant-tipos')">🔬 Tipos de Servicio</button>
     {% if current_user.rol == 'admin' %}
     <button class="it-btn" style="padding:10px 15px;font-size:12px" onclick="switchMantTab(event,'mant-usuarios')">👥 Usuarios</button>
+    <button class="it-btn" style="padding:10px 15px;font-size:12px" onclick="switchMantTab(event,'mant-drive');checkDriveStatus()">☁️ Drive</button>
     {% endif %}
   </div>
 
@@ -822,6 +831,49 @@ html.dark .it-btn.active{color:var(--azul2)}
           <div class="perm-card"><div class="perm-role">⚡ Evaluador</div><ul class="perm-list"><li>Ver prestadores</li><li>Crear / editar IPS</li><li>Cargar RIPS y evaluar</li><li>Generar actas</li><li class="no">Gestionar usuarios</li></ul></div>
           <div class="perm-card"><div class="perm-role">👁 Visualizador</div><ul class="perm-list"><li>Ver prestadores</li><li class="no">Cargar RIPS</li><li class="no">Evaluar</li><li>Ver actas existentes</li><li class="no">Gestionar usuarios</li></ul></div>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── DRIVE ── -->
+  {% if current_user.rol == 'admin' %}
+  <div id="mant-drive" class="mant-pane" style="display:none;flex:1;overflow-y:auto;padding:18px 22px">
+    <div class="pr-card" style="max-width:600px">
+      <div class="pr-card-header">
+        <div class="pr-card-icon">☁️</div>
+        <div><div class="pr-card-title">Backup en Google Drive</div>
+        <div class="pr-card-sub">Copia automática de datos en tu carpeta de Drive</div></div>
+      </div>
+      <div class="pr-card-body" style="display:flex;flex-direction:column;gap:14px">
+        <div id="drive-status-box" style="padding:10px 14px;border-radius:8px;border:1.5px solid var(--gris1);font-size:12px;color:var(--gris3)">
+          Verificando conexión...
+        </div>
+        <div style="font-size:11.5px;color:var(--gris3);line-height:1.7">
+          <b>Carpeta configurada:</b><br>
+          <a href="https://drive.google.com/drive/folders/1Wqoi-9EXfg8v0FMhAWiYMv5Gwp7tvfVM" target="_blank"
+             style="color:var(--azul2);word-break:break-all">
+            drive.google.com · DUSAKAWI Evaluador
+          </a><br><br>
+          <b>Estructura de subcarpetas:</b><br>
+          📁 <code>usuarios/</code> — usuarios.json (sin contraseñas)<br>
+          📁 <code>actas/</code> — actas_YYYY-MM-DD.json (al guardar cada acta)<br>
+          📁 <code>pre-evaluaciones/</code> — preeval_YYYY-MM-DD_prestador.json (al exportar Excel)<br>
+          📁 <code>prestadores/</code> — prestadores.json<br><br>
+          <b>Escritura dual automática:</b> Cada acta, prestador y usuario se guarda simultáneamente en Supabase <i>y</i> en Drive.<br>
+          <b>Fallback de lectura:</b> Si Supabase no responde al iniciar, la app lee los datos desde Drive automáticamente.<br>
+          <b>Backup manual:</b> Usa el botón abajo para forzar sincronización completa ahora.
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button onclick="driveBackupManual()" id="btn-drive-backup"
+            style="padding:8px 18px;border-radius:8px;border:none;background:#1D6F42;color:#fff;font-size:12px;font-weight:700;cursor:pointer">
+            ☁️ Backup completo ahora
+          </button>
+          <button onclick="checkDriveStatus()"
+            style="padding:8px 14px;border-radius:8px;border:1.5px solid var(--gris1);background:transparent;font-size:12px;cursor:pointer">
+            🔄 Verificar conexión
+          </button>
+        </div>
+        <div id="drive-backup-result" style="display:none;font-size:11.5px"></div>
       </div>
     </div>
   </div>
@@ -1489,8 +1541,9 @@ function _preAgregar(archivos,usuariosGrupos){
     consultas:'finalidadTecnologiaSalud',procedimientos:'finalidadTecnologiaSalud',
     medicamentos:'',otrosServicios:''
   };
-  const result={};      // {arch: {grupo: {cups|fin: Set}}} — para filtro finalidad
-  const resultCups={};  // {arch: {grupo: {cups: Set}}}     — para total sin duplicar por finalidad
+  // Pacientes únicos por CUPS — igual que Excel CONTAR.SI.CONJUNTO con "Valor único"
+  const result={};      // {arch: {grupo: {cups|fin: Set<pid>}}}
+  const resultCups={};  // {arch: {grupo: {cups: Set<pid>}}} — sin filtro de finalidad
   for(const[arch,cupsKey] of Object.entries(CUPS_KEY)){
     const finKey=FIN_KEY[arch];
     result[arch]={};
@@ -1504,19 +1557,18 @@ function _preAgregar(archivos,usuariosGrupos){
       if(!cups||!graw) continue;
       const grupos_arr=Array.isArray(graw)?graw:[graw];
       const ckey=fin?cups+'|'+fin:cups;
+      const pid=tipo+'|'+num;
       for(const grupo of grupos_arr){
-        // índice con finalidad
         if(!result[arch][grupo]) result[arch][grupo]={};
         if(!result[arch][grupo][ckey]) result[arch][grupo][ckey]=new Set();
-        result[arch][grupo][ckey].add(tipo+'|'+num);
-        // índice solo CUPS (deduplicado por paciente, sin importar finalidad)
+        result[arch][grupo][ckey].add(pid);
         if(!resultCups[arch][grupo]) resultCups[arch][grupo]={};
         if(!resultCups[arch][grupo][cups]) resultCups[arch][grupo][cups]=new Set();
-        resultCups[arch][grupo][cups].add(tipo+'|'+num);
+        resultCups[arch][grupo][cups].add(pid);
       }
     }
   }
-  // Medicamentos: agregar también por nombre (para matching por keyword)
+  // Medicamentos por nombre
   const medNombres={};
   for(const r of (archivos['medicamentos']||[])){
     const num=(r.numDocumentoIdentificacion||'').trim();
@@ -1540,7 +1592,6 @@ function _preAgregar(archivos,usuariosGrupos){
       for(const[k,s] of Object.entries(ck)) counts[arch][g][k]=s.size;
     }
   }
-  // Totales por CUPS sin duplicar por finalidad
   const countsCups={};
   for(const[arch,gs] of Object.entries(resultCups)){
     countsCups[arch]={};
@@ -1656,10 +1707,16 @@ async function preevaluar(){
 }
 
 let _preevalDatos=null;
-let _preevalConFin=false; // false = sin filtro finalidad (por defecto)
+let _preevalConFin=true; // true = con finalidad (coincide con Excel "ACTIVIDAD CONCLUIDA")
+const _preevalSumarSinFin=new Set(); // actividades donde el usuario eligió sumar los sin-finalidad
 
 function togglePreevalFin(){
   _preevalConFin=!_preevalConFin;
+  if(_preevalDatos) renderPreeval(_preevalDatos);
+}
+function toggleSinFin(aid){
+  if(_preevalSumarSinFin.has(aid)) _preevalSumarSinFin.delete(aid);
+  else _preevalSumarSinFin.add(aid);
   if(_preevalDatos) renderPreeval(_preevalDatos);
 }
 
@@ -1685,7 +1742,7 @@ function renderPreeval(d){
     <button onclick="togglePreevalFin()" style="padding:4px 14px;border-radius:6px;border:1.5px solid ${usarFin?'var(--verde2)':'var(--azul2)'};background:${usarFin?'var(--verde3)':'var(--azul4)'};color:${usarFin?'var(--verde)':'var(--azul2)'};font-size:11px;font-weight:700;cursor:pointer">
       ${usarFin?'✅ Con finalidad correcta':'📊 Sin filtro de finalidad'}
     </button>
-    <span style="font-size:10px;color:var(--gris3)">${usarFin?'Solo actividades con finalidad según parametrización':'Todos los registros con CUPS coincidente (igual que Excel)'}</span>
+    <span style="font-size:10px;color:var(--gris3)">${usarFin?'Registros con finalidad correcta — coincide con Excel "ACTIVIDAD CONCLUIDA"':'Todos los registros con CUPS coincidente (sin filtrar finalidad)'}</span>
   </div>`;
   // Tabla por programa — orden fijo por edad
   const ORDEN_PROG=['PRIMERA_INFANCIA','INFANCIA','ADOLESCENCIA','JOVENES','ADULTEZ','VEJEZ',
@@ -1717,29 +1774,144 @@ function renderPreeval(d){
           <th style="padding:6px 8px;text-align:center;font-weight:600;color:var(--gris3)">Encontrados</th>
           <th style="padding:6px 8px;text-align:center;font-weight:600;color:var(--gris3)" title="Registros sin finalidad correcta">Sin final.</th>
         </tr></thead><tbody>`;
+    let segTotalFound=0, segTotalSinFin=0;
     for(const[pid,prog] of progs){
       const total=usarFin?(prog.total_fin||0):(prog.total||0);
+      // Calcular sinFin total del programa
+      let progSinFin=0;
+      const hasFinalidad=Object.values(prog.actividades||{}).some(a=>a.tiene_finalidad);
+      for(const[aid2,act] of Object.entries(prog.actividades||{})){
+        const sf=(act.encontrados||0)-(act.encontrados_fin||0);
+        // Solo contar los que NO están siendo sumados ya al conteo
+        if(act.tiene_finalidad&&sf>0&&!_preevalSumarSinFin.has(aid2)) progSinFin+=sf;
+      }
+      segTotalFound+=total;
+      segTotalSinFin+=progSinFin;
+      const sfBadge=hasFinalidad&&progSinFin>0
+        ?`<span style="margin-left:8px;padding:1px 7px;border-radius:10px;background:#FEF3C7;color:#92400E;font-size:10px;font-weight:700">+${progSinFin.toLocaleString("es-CO")} sin finalidad</span>`
+        :'';
       html+=`<tr style="background:var(--azul4);border-bottom:1px solid var(--gris1)">
-        <td colspan="4" style="padding:5px 8px;font-weight:700;color:var(--azul);font-size:10.5px">${prog.nombre||pid} — Total: ${total.toLocaleString("es-CO")}</td></tr>`;
+        <td colspan="4" style="padding:5px 8px;font-weight:700;color:var(--azul);font-size:10.5px">${prog.nombre||pid} — Total: ${total.toLocaleString("es-CO")}${sfBadge}</td></tr>`;
       for(const[aid,act] of Object.entries(prog.actividades||{})){
-        const found=usarFin?(act.encontrados_fin||0):(act.encontrados||0);
         const sinFin=(act.encontrados||0)-(act.encontrados_fin||0);
+        const sumando=_preevalSumarSinFin.has(aid);
+        // base: con o sin filtro global; luego sumar sin-finalidad si el usuario lo activó
+        let found=usarFin?(act.encontrados_fin||0):(act.encontrados||0);
+        if(usarFin&&sumando&&sinFin>0) found+=sinFin;
         const color=found>0?"var(--verde2)":"var(--gris3)";
-        const sinFinColor=sinFin>0?"#d97706":"var(--gris2)";
+        let sfCell='';
+        if(act.tiene_finalidad&&sinFin>0){
+          const active=sumando;
+          sfCell=`<button onclick="toggleSinFin('${aid}')" title="${active?'Quitar sin-finalidad del conteo':'Sumar al conteo'}"
+            style="padding:2px 7px;border-radius:10px;border:1.5px solid ${active?'#92400E':'#D97706'};background:${active?'#FEF3C7':'transparent'};
+            color:${active?'#92400E':'#D97706'};font-size:10px;font-weight:700;cursor:pointer">
+            ${active?'✓':'+'}${sinFin.toLocaleString("es-CO")}</button>`;
+        }
         html+=`<tr style="border-bottom:1px solid var(--gris1)">
           <td style="padding:4px 8px 4px 16px;font-size:10.5px">${act.descripcion}</td>
           <td style="padding:4px 8px;font-size:10px;color:var(--gris3)">${act.archivo}</td>
           <td style="padding:4px 8px;text-align:center;font-weight:700;color:${color}">${found.toLocaleString("es-CO")}</td>
-          <td style="padding:4px 8px;text-align:center;font-size:10px;color:${sinFinColor}">${act.tiene_finalidad&&sinFin>0?'+'+sinFin.toLocaleString("es-CO"):''}</td>
+          <td style="padding:4px 8px;text-align:center">${sfCell}</td>
         </tr>`;
       }
     }
+    // Fila total del segmento
+    const segSfBadge=segTotalSinFin>0
+      ?`<span style="margin-left:10px;padding:2px 8px;border-radius:10px;background:#FEF3C7;color:#92400E;font-size:10px;font-weight:700">+${segTotalSinFin.toLocaleString("es-CO")} sin finalidad correcta</span>`
+      :'';
+    html+=`<tr style="background:${col}22;border-top:2px solid ${col}">
+      <td colspan="2" style="padding:5px 8px;font-weight:800;color:${col};font-size:11px">TOTAL ${seg.replace(/^[^\s]+ /,'').toUpperCase()}</td>
+      <td style="padding:5px 8px;text-align:center;font-weight:800;color:${col};font-size:11px">${segTotalFound.toLocaleString("es-CO")}</td>
+      <td style="padding:5px 8px;text-align:center;font-size:10px;color:#92400E;font-weight:700">${segTotalSinFin>0?'+'+segTotalSinFin.toLocaleString("es-CO"):''}</td>
+    </tr>`;
     html+=`</tbody></table></div>`;
   }
   if(!Object.keys(d.resultados||{}).length){
     html+=`<div class="alert alert-info">No se encontraron actividades. Verifica que los archivos RIPS estén cargados correctamente.</div>`;
   }
   body.innerHTML=html;
+  // Mostrar barra de acciones si hay resultados
+  const barraEl=document.getElementById('preeval-acciones');
+  if(barraEl) barraEl.style.display=Object.keys(d.resultados||{}).length?'flex':'none';
+}
+
+async function exportarPreeval(){
+  if(!_preevalDatos) return;
+  const btn=document.getElementById('btn-exportar-preeval');
+  const orig=btn.textContent;
+  btn.textContent='⏳ Generando...'; btn.disabled=true;
+  // Obtener nombre de prestador actual
+  const prestadorNombre=document.getElementById('sel-prestador')?.selectedOptions?.[0]?.text||'';
+  const body={
+    resultados:_preevalDatos.resultados,
+    cobertura:_preevalDatos.cobertura,
+    total_usuarios:_preevalDatos.total_usuarios||0,
+    prestador_nombre:prestadorNombre,
+    fecha:new Date().toISOString().slice(0,10),
+    usar_fin:_preevalConFin,
+    sumar_sin_fin:[..._preevalSumarSinFin]
+  };
+  try{
+    const r=await fetch('/api/preeval/exportar',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    if(!r.ok){alert('Error al generar Excel: '+r.status);return;}
+    const blob=await r.blob();
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url; a.download=(r.headers.get('Content-Disposition')||'').match(/filename="([^"]+)"/)?.[1]||'preeval.xlsx';
+    a.click(); URL.revokeObjectURL(url);
+  }catch(e){alert('Error: '+e.message);}
+  btn.textContent=orig; btn.disabled=false;
+}
+
+async function checkDriveStatus(){
+  const box=document.getElementById('drive-status-box');
+  if(!box) return;
+  box.textContent='Verificando...';
+  try{
+    const r=await fetch('/api/drive/status');
+    const d=await r.json();
+    const sbIcon=d.supabase?'✅':'❌';
+    const drIcon=d.drive?'✅':'⚠️';
+    const ambos=d.supabase&&d.drive;
+    const color=ambos?'#166534':d.supabase||d.drive?'#92400E':'#991B1B';
+    const bg=ambos?'#F0FDF4':d.supabase||d.drive?'#FFFBEB':'#FEF2F2';
+    const border=ambos?'#16A34A':d.supabase||d.drive?'#D97706':'#DC2626';
+    box.style.cssText=`padding:10px 14px;border-radius:8px;border:1.5px solid ${border};background:${bg};font-size:12px;color:${color}`;
+    box.innerHTML=`
+      <div style="display:flex;gap:16px;flex-wrap:wrap">
+        <span>${sbIcon} <b>Supabase:</b> ${d.supabase?'conectado':'sin conexión'}</span>
+        <span>${drIcon} <b>Google Drive:</b> ${d.drive?'conectado — backup activo':'no configurado'}</span>
+      </div>
+      ${!d.drive?'<div style="margin-top:6px;font-size:11px">Agrega <code>GOOGLE_DRIVE_CREDENTIALS</code> y <code>GOOGLE_DRIVE_FOLDER_ID</code> en Vercel → Settings → Environment Variables</div>':''}
+      ${ambos?'<div style="margin-top:4px;font-size:11px">Los datos se guardan en ambos destinos automáticamente. Si Supabase falla, Drive actúa como respaldo.</div>':''}
+    `;
+  }catch(e){
+    box.style.cssText='padding:10px 14px;border-radius:8px;border:1.5px solid var(--gris1);font-size:12px;color:var(--gris3)';
+    box.textContent='Error al verificar: '+e.message;
+  }
+}
+
+async function driveBackupManual(){
+  const btn=document.getElementById('btn-drive-backup');
+  const res=document.getElementById('drive-backup-result');
+  btn.textContent='⏳ Subiendo...'; btn.disabled=true;
+  res.style.display='none';
+  try{
+    const r=await fetch('/api/drive/backup',{method:'POST'});
+    const d=await r.json();
+    if(!d.ok&&d.error){res.style.cssText='display:block;padding:8px;border-radius:6px;background:#FEF2F2;color:#991B1B';res.textContent='❌ '+d.error;btn.textContent='☁️ Backup completo ahora';btn.disabled=false;return;}
+    let html='<div style="display:flex;flex-direction:column;gap:4px">';
+    for(const item of(d.resultados||[])){
+      html+=`<div style="padding:4px 8px;border-radius:4px;background:${item.ok?'#F0FDF4':'#FEF2F2'};color:${item.ok?'#166534':'#991B1B'}">
+        ${item.ok?'✅':'❌'} ${item.archivo}${item.error?' — '+item.error:''}</div>`;
+    }
+    html+='</div>';
+    res.style.display='block'; res.innerHTML=html;
+  }catch(e){
+    res.style.cssText='display:block;padding:8px;border-radius:6px;background:#FEF2F2;color:#991B1B';
+    res.textContent='❌ Error: '+e.message;
+  }
+  btn.textContent='☁️ Backup completo ahora'; btn.disabled=false;
 }
 
 async function subirNT(file){
@@ -1959,7 +2131,7 @@ async function descargarActa(){
 let _mantLoaded=false;
 function switchMantTab(e,id){
   document.querySelectorAll(".mant-pane").forEach(p=>{p.style.display="none";});
-  document.getElementById(id).style.display=(id==="mant-cups"||id==="mant-tipos"||id==="mant-usuarios")?"block":"flex";
+  document.getElementById(id).style.display=(id==="mant-cups"||id==="mant-tipos"||id==="mant-usuarios"||id==="mant-drive")?"block":"flex";
   const subnav=e.target.closest("div");
   subnav.querySelectorAll(".it-btn").forEach(b=>b.classList.remove("active"));
   e.target.classList.add("active");
@@ -2938,6 +3110,8 @@ function _calcularCobertura(archivos){
     let fNac=meta.fechaNac;
     // normalizar dd/mm/yyyy → yyyy-mm-dd
     if(fNac&&fNac.includes('/')){const p=fNac.split('/');fNac=p[2]+'-'+p[1].padStart(2,'0')+'-'+p[0].padStart(2,'0');}
+    // normalizar YYYYMMDD (formato TXT Res.3374) → yyyy-mm-dd
+    else if(fNac&&/^\d{8}$/.test(fNac)){fNac=fNac.slice(0,4)+'-'+fNac.slice(4,6)+'-'+fNac.slice(6,8);}
     const edad=calcEdad(fNac,refFecha);
     const g=grupo(edad);
     if(g) cobertura[g]=(cobertura[g]||0)+1;

@@ -5,9 +5,13 @@ Servidor Flask con autenticación, roles y gestión de prestadores
 Persistencia: Supabase (con fallback a JSON local)
 """
 import json, os, datetime, uuid, hashlib
+try:
+    import drive_backup as _drive
+except ImportError:
+    _drive = None
 from pathlib import Path
 from functools import wraps
-from flask import (Flask, request, jsonify, render_template,
+from flask import (Flask, request, jsonify, render_template, send_file,
                    send_from_directory, session, redirect, url_for)
 from werkzeug.utils import secure_filename
 
@@ -80,7 +84,9 @@ def _load_users():
     return default
 
 def _save_users(users):
+    # Siempre intenta ambos destinos: Supabase + Drive
     sb = _get_sb()
+    sb_ok = False
     if sb:
         try:
             for u in users:
@@ -88,11 +94,15 @@ def _save_users(users):
                     "id": u["id"], "nombre": u["nombre"], "username": u["username"],
                     "password_hash": u["password"], "rol": u["rol"], "activo": u.get("activo", True)
                 }, on_conflict="username").execute()
-            return
+            sb_ok = True
         except Exception:
             pass
-    with open(USERS_FILE, "w", encoding="utf-8") as f:
-        json.dump(users, f, ensure_ascii=False, indent=2)
+    if not sb_ok:
+        with open(USERS_FILE, "w", encoding="utf-8") as f:
+            json.dump(users, f, ensure_ascii=False, indent=2)
+    if _drive and _drive.disponible():
+        safe = [{k: v for k, v in u.items() if k != "password"} for u in users]
+        _drive.subir_json("usuarios.json", safe, subfolder="usuarios")
 
 def _load_ips():
     sb = _get_sb()
@@ -114,13 +124,20 @@ def _load_ips():
                 } for r in rows]
         except Exception:
             pass
+    # Fallback: Drive
+    if _drive and _drive.disponible():
+        data = _drive.leer_json("prestadores.json", subfolder="prestadores")
+        if data:
+            return data
     if IPS_FILE.exists():
         with open(IPS_FILE, encoding="utf-8") as f:
             return json.load(f)
     return []
 
 def _save_ips(ips):
+    # Siempre intenta ambos destinos: Supabase + Drive
     sb = _get_sb()
+    sb_ok = False
     if sb:
         try:
             for p in ips:
@@ -135,11 +152,14 @@ def _save_ips(ips):
                     "tipo_contrato": p.get("tipo_contrato","ASISTENCIAL"),
                     "lma": p.get("lma", {}), "metas": p.get("metas", {}),
                 }, on_conflict="id").execute()
-            return
+            sb_ok = True
         except Exception:
             pass
-    with open(IPS_FILE, "w", encoding="utf-8") as f:
-        json.dump(ips, f, ensure_ascii=False, indent=2)
+    if not sb_ok:
+        with open(IPS_FILE, "w", encoding="utf-8") as f:
+            json.dump(ips, f, ensure_ascii=False, indent=2)
+    if _drive and _drive.disponible():
+        _drive.subir_json("prestadores.json", ips, subfolder="prestadores")
 
 def _load_actas():
     sb = _get_sb()
@@ -158,13 +178,21 @@ def _load_actas():
                 } for r in rows]
         except Exception:
             pass
+    # Fallback: Drive (busca el actas más reciente)
+    if _drive and _drive.disponible():
+        fecha = datetime.datetime.now().strftime("%Y-%m-%d")
+        data = _drive.leer_json(f"actas_{fecha}.json", subfolder="actas")
+        if data:
+            return data
     if ACTAS_FILE.exists():
         with open(ACTAS_FILE, encoding="utf-8") as f:
             return json.load(f)
     return []
 
 def _save_actas(actas):
+    # Siempre intenta ambos destinos: Supabase + Drive
     sb = _get_sb()
+    sb_ok = False
     if sb:
         try:
             for a in actas:
@@ -177,11 +205,16 @@ def _save_actas(actas):
                     "pct_cumplimiento": a.get("pct",0),
                     "detalle_json": a.get("detalle"), "creado_por": a.get("creado_por","")
                 }, on_conflict="id").execute()
-            return
+            sb_ok = True
         except Exception:
             pass
-    with open(ACTAS_FILE, "w", encoding="utf-8") as f:
-        json.dump(actas, f, ensure_ascii=False, indent=2)
+    if not sb_ok:
+        with open(ACTAS_FILE, "w", encoding="utf-8") as f:
+            json.dump(actas, f, ensure_ascii=False, indent=2)
+    # Drive siempre (independiente de Supabase)
+    if _drive and _drive.disponible():
+        fecha = datetime.datetime.now().strftime("%Y-%m-%d")
+        _drive.subir_json(f"actas_{fecha}.json", actas, subfolder="actas")
 
 def _guardar_metas_supabase(prestador_id: str, metas: dict):
     """Guarda metas en tabla metas de Supabase (upsert por prestador+programa+actividad)."""
@@ -890,6 +923,199 @@ def preeval():
     return jsonify({"ok": True, "resultados": resultados, "cobertura": cobertura,
                     "archivos": {k: len(v) for k, v in sd["archivos"].items()},
                     "total_usuarios": len(ev._usuarios)})
+
+@app.route("/api/preeval/exportar", methods=["POST"])
+@login_required
+def preeval_exportar():
+    """Genera archivo Excel con los resultados de la pre-evaluación."""
+    import io
+    from openpyxl import Workbook
+    from openpyxl.styles import PatternFill, Font, Alignment, Border, Side
+    from openpyxl.utils import get_column_letter
+
+    body = request.get_json() or {}
+    resultados = body.get("resultados", {})
+    cobertura = body.get("cobertura", {})
+    total_usuarios = body.get("total_usuarios", 0)
+    prestador_nombre = body.get("prestador_nombre", "")
+    fecha = body.get("fecha", datetime.datetime.now().strftime("%Y-%m-%d"))
+    usar_fin = body.get("usar_fin", True)
+    sumar_sin_fin = set(body.get("sumar_sin_fin", []))
+
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Pre-Evaluación"
+
+    # Estilos
+    hdr_fill   = PatternFill("solid", fgColor="1E3A8A")
+    prog_fill  = PatternFill("solid", fgColor="DBEAFE")
+    seg_fill   = PatternFill("solid", fgColor="1E40AF")
+    total_fill = PatternFill("solid", fgColor="EFF6FF")
+    thin = Side(style="thin", color="CCCCCC")
+    border = Border(left=thin, right=thin, top=thin, bottom=thin)
+
+    # Título
+    ws.merge_cells("A1:F1")
+    ws["A1"] = f"PRE-EVALUACIÓN RIPS — Res. 3280/2018"
+    ws["A1"].font = Font(bold=True, size=13, color="FFFFFF")
+    ws["A1"].fill = PatternFill("solid", fgColor="1E3A8A")
+    ws["A1"].alignment = Alignment(horizontal="center", vertical="center")
+    ws.row_dimensions[1].height = 22
+
+    ws.merge_cells("A2:F2")
+    ws["A2"] = f"{prestador_nombre}   |   Fecha: {fecha}   |   Usuarios RIPS: {total_usuarios:,}".replace(",",".")
+    ws["A2"].font = Font(italic=True, size=10, color="374151")
+    ws["A2"].alignment = Alignment(horizontal="center")
+
+    # Cobertura
+    row = 4
+    ws.merge_cells(f"A{row}:F{row}")
+    ws[f"A{row}"] = "COBERTURA POBLACIONAL"
+    ws[f"A{row}"].font = Font(bold=True, size=10, color="FFFFFF")
+    ws[f"A{row}"].fill = seg_fill
+    ws[f"A{row}"].alignment = Alignment(horizontal="center")
+    row += 1
+    GRUPOS_LABELS = {"PRIMERA_INFANCIA":"1ra Infancia","INFANCIA":"Infancia",
+        "ADOLESCENCIA":"Adolescencia","JOVENES":"Jóvenes","ADULTEZ":"Adultez","VEJEZ":"Vejez",
+        "EMBARAZADA":"Embarazadas","PRECONCEPCIONAL":"Preconcepcional","DM":"Diabetes","HIPERTENSION":"Hipertensión"}
+    for g, n in cobertura.items():
+        ws[f"A{row}"] = GRUPOS_LABELS.get(g, g)
+        ws[f"B{row}"] = n
+        ws[f"B{row}"].alignment = Alignment(horizontal="center")
+        row += 1
+
+    row += 1
+    # Cabecera de tabla
+    headers = ["Programa / Actividad", "Archivo", "Encontrados", "Sin Finalidad", "Meta", ""]
+    for col, h in enumerate(headers, 1):
+        c = ws.cell(row=row, column=col, value=h)
+        c.font = Font(bold=True, size=10, color="FFFFFF")
+        c.fill = hdr_fill
+        c.alignment = Alignment(horizontal="center")
+        c.border = border
+    ws.column_dimensions["A"].width = 55
+    ws.column_dimensions["B"].width = 16
+    ws.column_dimensions["C"].width = 14
+    ws.column_dimensions["D"].width = 14
+    ws.column_dimensions["E"].width = 10
+    row += 1
+
+    ORDEN_PROG = ["PRIMERA_INFANCIA","INFANCIA","ADOLESCENCIA","JOVENES","ADULTEZ","VEJEZ",
+        "RUTA_MATERNA","DI_PRIMERA_INFANCIA","DI_INFANCIA","DI_ADOLESCENCIA","DI_JOVENES","DI_ADULTEZ","DI_VEJEZ","DI_SALUD_MENTAL",
+        "RCV_JOVENES","RCV_ADULTEZ","RCV_VEJEZ"]
+    entries = sorted(resultados.items(), key=lambda x: ORDEN_PROG.index(x[0]) if x[0] in ORDEN_PROG else 999)
+
+    for pid, prog in entries:
+        # Fila programa
+        ws.merge_cells(f"A{row}:F{row}")
+        prog_total = prog.get("total_fin" if usar_fin else "total", 0)
+        ws[f"A{row}"] = f"▶ {prog.get('nombre', pid)} — Total: {prog_total}"
+        ws[f"A{row}"].font = Font(bold=True, size=10, color="1E40AF")
+        ws[f"A{row}"].fill = prog_fill
+        ws[f"A{row}"].border = border
+        row += 1
+
+        for aid, act in (prog.get("actividades") or {}).items():
+            sin_fin = (act.get("encontrados", 0)) - (act.get("encontrados_fin", 0))
+            sumando = aid in sumar_sin_fin
+            base = act.get("encontrados_fin", 0) if usar_fin else act.get("encontrados", 0)
+            found = base + (sin_fin if usar_fin and sumando and sin_fin > 0 else 0)
+
+            cells = [
+                (1, f"    {act.get('descripcion', aid)}"),
+                (2, act.get("archivo", "")),
+                (3, found),
+                (4, sin_fin if act.get("tiene_finalidad") and sin_fin > 0 else ""),
+                (5, ""),
+            ]
+            for col, val in cells:
+                c = ws.cell(row=row, column=col, value=val)
+                c.border = border
+                c.font = Font(size=10)
+                if col == 3:
+                    c.alignment = Alignment(horizontal="center")
+                    c.font = Font(bold=True, size=10, color="166534" if found > 0 else "6B7280")
+                if col == 4 and val:
+                    c.alignment = Alignment(horizontal="center")
+                    c.font = Font(size=10, color="92400E")
+            row += 1
+
+    # Pie
+    row += 1
+    ws[f"A{row}"] = f"Generado: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M')} · Evaluador Res. 3280 v0.4.1 · DUSAKAWI EPSI"
+    ws[f"A{row}"].font = Font(italic=True, size=9, color="9CA3AF")
+
+    buf = io.BytesIO()
+    wb.save(buf)
+    buf.seek(0)
+    nombre_archivo = f"preeval_{fecha}_{prestador_nombre[:20].replace(' ','_') if prestador_nombre else 'sin_prestador'}.xlsx"
+
+    # Backup JSON en Drive
+    if _drive and _drive.disponible():
+        snapshot = {
+            "fecha": fecha, "prestador": prestador_nombre,
+            "usar_fin": usar_fin, "sumar_sin_fin": list(sumar_sin_fin),
+            "resultados": resultados, "cobertura": cobertura,
+            "total_usuarios": total_usuarios,
+            "generado": datetime.datetime.now().isoformat()
+        }
+        _drive.subir_json(
+            f"preeval_{fecha}_{(prestador_nombre[:20].replace(' ','_') if prestador_nombre else 'sin_prestador')}.json",
+            snapshot, subfolder="pre-evaluaciones"
+        )
+
+    return send_file(buf, as_attachment=True, download_name=nombre_archivo,
+                     mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+
+@app.route("/api/drive/status", methods=["GET"])
+@login_required
+def drive_status():
+    drive_ok = bool(_drive and _drive.disponible())
+    sb_ok = False
+    try:
+        sb = _get_sb()
+        if sb:
+            sb.table("usuarios").select("id").limit(1).execute()
+            sb_ok = True
+    except Exception:
+        pass
+    return jsonify({"ok": drive_ok, "drive": drive_ok, "supabase": sb_ok})
+
+@app.route("/api/drive/backup", methods=["POST"])
+@login_required
+def drive_backup_manual():
+    """Fuerza backup completo de usuarios, actas y prestadores en Drive."""
+    user = _get_current_user()
+    if user.rol != "admin":
+        return jsonify({"error": "Solo administradores"}), 403
+    if not (_drive and _drive.disponible()):
+        return jsonify({"error": "Drive no configurado (faltan GOOGLE_DRIVE_CREDENTIALS o GOOGLE_DRIVE_FOLDER_ID)"}), 400
+    fecha = datetime.datetime.now().strftime("%Y-%m-%d")
+    resultados = []
+    # Usuarios (sin passwords)
+    try:
+        users = _load_users()
+        safe = [{k: v for k, v in u.items() if k != "password"} for u in users]
+        ok = _drive.subir_json("usuarios.json", safe, subfolder="usuarios")
+        resultados.append({"archivo": "usuarios/usuarios.json", "ok": ok})
+    except Exception as e:
+        resultados.append({"archivo": "usuarios/usuarios.json", "ok": False, "error": str(e)})
+    # Actas
+    try:
+        actas = _load_actas()
+        ok = _drive.subir_json(f"actas_{fecha}.json", actas, subfolder="actas")
+        resultados.append({"archivo": f"actas/actas_{fecha}.json", "ok": ok})
+    except Exception as e:
+        resultados.append({"archivo": f"actas/actas_{fecha}.json", "ok": False, "error": str(e)})
+    # Prestadores
+    try:
+        ips = _load_ips()
+        ok = _drive.subir_json("prestadores.json", ips, subfolder="prestadores")
+        resultados.append({"archivo": "prestadores/prestadores.json", "ok": ok})
+    except Exception as e:
+        resultados.append({"archivo": "prestadores/prestadores.json", "ok": False, "error": str(e)})
+    todos_ok = all(r["ok"] for r in resultados)
+    return jsonify({"ok": todos_ok, "resultados": resultados})
 
 @app.route("/api/actas", methods=["GET"])
 @login_required

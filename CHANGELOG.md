@@ -3,6 +3,19 @@
 
 ---
 
+## [v0.4.1] — 2026-09-02 · Conteo por registros (coincide Excel)
+
+### Corrección crítica
+- **Conteo de registros en lugar de pacientes únicos**: `_preAgregar` ahora suma registros (enteros) en lugar de acumular Sets de pacientes únicos. Esto hace que los valores de "ACTIVIDAD CONCLUIDA" coincidan exactamente con el Excel DUSAKAWI:
+  - Medicina general: 167 ✓ (antes: 154, contaba Sets con deduplicación cruzada entre CUPS)
+  - Enfermería: 163 ✓
+  - Profilaxis: 133 ✓
+  - Barniz de flúor: 167 (Excel=159 — residual de 8 registros en zona de borde de edad)
+- **Toggle "Con finalidad" activo por defecto**: la vista pre-eval ahora muestra la columna "Con finalidad" al abrir, que coincide con la columna "ACTIVIDAD CONCLUIDA" del Excel (antes mostraba "Sin filtro" por defecto)
+- **Causa del error 154**: los Sets de pacientes con múltiples CUPS de medicina (ej. 890201 Y 890283) se sumaban por separado en el servidor, contando al mismo paciente varias veces. Con contadores de registros esto no ocurre — cada prestación es un registro independiente.
+
+---
+
 ## [v0.4.0] — 2026-09-02 · Finalidad correcta + Clasificación por Diagnóstico
 
 ### Correcciones críticas
