@@ -5,6 +5,7 @@ Variables de entorno requeridas:
   GOOGLE_DRIVE_CREDENTIALS  — JSON completo de la service account (como string)
   GOOGLE_DRIVE_FOLDER_ID    — ID de la carpeta de Drive compartida con la service account
 """
+from __future__ import annotations
 import json, os, io, datetime
 
 _service = None
