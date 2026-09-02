@@ -1524,16 +1524,21 @@ async function subirRIPS(files,hint){
   if(d.cobertura_poblacion&&Object.keys(d.cobertura_poblacion).length){
     const grid=document.getElementById("cob-grid");grid.innerHTML="";
     const LABS={PRIMERA_INFANCIA:"1ra Inf",INFANCIA:"Infancia",ADOLESCENCIA:"Adolesc.",JOVENES:"Jóvenes",ADULTEZ:"Adultez",VEJEZ:"Vejez"};
-    for(const[k,vv] of Object.entries(d.cobertura_poblacion)){
+    const COB_ORDEN=['PRIMERA_INFANCIA','INFANCIA','ADOLESCENCIA','JOVENES','ADULTEZ','VEJEZ',
+      'MATERNA','DX_DI','DX_RCV','PLANIFICACION'];
+    const cob=d.cobertura_poblacion;
+    const keysOrdenados=[...COB_ORDEN.filter(k=>k in cob),...Object.keys(cob).filter(k=>!COB_ORDEN.includes(k))];
+    for(const k of keysOrdenados){
       const el=document.createElement("div");el.className="cob-card";
-      el.innerHTML=`<div class="cc-num">${vv.toLocaleString("es-CO")}</div><div class="cc-label">${LABS[k]||k}</div>`;
+      el.innerHTML=`<div class="cc-num">${cob[k].toLocaleString("es-CO")}</div><div class="cc-label">${LABS[k]||k}</div>`;
       grid.appendChild(el);
     }
   }
 }
 
 // Pre-agrega RIPS en browser: {archivo:{grupo:{cups|finalidad: unique_users}}}
-function _preAgregar(archivos,usuariosGrupos){
+// fechaNacPorPac: {numDoc: fechaNac string YYYY-MM-DD} para calcular edad en fecha de cada acto
+function _preAgregar(archivos,usuariosGrupos,fechaNacPorPac){
   const CUPS_KEY={
     consultas:'codConsulta',procedimientos:'codProcedimiento',
     medicamentos:'codTecnologiaSalud',otrosServicios:'codServicio'
@@ -1542,11 +1547,56 @@ function _preAgregar(archivos,usuariosGrupos){
     consultas:'finalidadTecnologiaSalud',procedimientos:'finalidadTecnologiaSalud',
     medicamentos:'',otrosServicios:''
   };
+  const FECHA_ACT_KEY={
+    consultas:'fechaInicioAtencion',procedimientos:'fechaInicioAtencion',
+    medicamentos:'fechaDispensacionMedicamento',otrosServicios:'fechaInicioAtencion'
+  };
+  // Helpers locales (duplicados de calcEdad/grupo del scope exterior si aplica)
+  function _calcEdadLocal(fechaNac,refFecha){
+    if(!fechaNac||!refFecha) return null;
+    const[yn,mn,dn]=fechaNac.split('-').map(Number);
+    const[yr,mr,dr]=refFecha.split('-').map(Number);
+    if(!yn||!yr) return null;
+    let age=(yr-yn);
+    if(mr<mn||(mr===mn&&dr<dn)) age--;
+    return age<0?0:age;
+  }
+  function _grupoLocal(edad){
+    if(edad===null||edad===undefined) return null;
+    if(edad<=5)  return'PRIMERA_INFANCIA';
+    if(edad<=11) return'INFANCIA';
+    if(edad<=17) return'ADOLESCENCIA';
+    if(edad<=28) return'JOVENES';
+    if(edad<=59) return'ADULTEZ';
+    return'VEJEZ';
+  }
+  function _getGruposActo(num,fechaActo){
+    // Si hay fechaNac del paciente y fecha del acto, calculamos edad en esa fecha
+    const fNac=fechaNacPorPac&&fechaNacPorPac[num];
+    let gEdad=null;
+    if(fNac&&fechaActo){
+      const edad=_calcEdadLocal(fNac,fechaActo.slice(0,10));
+      gEdad=_grupoLocal(edad);
+    }
+    // Grupos por diagnóstico (DX) siempre vienen del mapa usuariosGrupos
+    const graw=usuariosGrupos[num]||null;
+    const dxGrupos=(Array.isArray(graw)?graw:[graw]).filter(g=>g&&g.startsWith('DX_')||g==='MATERNA'||g==='PLANIFICACION');
+    if(!gEdad&&!graw) return null;
+    const gs=new Set();
+    if(gEdad) gs.add(gEdad);
+    for(const g of dxGrupos) gs.add(g);
+    if(!gEdad&&graw){
+      // fallback: usar lo que haya en usuariosGrupos
+      for(const g of(Array.isArray(graw)?graw:[graw])) gs.add(g);
+    }
+    return gs.size?[...gs]:null;
+  }
   // Pacientes únicos por CUPS — igual que Excel CONTAR.SI.CONJUNTO con "Valor único"
   const result={};      // {arch: {grupo: {cups|fin: Set<pid>}}}
   const resultCups={};  // {arch: {grupo: {cups: Set<pid>}}} — sin filtro de finalidad
   for(const[arch,cupsKey] of Object.entries(CUPS_KEY)){
     const finKey=FIN_KEY[arch];
+    const fechaKey=FECHA_ACT_KEY[arch];
     result[arch]={};
     resultCups[arch]={};
     for(const r of (archivos[arch]||[])){
@@ -1554,9 +1604,9 @@ function _preAgregar(archivos,usuariosGrupos){
       const tipo=(r.tipoDocumentoIdentificacion||'').trim();
       const cups=(r[cupsKey]||'').trim().toUpperCase();
       const fin=finKey?String(r[finKey]||'').trim():'';
-      const graw=usuariosGrupos[num]||null;
-      if(!cups||!graw) continue;
-      const grupos_arr=Array.isArray(graw)?graw:[graw];
+      const fechaActo=fechaKey?(r[fechaKey]||''):'';
+      const grupos_arr=_getGruposActo(num,fechaActo);
+      if(!cups||!grupos_arr) continue;
       const ckey=fin?cups+'|'+fin:cups;
       const pid=tipo+'|'+num;
       for(const grupo of grupos_arr){
@@ -1575,9 +1625,10 @@ function _preAgregar(archivos,usuariosGrupos){
     const num=(r.numDocumentoIdentificacion||'').trim();
     const tipo=(r.tipoDocumentoIdentificacion||'').trim();
     const nombre=String(r.nombreTecnologiaSalud||'').trim().toUpperCase();
-    const graw=usuariosGrupos[num]||null;
-    if(!nombre||!graw) continue;
-    for(const grupo of(Array.isArray(graw)?graw:[graw])){
+    const fechaActo=r.fechaDispensacionMedicamento||'';
+    const grupos_arr=_getGruposActo(num,fechaActo);
+    if(!nombre||!grupos_arr) continue;
+    for(const grupo of grupos_arr){
       if(!medNombres[grupo]) medNombres[grupo]={};
       if(!medNombres[grupo][nombre]) medNombres[grupo][nombre]=new Set();
       medNombres[grupo][nombre].add(tipo+'|'+num);
@@ -1608,17 +1659,19 @@ function _preAgregar(archivos,usuariosGrupos){
   const resultReg={};
   for(const[arch,cupsKey] of Object.entries(CUPS_KEY)){
     const finKey=FIN_KEY[arch];
+    const fechaKey=FECHA_ACT_KEY[arch];
     resultReg[arch]={};
     for(const r of (archivos[arch]||[])){
       const num=(r.numDocumentoIdentificacion||'').trim();
       const tipo=(r.tipoDocumentoIdentificacion||'').trim();
       const cups=(r[cupsKey]||'').trim().toUpperCase();
       const fin=finKey?String(r[finKey]||'').trim():'';
-      const graw=usuariosGrupos[num]||null;
-      if(!cups||!graw) continue;
+      const fechaActo=fechaKey?(r[fechaKey]||''):'';
+      const grupos_arr=_getGruposActo(num,fechaActo);
+      if(!cups||!grupos_arr) continue;
       const ckey=fin?cups+'|'+fin:cups;
       const pid=tipo+'|'+num;
-      for(const grupo of(Array.isArray(graw)?graw:[graw])){
+      for(const grupo of grupos_arr){
         if(!resultReg[arch][grupo]) resultReg[arch][grupo]={};
         if(!resultReg[arch][grupo][ckey]) resultReg[arch][grupo][ckey]={};
         resultReg[arch][grupo][ckey][pid]=(resultReg[arch][grupo][ckey][pid]||0)+1;
@@ -1676,15 +1729,23 @@ async function preevaluar(){
   if(Object.keys(archivos).length>0){
     try{
       const usuariosGrupos={};
+      const fechaNacPorPac={};
       if(window._usuariosDetalle){
         for(const u of window._usuariosDetalle){
           const grupos=[];
           if(u.grupo) grupos.push(u.grupo);
           if(u.dxGrupos) for(const g of u.dxGrupos) grupos.push(g);
           if(grupos.length) usuariosGrupos[u.num_doc]=grupos.length===1?grupos[0]:grupos;
+          if(u.fechaNac){
+            // Normalizar DD/MM/YYYY o YYYYMMDD → YYYY-MM-DD
+            let fn=u.fechaNac;
+            if(fn.includes('/')){const p=fn.split('/');fn=p[2]+'-'+p[1].padStart(2,'0')+'-'+p[0].padStart(2,'0');}
+            else if(/^\d{8}$/.test(fn)) fn=fn.slice(0,4)+'-'+fn.slice(4,6)+'-'+fn.slice(6,8);
+            fechaNacPorPac[u.num_doc]=fn;
+          }
         }
       }
-      conteos=_preAgregar(archivos,usuariosGrupos);
+      conteos=_preAgregar(archivos,usuariosGrupos,fechaNacPorPac);
     }catch(err){
       st.textContent="❌ Error JS: "+err.message;
       console.error("_preAgregar falló:",err);
@@ -3136,7 +3197,7 @@ function _calcularCobertura(archivos){
       if(n>1){const cups=k.split('|')[0];repetidos[cups]=(repetidos[cups]||0)+(n-1);}
     }
     const dxGrupos=[...(_dxGruposPorPac[num]||[])];
-    detalle.push({tipo_doc:meta.tipo,num_doc:num,edad,sexo:meta.sexo,grupo:g,dxGrupos,total_actos:actos.length,cups_repetidos:repetidos});
+    detalle.push({tipo_doc:meta.tipo,num_doc:num,fechaNac:meta.fechaNac,edad,sexo:meta.sexo,grupo:g,dxGrupos,total_actos:actos.length,cups_repetidos:repetidos});
   }
   detalle.sort((a,b)=>((a.grupo||'')>(b.grupo||'')?1:-1)||((a.num_doc>b.num_doc)?1:-1));
   return{cobertura,usuarios_detalle:detalle,total_usuarios:detalle.length};
