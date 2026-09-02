@@ -3,16 +3,25 @@
 
 ---
 
-## [v0.4.1] — 2026-09-02 · Conteo por registros (coincide Excel)
+## [v0.4.1] — 2026-09-02 · Clasificación de edad correcta + Pre-eval exacta + Exportar Excel
 
-### Corrección crítica
-- **Conteo de registros en lugar de pacientes únicos**: `_preAgregar` ahora suma registros (enteros) en lugar de acumular Sets de pacientes únicos. Esto hace que los valores de "ACTIVIDAD CONCLUIDA" coincidan exactamente con el Excel DUSAKAWI:
-  - Medicina general: 167 ✓ (antes: 154, contaba Sets con deduplicación cruzada entre CUPS)
-  - Enfermería: 163 ✓
-  - Profilaxis: 133 ✓
-  - Barniz de flúor: 167 (Excel=159 — residual de 8 registros en zona de borde de edad)
-- **Toggle "Con finalidad" activo por defecto**: la vista pre-eval ahora muestra la columna "Con finalidad" al abrir, que coincide con la columna "ACTIVIDAD CONCLUIDA" del Excel (antes mostraba "Sin filtro" por defecto)
-- **Causa del error 154**: los Sets de pacientes con múltiples CUPS de medicina (ej. 890201 Y 890283) se sumaban por separado en el servidor, contando al mismo paciente varias veces. Con contadores de registros esto no ocurre — cada prestación es un registro independiente.
+### Correcciones críticas
+
+- **Bug de fechaNacimiento YYYYMMDD (Res. 3374 TXT)**: el formato nativo del TXT es `YYYYMMDD` (8 dígitos sin separadores). El parser solo normalizaba `dd/mm/yyyy`. Resultado: `split('-')` devolvía NaN → la función `grupo(NaN)` no pasaba ningún `if(edad<=X)` y retornaba `'VEJEZ'` — niños de 0-5 años aparecían como adultos mayores. Corregido con detección de cadena de 8 dígitos y conversión a `YYYY-MM-DD`. Impacto estimado: **~179 pacientes** mal clasificados en Primera Infancia.
+
+- **Conteo de pacientes únicos por CUPS (igual que Excel CONTAR.SI.CONJUNTO)**: la fórmula Excel usa `CONTAR.SI.CONJUNTO(...;"*Valor único*")` que cuenta 1 fila por paciente por CUPS, luego suma para cada CUPS del grupo. El código JS usa Sets `{paciente → CUPS}` que replica exactamente esa semántica. Un commit intermedio incorrecto había cambiado a contadores enteros (total de registros) — revertido.
+
+- **Toggle "Con finalidad" activo por defecto**: la vista pre-eval abre en modo "Con finalidad correcta" que coincide con la columna "ACTIVIDAD CONCLUIDA" del Excel DUSAKAWI.
+
+### Nuevas funciones
+
+- **Exportar pre-evaluación a Excel** (`/api/preeval/exportar`): genera un `.xlsx` con cobertura, tabla de programas/actividades, totales por segmento y estado de finalidad. Respeta el toggle Con/Sin finalidad y los botones "+N" activados por el usuario.
+
+- **"Sin final." interactivo por actividad**: el valor `+N` de cada fila es un botón — al hacer clic se suma al conteo de esa actividad. El programa y el total del segmento se actualizan en tiempo real.
+
+- **Totales por programa y segmento**: cada programa muestra badge naranja con registros sin finalidad pendientes; al final de cada segmento (Cursos de Vida, Ruta Materna, RCV) aparece fila TOTAL con suma de encontrados y sin-finalidad.
+
+- **Backup en Google Drive** (opcional): si se configuran `GOOGLE_DRIVE_CREDENTIALS` y `GOOGLE_DRIVE_FOLDER_ID`, la app escribe en Supabase **y** Drive en paralelo. Si Supabase falla al leer, lee desde Drive. Panel en Mantenimiento → ☁️ Drive (solo admin) muestra estado de ambas conexiones y permite backup manual.
 
 ---
 
