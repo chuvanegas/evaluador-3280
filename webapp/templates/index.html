@@ -3104,28 +3104,33 @@ function _calcularCobertura(archivos){
     }
   }
 
+  // COBERTURA: todas las filas de USUARIOS (con duplicados entre meses, igual que Excel)
   const cobertura={};
+  function _normFecha(fNac){
+    if(!fNac) return '';
+    if(fNac.includes('/')){const p=fNac.split('/');return p[2]+'-'+p[1].padStart(2,'0')+'-'+p[0].padStart(2,'0');}
+    if(/^\d{8}$/.test(fNac)) return fNac.slice(0,4)+'-'+fNac.slice(4,6)+'-'+fNac.slice(6,8);
+    return fNac;
+  }
+  for(const r of (archivos.usuarios||[])){
+    const num=(r.numDocumentoIdentificacion||'').trim();
+    const refFecha=fechaMax[num]||null;
+    const edad=calcEdad(_normFecha(r.fechaNacimiento||''),refFecha);
+    const g=grupo(edad);
+    if(g) cobertura[g]=(cobertura[g]||0)+1;
+    // DX: también con duplicados
+    for(const dg of (_dxGruposPorPac[num]||new Set())) cobertura[dg]=(cobertura[dg]||0)+1;
+  }
+
+  // DETALLE: pacientes únicos (para pre-eval y tabla de repetidos)
   const detalle=[];
   for(const[num,meta] of Object.entries(usuariosMeta)){
     const refFecha=fechaMax[num]||null;
-    let fNac=meta.fechaNac;
-    // normalizar dd/mm/yyyy → yyyy-mm-dd
-    if(fNac&&fNac.includes('/')){const p=fNac.split('/');fNac=p[2]+'-'+p[1].padStart(2,'0')+'-'+p[0].padStart(2,'0');}
-    // normalizar YYYYMMDD (formato TXT Res.3374) → yyyy-mm-dd
-    else if(fNac&&/^\d{8}$/.test(fNac)){fNac=fNac.slice(0,4)+'-'+fNac.slice(4,6)+'-'+fNac.slice(6,8);}
-    const edad=calcEdad(fNac,refFecha);
+    const edad=calcEdad(_normFecha(meta.fechaNac),refFecha);
     const g=grupo(edad);
-    if(g) cobertura[g]=(cobertura[g]||0)+1;
-    // Contar también grupos DX (Materna, RCV)
-    const dxGs=[...(_dxGruposPorPac[num]||[])];
-    for(const dg of dxGs) cobertura[dg]=(cobertura[dg]||0)+1;
     const actos=actosPorNum[num]||[];
-    // Solo contar como repetido si mismo CUPS en la MISMA fecha (facturación duplicada)
-    const cupsPerFecha={};// "CUPS|fecha" → conteo
-    for(const a of actos){
-      const k=a.cups+'|'+a.fecha;
-      cupsPerFecha[k]=(cupsPerFecha[k]||0)+1;
-    }
+    const cupsPerFecha={};
+    for(const a of actos){const k=a.cups+'|'+a.fecha;cupsPerFecha[k]=(cupsPerFecha[k]||0)+1;}
     const repetidos={};
     for(const[k,n] of Object.entries(cupsPerFecha)){
       if(n>1){const cups=k.split('|')[0];repetidos[cups]=(repetidos[cups]||0)+(n-1);}
