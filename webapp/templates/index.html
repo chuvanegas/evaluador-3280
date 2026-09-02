@@ -1793,10 +1793,13 @@ function renderPreeval(d){
   // Cabecera: usuarios + cobertura
   let html=`<div style="margin-bottom:10px;display:flex;gap:12px;flex-wrap:wrap;align-items:center">
     <div class="stat-card" style="flex:1;min-width:120px"><div class="sc-label">Usuarios</div><div class="sc-val">${(d.total_usuarios||0).toLocaleString("es-CO")}</div></div>`;
-  for(const[g,n] of Object.entries(d.cobertura||{})){
+  {const COB_ORDEN2=['PRIMERA_INFANCIA','INFANCIA','ADOLESCENCIA','JOVENES','ADULTEZ','VEJEZ','MATERNA','DX_DI','DX_RCV','PLANIFICACION'];
+  const cob2=d.cobertura||{};
+  const keys2=[...COB_ORDEN2.filter(k=>k in cob2),...Object.keys(cob2).filter(k=>!COB_ORDEN2.includes(k))];
+  for(const g of keys2){const n=cob2[g];
     const lbl={PRIMERA_INFANCIA:"1ra Inf",INFANCIA:"Infancia",ADOLESCENCIA:"Adolesc.",JOVENES:"Jóvenes",ADULTEZ:"Adultez",VEJEZ:"Vejez"}[g]||g;
     html+=`<div class="cob-card" style="min-width:70px"><div class="cc-num">${n.toLocaleString("es-CO")}</div><div class="cc-label">${lbl}</div></div>`;
-  }
+  }}
   html+=`</div>`;
   // Toggle finalidad
   html+=`<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;padding:8px 12px;background:var(--gris0);border-radius:8px;border:1px solid var(--gris1)">
