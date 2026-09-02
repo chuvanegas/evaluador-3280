@@ -1570,12 +1570,19 @@ function _preAgregar(archivos,usuariosGrupos,fechaNacPorPac){
     if(edad<=59) return'ADULTEZ';
     return'VEJEZ';
   }
+  function _normActoFecha(f){
+    if(!f) return '';
+    f=f.slice(0,10);
+    if(/^\d{8}$/.test(f)) return f.slice(0,4)+'-'+f.slice(4,6)+'-'+f.slice(6,8);
+    return f;
+  }
   function _getGruposActo(num,fechaActo){
     // Si hay fechaNac del paciente y fecha del acto, calculamos edad en esa fecha
     const fNac=fechaNacPorPac&&fechaNacPorPac[num];
     let gEdad=null;
-    if(fNac&&fechaActo){
-      const edad=_calcEdadLocal(fNac,fechaActo.slice(0,10));
+    const fechaNorm=_normActoFecha(fechaActo);
+    if(fNac&&fechaNorm){
+      const edad=_calcEdadLocal(fNac,fechaNorm);
       gEdad=_grupoLocal(edad);
     }
     // Grupos por diagnóstico (DX) siempre vienen del mapa usuariosGrupos
