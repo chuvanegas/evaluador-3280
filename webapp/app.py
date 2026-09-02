@@ -786,9 +786,7 @@ def preeval():
                 for grupo in grupos_aplicables:
                     for ckey, count in grupo_map.get(grupo, {}).items():
                         cups_val = ckey.split("|")[0]
-                        fin_val = ckey.split("|")[1] if "|" in ckey else ""
                         if cups_val not in cups_list: continue
-                        if finalidades and fin_val not in finalidades: continue
                         encontrados += count
 
                 acts[aid] = {
