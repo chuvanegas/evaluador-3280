@@ -167,8 +167,7 @@
       "descripcion": "Tamizaje para hemoglobina",
       "archivo": "procedimientos",
       "cups": [
-        "902213",
-        "903824"
+        "902213"
       ],
       "finalidad": [],
       "deduplicar": true,
