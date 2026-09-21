@@ -1594,7 +1594,8 @@ function _preAgregar(archivos,usuariosGrupos,fechaNacPorPac){
   const JAV_GRUPOS=new Set(['JOVENES','ADULTEZ','VEJEZ']);
   const CV_GRUPOS=new Set(['PRIMERA_INFANCIA','INFANCIA','ADOLESCENCIA','JOVENES','ADULTEZ','VEJEZ']);
   const RUTAS_AUDIT_SET=new Set(['EMBARAZADA','PRECONCEPCIONAL','PLANIFICACION','DM','HIPERTENSION']);
-  const sinFinRutas={}; // {grupo:{cups:{ruta:Set<numDoc>}}} — audit rutas especificas
+  const sinFinRutas={};    // {grupo:{cups:{ruta:Set<numDoc>}}} — todos los que hacen CUPS match
+  const sinFinRutasFin={}; // {grupo:{ckey:{ruta:Set<numDoc>}}} — solo los que tienen fin correcta
   for(const[arch,cupsKey] of Object.entries(CUPS_KEY)){
     const finKey=FIN_KEY[arch];
     const fechaKey=FECHA_ACT_KEY[arch];
@@ -1648,15 +1649,23 @@ function _preAgregar(archivos,usuariosGrupos,fechaNacPorPac){
         if(!resultCups[arch][grupo]) resultCups[arch][grupo]={};
         if(!resultCups[arch][grupo][cups]) resultCups[arch][grupo][cups]=new Set();
         resultCups[arch][grupo][cups].add(rowKey);
-        // Audit: rastrear pacientes en rutas especificas para mostrar en "Sin final."
+        // Audit: rastrear rutas especificas de pacientes (para sinFin breakdown)
         if(arch==='consultas'){
           const allG=_getGruposActo(num);
           if(allG){const allArr=Array.isArray(allG)?allG:[allG];
             for(const ruta of allArr.filter(g=>RUTAS_AUDIT_SET.has(g))){
+              // Todos los que hacen CUPS match (sin importar finalidad)
               if(!sinFinRutas[grupo]) sinFinRutas[grupo]={};
               if(!sinFinRutas[grupo][cups]) sinFinRutas[grupo][cups]={};
               if(!sinFinRutas[grupo][cups][ruta]) sinFinRutas[grupo][cups][ruta]=new Set();
               sinFinRutas[grupo][cups][ruta].add(num);
+              // Solo los que tienen finalidad (cups|fin)
+              if(fin){
+                if(!sinFinRutasFin[grupo]) sinFinRutasFin[grupo]={};
+                if(!sinFinRutasFin[grupo][ckey]) sinFinRutasFin[grupo][ckey]={};
+                if(!sinFinRutasFin[grupo][ckey][ruta]) sinFinRutasFin[grupo][ckey][ruta]=new Set();
+                sinFinRutasFin[grupo][ckey][ruta].add(num);
+              }
             }}
         }
       }
@@ -1706,6 +1715,15 @@ function _preAgregar(archivos,usuariosGrupos,fechaNacPorPac){
     }
   }
   counts['__ruta_audit']=sinFinRutasC;
+  const sinFinRutasFinC={};
+  for(const[g,ck] of Object.entries(sinFinRutasFin)){
+    sinFinRutasFinC[g]={};
+    for(const[c,rs] of Object.entries(ck)){
+      sinFinRutasFinC[g][c]={};
+      for(const[r,s] of Object.entries(rs)) sinFinRutasFinC[g][c][r]=s.size;
+    }
+  }
+  counts['__ruta_audit_fin']=sinFinRutasFinC;
 
   // Totales por registro (no deduplicados): {arch: {grupo: {cups: {num: count}}}}
   // Para sellantes y fortif que cuentan cada aplicación
@@ -1829,10 +1847,132 @@ function togglePreevalFin(){
   _preevalConFin=!_preevalConFin;
   if(_preevalDatos) renderPreeval(_preevalDatos);
 }
-function toggleSinFin(aid){
-  if(_preevalSumarSinFin.has(aid)) _preevalSumarSinFin.delete(aid);
-  else _preevalSumarSinFin.add(aid);
+function toggleSinFin(key){ // key = aid (todos) OR aid::RUTA (solo esa ruta)
+  if(_preevalSumarSinFin.has(key)) _preevalSumarSinFin.delete(key);
+  else _preevalSumarSinFin.add(key);
   if(_preevalDatos) renderPreeval(_preevalDatos);
+}
+function abrirModalAuditoria(){
+  if(!_preevalDatos) return;
+  const RLBL={'EMBARAZADA':'🤰 Embarazada','PRECONCEPCIONAL':'📋 Preconcepcional','PLANIFICACION':'📅 Planificación Familiar','DM':'💊 Diabetes Mellitus','HIPERTENSION':'💓 Hipertensión'};
+  const d=_preevalDatos;
+  // Recopilar todos los pacientes sin finalidad por ruta, cruzando todos los programas
+  const resumen={}; // {ruta:{programa:{actividad:{total,sinFin}}}}
+  for(const[prog,datos] of Object.entries(d.resultados||{})){
+    for(const[aid,act] of Object.entries(datos.actividades||{})){
+      if(!act.tiene_finalidad) continue;
+      const sinFin=(act.encontrados||0)-(act.encontrados_fin||0);
+      if(act.ruta_audit){
+        for(const[ruta,total] of Object.entries(act.ruta_audit)){
+          const sf=(act.ruta_sin_fin&&act.ruta_sin_fin[ruta])||0;
+          if(!resumen[ruta]) resumen[ruta]={};
+          if(!resumen[ruta][prog]) resumen[ruta][prog]={};
+          resumen[ruta][prog][aid]={total,sinFin:sf,nombre:act.nombre||aid};
+        }
+      }
+    }
+  }
+  const PROG_LBL={
+    PRIMERA_INFANCIA:'Primera Infancia',INFANCIA:'Infancia',ADOLESCENCIA:'Adolescencia',
+    JOVENES:'Jóvenes',ADULTEZ:'Adultez',VEJEZ:'Vejez',
+    RUTA_MATERNA_PRECONCEPCION:'R.M. Preconcepción',RUTA_MATERNA_IVE:'R.M. IVE',
+    RUTA_MATERNA_PRENATAL:'R.M. Prenatal',RUTA_MATERNA_PARTO:'R.M. Parto',RUTA_MATERNA_POSPARTO:'R.M. Posparto',
+    RCV_RIESGO:'RCV Riesgo',RCV_DM:'RCV Diabetes',RCV_DM_HTA:'RCV DM+HTA'
+  };
+  let html=`<div style="display:flex;flex-direction:column;gap:20px">`;
+  const rutasOrden=['EMBARAZADA','PRECONCEPCIONAL','PLANIFICACION','DM','HIPERTENSION'];
+  const rutasPresentes=[...rutasOrden.filter(r=>resumen[r]),...Object.keys(resumen).filter(r=>!rutasOrden.includes(r))];
+  if(!rutasPresentes.length){
+    html+=`<div style="text-align:center;padding:40px;color:#6B7280;font-size:14px">✅ No se encontraron inconsistencias entre rutas</div>`;
+  } else {
+    for(const ruta of rutasPresentes){
+      const programas=resumen[ruta];
+      const totalPacRuta=Object.values(programas).reduce((s,acts)=>s+Object.values(acts).reduce((s2,a)=>s2+(a.sinFin||0),0),0);
+      html+=`<div style="border:1.5px solid #C4B5FD;border-radius:10px;overflow:hidden">
+        <div style="background:#EDE9FE;padding:10px 16px;display:flex;justify-content:space-between;align-items:center">
+          <span style="font-size:14px;font-weight:700;color:#4C1D95">${RLBL[ruta]||ruta}</span>
+          <span style="font-size:12px;font-weight:600;color:#7C3AED;background:#F5F3FF;padding:2px 10px;border-radius:12px">${totalPacRuta} sin finalidad</span>
+        </div>
+        <table style="width:100%;border-collapse:collapse;font-size:12px">
+          <thead><tr style="background:#F5F3FF;color:#4C1D95">
+            <th style="padding:7px 12px;text-align:left;font-weight:600">Programa</th>
+            <th style="padding:7px 12px;text-align:left;font-weight:600">Actividad</th>
+            <th style="padding:7px 8px;text-align:right;font-weight:600">Con ruta</th>
+            <th style="padding:7px 8px;text-align:right;font-weight:600;color:#D97706">Sin final.</th>
+          </tr></thead><tbody>`;
+      for(const[prog,acts] of Object.entries(programas)){
+        for(const[aid,info] of Object.entries(acts)){
+          html+=`<tr style="border-top:1px solid #EDE9FE">
+            <td style="padding:6px 12px;color:#6B7280">${PROG_LBL[prog]||prog}</td>
+            <td style="padding:6px 12px;color:#111827">${info.nombre}</td>
+            <td style="padding:6px 8px;text-align:right;color:#374151">${(info.total||0).toLocaleString('es-CO')}</td>
+            <td style="padding:6px 8px;text-align:right;font-weight:700;color:${(info.sinFin||0)>0?'#B45309':'#6B7280'}">${(info.sinFin||0).toLocaleString('es-CO')}</td>
+          </tr>`;
+        }
+      }
+      html+=`</tbody></table>
+        <div style="padding:8px 12px;background:#FAFAFA;border-top:1px solid #EDE9FE">
+          <textarea id="nota_${ruta}" placeholder="Observaciones / notas para el prestador..." rows="2"
+            style="width:100%;box-sizing:border-box;padding:6px 10px;border:1px solid #D1D5DB;border-radius:6px;font-size:11px;resize:vertical;font-family:inherit"></textarea>
+        </div>
+      </div>`;
+    }
+  }
+  html+=`</div>`;
+  // Crear modal
+  let modal=document.getElementById('audit-modal');
+  if(!modal){
+    modal=document.createElement('div');
+    modal.id='audit-modal';
+    modal.style.cssText='position:fixed;inset:0;z-index:9999;display:flex;align-items:flex-start;justify-content:center;padding:20px;background:rgba(0,0,0,0.5);overflow-y:auto';
+    modal.addEventListener('click',e=>{if(e.target===modal) cerrarModalAuditoria();});
+    document.body.appendChild(modal);
+  }
+  modal.innerHTML=`<div style="background:white;border-radius:14px;width:100%;max-width:900px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.3)">
+    <div style="background:linear-gradient(135deg,#4C1D95,#7C3AED);padding:16px 20px;display:flex;justify-content:space-between;align-items:center">
+      <div>
+        <div style="color:white;font-size:16px;font-weight:700">🔍 Auditoría de Rutas Cruzadas</div>
+        <div style="color:#DDD6FE;font-size:11px;margin-top:2px">Pacientes con actividad en consultas de CV que también tienen otra ruta activa</div>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button onclick="imprimirAuditoria()" style="padding:7px 16px;border-radius:7px;border:1px solid rgba(255,255,255,0.4);background:rgba(255,255,255,0.15);color:white;font-size:12px;font-weight:600;cursor:pointer">🖨️ Imprimir</button>
+        <button onclick="cerrarModalAuditoria()" style="padding:7px 14px;border-radius:7px;border:1px solid rgba(255,255,255,0.4);background:rgba(255,255,255,0.15);color:white;font-size:12px;font-weight:600;cursor:pointer">✕ Cerrar</button>
+      </div>
+    </div>
+    <div style="padding:20px;overflow-y:auto;max-height:80vh" id="audit-modal-body">${html}</div>
+  </div>`;
+  modal.style.display='flex';
+}
+function cerrarModalAuditoria(){
+  const m=document.getElementById('audit-modal');
+  if(m) m.style.display='none';
+}
+function imprimirAuditoria(){
+  const body=document.getElementById('audit-modal-body');
+  if(!body) return;
+  // Recoger notas
+  const notas=[];
+  body.querySelectorAll('textarea[id^="nota_"]').forEach(t=>{
+    if(t.value.trim()) notas.push({ruta:t.id.replace('nota_',''),nota:t.value.trim()});
+  });
+  const win=window.open('','_blank','width=900,height=700');
+  win.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Auditoría Rutas Cruzadas — Evaluador Res. 3280</title>
+    <style>body{font-family:Arial,sans-serif;padding:20px;color:#111}table{width:100%;border-collapse:collapse;margin-bottom:16px}
+    th,td{border:1px solid #ddd;padding:6px 10px;text-align:left;font-size:12px}th{background:#EDE9FE;color:#4C1D95;font-weight:700}
+    h2{color:#4C1D95;margin:0 0 4px}h3{color:#5B21B6;margin:16px 0 6px;border-bottom:2px solid #EDE9FE;padding-bottom:4px}
+    .nota{background:#FFFBEB;border:1px solid #FCD34D;border-radius:6px;padding:8px 12px;font-size:11px;margin-top:8px}
+    @media print{button{display:none}}</style></head><body>
+    <h2>🔍 Auditoría de Rutas Cruzadas</h2>
+    <p style="font-size:11px;color:#6B7280">Evaluador Res. 3280 — Generado: ${new Date().toLocaleString('es-CO')}</p>
+    ${body.innerHTML.replace(/<textarea[^>]*>[\s\S]*?<\/textarea>/g,'').replace(/<button[^>]*>[\s\S]*?<\/button>/g,'')}`);
+  if(notas.length){
+    const RLBL={'EMBARAZADA':'🤰 Embarazada','PRECONCEPCIONAL':'📋 Preconcepcional','PLANIFICACION':'📅 Planificación Familiar','DM':'💊 Diabetes Mellitus','HIPERTENSION':'💓 Hipertensión'};
+    win.document.write(`<h3>Notas y observaciones</h3>`);
+    for(const{ruta,nota} of notas) win.document.write(`<div class="nota"><b>${RLBL[ruta]||ruta}:</b> ${nota}</div>`);
+  }
+  win.document.write(`</body></html>`);
+  win.document.close();
+  win.print();
 }
 
 function renderPreeval(d){
@@ -1861,6 +2001,12 @@ function renderPreeval(d){
       ${usarFin?'✅ Con finalidad correcta':'📊 Sin filtro de finalidad'}
     </button>
     <span style="font-size:10px;color:var(--gris3)">${usarFin?'Registros con finalidad correcta — coincide con Excel "ACTIVIDAD CONCLUIDA"':'Todos los registros con CUPS coincidente (sin filtrar finalidad)'}</span>
+  </div>`;
+  // Botón de auditoría
+  html+=`<div style="display:flex;justify-content:flex-end;margin-bottom:10px">
+    <button onclick="abrirModalAuditoria()" style="padding:6px 16px;border-radius:8px;border:1.5px solid #7C3AED;background:#F5F3FF;color:#5B21B6;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px">
+      🔍 Ver Auditoría de Rutas
+    </button>
   </div>`;
   // Tabla por programa — orden fijo por edad
   const ORDEN_PROG=[
@@ -1922,30 +2068,41 @@ function renderPreeval(d){
       </tr>`;
       for(const[aid,act] of Object.entries(prog.actividades||{})){
         const sinFin=(act.encontrados||0)-(act.encontrados_fin||0);
-        const sumando=_preevalSumarSinFin.has(aid);
-        // base: con o sin filtro global; luego sumar sin-finalidad si el usuario lo activó
+        const sumandoAll=_preevalSumarSinFin.has(aid);
+        const RLBL={'EMBARAZADA':'🤰 Embarazada','PRECONCEPCIONAL':'📋 Preconcepcional','PLANIFICACION':'📅 Planificación Familiar','DM':'💊 Diabetes Mellitus','HIPERTENSION':'💓 Hipertensión'};
+        // found: base + master toggle + toggles individuales por ruta
         let found=usarFin?(act.encontrados_fin||0):(act.encontrados||0);
-        if(usarFin&&sumando&&sinFin>0) found+=sinFin;
+        if(usarFin&&sinFin>0){
+          if(sumandoAll){ found+=sinFin; }
+          else if(act.ruta_sin_fin){
+            for(const[ruta,cnt] of Object.entries(act.ruta_sin_fin)){
+              if(_preevalSumarSinFin.has(aid+'::'+ruta)) found+=cnt;
+            }
+          }
+        }
         const color=found>0?"var(--verde2)":"var(--gris3)";
         let sfCell='';
         if(act.tiene_finalidad&&sinFin>0){
-          const active=sumando;
-          sfCell=`<button onclick="toggleSinFin('${aid}')" title="${active?'Quitar sin-finalidad del conteo':'Sumar al conteo'}"
-            style="padding:2px 7px;border-radius:10px;border:1.5px solid ${active?'#92400E':'#D97706'};background:${active?'#FEF3C7':'transparent'};
-            color:${active?'#92400E':'#D97706'};font-size:10px;font-weight:700;cursor:pointer">
-            ${active?'✓':'+'}${sinFin.toLocaleString("es-CO")}</button>`;
-          // Audit: rutas donde también están los pacientes sin finalidad
-          if(act.ruta_audit){
-            const RLBL={
-              'EMBARAZADA':'🤰 Embarazada',
-              'PRECONCEPCIONAL':'📋 Preconcepcional',
-              'PLANIFICACION':'📅 Planificación Familiar',
-              'DM':'💊 Diabetes Mellitus',
-              'HIPERTENSION':'💓 Hipertensión'
-            };
-            const chips=Object.entries(act.ruta_audit).filter(([,n])=>n>0)
-              .map(([r,n])=>`<div style="margin-top:2px;padding:2px 8px;border-radius:6px;background:#F3E8FF;border:1px solid #C4B5FD;color:#6D28D9;font-size:9.5px;font-weight:600;white-space:nowrap">${RLBL[r]||r}: <b>${n}</b> pacientes</div>`).join('');
-            if(chips) sfCell+=`<div style="margin-top:5px;font-size:9px;color:#6D28D9;font-weight:700;opacity:.7">También en:</div>${chips}`;
+          // Botón master
+          sfCell=`<button onclick="toggleSinFin('${aid}')" title="${sumandoAll?'Quitar todos del conteo':'Sumar todos los sin finalidad'}"
+            style="padding:3px 10px;border-radius:10px;border:1.5px solid ${sumandoAll?'#92400E':'#D97706'};background:${sumandoAll?'#FEF3C7':'transparent'};
+            color:${sumandoAll?'#92400E':'#D97706'};font-size:10px;font-weight:700;cursor:pointer;display:block;margin-bottom:4px;width:100%;text-align:center">
+            ${sumandoAll?'✓ Sumando todos':'+'} ${sinFin.toLocaleString("es-CO")} sin finalidad</button>`;
+          // Botones individuales por ruta (solo cuando master NO está activo)
+          if(!sumandoAll&&act.ruta_sin_fin){
+            const rutaEntries=Object.entries(act.ruta_sin_fin).filter(([,n])=>n>0);
+            if(rutaEntries.length){
+              sfCell+=`<div style="font-size:9px;color:var(--gris3);margin-bottom:3px;text-align:center">— o sumar solo: —</div>`;
+              for(const[ruta,cnt] of rutaEntries){
+                const key=aid+'::'+ruta;
+                const actRuta=_preevalSumarSinFin.has(key);
+                sfCell+=`<button onclick="toggleSinFin('${key}')"
+                  style="display:block;width:100%;text-align:left;margin-bottom:2px;padding:3px 8px;border-radius:6px;
+                  border:1px solid ${actRuta?'#6D28D9':'#C4B5FD'};background:${actRuta?'#EDE9FE':'#F5F3FF'};
+                  color:#6D28D9;font-size:9.5px;font-weight:600;cursor:pointer">
+                  ${actRuta?'✓ ':''} ${RLBL[ruta]||ruta}: <b>${cnt}</b></button>`;
+              }
+            }
           }
         }
         html+=`<tr style="border-bottom:1px solid var(--gris1)">
