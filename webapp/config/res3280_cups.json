@@ -154,14 +154,14 @@
       "descripcion": "Atención por profesional de enfermería, medicina general o nutrición para la promoción y apoyo de la lactancia materna",
       "archivo": "procedimientos",
       "cups": [
-        "I10605",
-        "H10605"
+        "I10605"
       ],
       "finalidad": [],
       "deduplicar": true,
       "aplica_a": [
         "PRIMERA_INFANCIA"
-      ]
+      ],
+      "archivo_fallback": "otrosServicios"
     },
     "proc_tamizaje_hemoglobina": {
       "descripcion": "Tamizaje para hemoglobina",

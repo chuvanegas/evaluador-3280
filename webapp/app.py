@@ -834,6 +834,16 @@ def preeval():
                             if cups_val not in cups_list: continue
                             if not finalidades or fin_val in finalidades:
                                 encontrados_fin += count
+                    # Fallback: si el archivo principal dio 0, buscar en archivo_fallback
+                    # Replica: =SI(CONTAR.SI(procedimientos!H:H;"CUPS")>0; ...; CONTAR.SI.CONJUNTO(otrosServicios...))
+                    if encontrados_total == 0 and act_cfg.get("archivo_fallback"):
+                        fb_arch = act_cfg["archivo_fallback"]
+                        fb_cups_map = conteos.get("__cups_only", {}).get(fb_arch, {})
+                        for grupo in grupos_aplicables:
+                            for cups_val, count in fb_cups_map.get(grupo, {}).items():
+                                if cups_val in cups_list:
+                                    encontrados_total += count
+                        encontrados_fin = encontrados_total
 
                 acts[aid] = {
                     "descripcion": act_cfg.get("descripcion", aid),
