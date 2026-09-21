@@ -268,13 +268,7 @@
         "PRIMERA_INFANCIA",
         "INFANCIA",
         "ADOLESCENCIA"
-      ],
-      "por_registro": true,
-      "max_por_paciente": {
-        "PRIMERA_INFANCIA": 8,
-        "INFANCIA": 12,
-        "default": 16
-      }
+      ]
     },
     "proc_fortificacion_micronutrientes": {
       "descripcion": "Fortificación casera con micronutrientes en polvo",
