@@ -1613,8 +1613,10 @@ function _preAgregar(archivos,usuariosGrupos,fechaNacPorPac){
       let grupos_arr;
       if(arch==='consultas'){
         if(DX_CONSULTA_CV[diag]){
-          // Z001/Z002/Z003 → grupo directo
-          grupos_arr=[DX_CONSULTA_CV[diag]];
+          // Z001/Z002/Z003 → grupo directo, EXCLUIR embarazadas (aplica a todos los grupos CV)
+          const allG=_getGruposActo(num);
+          const isEmb=allG&&(Array.isArray(allG)?allG:[allG]).includes('EMBARAZADA');
+          grupos_arr=isEmb?null:[DX_CONSULTA_CV[diag]];
         } else if(diag==='Z108'){
           // Z108 (otros controles) → J/A/V por edad, EXCLUIR embarazadas
           const allG=_getGruposActo(num);
@@ -1932,13 +1934,13 @@ function renderPreeval(d){
             style="padding:2px 7px;border-radius:10px;border:1.5px solid ${active?'#92400E':'#D97706'};background:${active?'#FEF3C7':'transparent'};
             color:${active?'#92400E':'#D97706'};font-size:10px;font-weight:700;cursor:pointer">
             ${active?'✓':'+'}${sinFin.toLocaleString("es-CO")}</button>`;
-        }
-        // Ruta audit: mostrar en qué rutas especificas están los pacientes de esta actividad
-        if(act.ruta_audit&&Object.keys(act.ruta_audit).length){
-          const RLBL={'EMBARAZADA':'Emb','PRECONCEPCIONAL':'Preconcep','PLANIFICACION':'Planif','DM':'DM','HIPERTENSION':'HTA'};
-          const chips=Object.entries(act.ruta_audit).filter(([,n])=>n>0)
-            .map(([r,n])=>`<span style="display:inline-block;padding:0 5px;border-radius:8px;background:#EDE9FE;color:#6D28D9;font-size:9px;font-weight:700">${RLBL[r]||r}:${n}</span>`).join(' ');
-          if(chips) sfCell+=`<div style="margin-top:3px;line-height:1.8">${chips}</div>`;
+          // Audit: mostrar rutas donde están pacientes (solo cuando hay sin-finalidad)
+          if(act.ruta_audit){
+            const RLBL={'EMBARAZADA':'🤰 Emb','PRECONCEPCIONAL':'📋 Preconcep','PLANIFICACION':'📅 Planif','DM':'💊 DM','HIPERTENSION':'💓 HTA'};
+            const chips=Object.entries(act.ruta_audit).filter(([,n])=>n>0)
+              .map(([r,n])=>`<span title="Pacientes también en ${r}" style="padding:1px 6px;border-radius:6px;background:#F3E8FF;border:1px solid #C4B5FD;color:#6D28D9;font-size:9px;font-weight:700;white-space:nowrap">${RLBL[r]||r}: ${n}</span>`).join(' ');
+            if(chips) sfCell+=`<div style="margin-top:4px;font-size:9px;color:var(--gris3);display:flex;flex-wrap:wrap;gap:3px;align-items:center"><span style="opacity:.6">también en:</span> ${chips}</div>`;
+          }
         }
         html+=`<tr style="border-bottom:1px solid var(--gris1)">
           <td style="padding:4px 8px 4px 16px;font-size:10.5px">${act.descripcion}</td>
