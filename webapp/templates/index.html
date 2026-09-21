@@ -1891,7 +1891,7 @@ function renderPreeval(d){
         <thead><tr style="background:var(--gris1)">
           <th style="padding:6px 8px;text-align:left;font-weight:600;color:var(--gris3)">Actividad</th>
           <th style="padding:6px 8px;text-align:left;font-weight:600;color:var(--gris3)">Archivo</th>
-          <th style="padding:6px 8px;text-align:center;font-weight:600;color:var(--gris3)">Encontrados</th>
+          <th style="padding:6px 8px;text-align:center;font-weight:600;color:var(--gris3)">ACTIVIDAD CONCILIADA</th>
           <th style="padding:6px 8px;text-align:center;font-weight:600;color:var(--gris3)" title="Registros sin finalidad correcta">Sin final.</th>
         </tr></thead><tbody>`;
     let segTotalFound=0, segTotalSinFin=0;
@@ -1911,7 +1911,13 @@ function renderPreeval(d){
         ?`<span style="margin-left:8px;padding:1px 7px;border-radius:10px;background:#FEF3C7;color:#92400E;font-size:10px;font-weight:700">+${progSinFin.toLocaleString("es-CO")} sin finalidad</span>`
         :'';
       html+=`<tr style="background:var(--azul4);border-bottom:1px solid var(--gris1)">
-        <td colspan="4" style="padding:5px 8px;font-weight:700;color:var(--azul);font-size:10.5px">${prog.nombre||pid} — Total: ${total.toLocaleString("es-CO")}${sfBadge}</td></tr>`;
+        <td colspan="4" style="padding:5px 8px;font-weight:700;color:var(--azul);font-size:10.5px">${prog.nombre||pid} — Total: ${total.toLocaleString("es-CO")}${sfBadge}</td></tr>
+      <tr style="background:var(--gris0);border-bottom:1px solid var(--gris1)">
+        <th style="padding:3px 8px 3px 16px;text-align:left;font-weight:600;color:var(--gris3);font-size:9.5px">Actividad</th>
+        <th style="padding:3px 8px;text-align:left;font-weight:600;color:var(--gris3);font-size:9.5px">Archivo</th>
+        <th style="padding:3px 8px;text-align:center;font-weight:600;color:var(--gris3);font-size:9.5px">ACTIVIDAD CONCILIADA</th>
+        <th style="padding:3px 8px;text-align:center;font-weight:600;color:var(--gris3);font-size:9.5px">Sin final.</th>
+      </tr>`;
       for(const[aid,act] of Object.entries(prog.actividades||{})){
         const sinFin=(act.encontrados||0)-(act.encontrados_fin||0);
         const sumando=_preevalSumarSinFin.has(aid);
