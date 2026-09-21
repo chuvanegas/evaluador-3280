@@ -1589,6 +1589,12 @@ function _preAgregar(archivos,usuariosGrupos,fechaNacPorPac){
   const result={};      // {arch: {grupo: {cups|fin: Set<rowKey>}}}
   const resultCups={};  // {arch: {grupo: {cups: Set<rowKey>}}} — sin filtro de finalidad
   const seenRowKeys={};  // {arch: {grupo: Set<rowKey>}} — dedup global igual que Excel
+  // Clasificación de CONSULTAS por código DX (igual que Excel col Y): no por edad del paciente
+  const DX_CONSULTA_CV={'Z001':'PRIMERA_INFANCIA','Z002':'INFANCIA','Z003':'ADOLESCENCIA'};
+  const JAV_GRUPOS=new Set(['JOVENES','ADULTEZ','VEJEZ']);
+  const CV_GRUPOS=new Set(['PRIMERA_INFANCIA','INFANCIA','ADOLESCENCIA','JOVENES','ADULTEZ','VEJEZ']);
+  const RUTAS_AUDIT_SET=new Set(['EMBARAZADA','PRECONCEPCIONAL','PLANIFICACION','DM','HIPERTENSION']);
+  const sinFinRutas={}; // {grupo:{cups:{ruta:Set<numDoc>}}} — audit rutas especificas
   for(const[arch,cupsKey] of Object.entries(CUPS_KEY)){
     const finKey=FIN_KEY[arch];
     const fechaKey=FECHA_ACT_KEY[arch];
@@ -1601,10 +1607,32 @@ function _preAgregar(archivos,usuariosGrupos,fechaNacPorPac){
       const cups=(r[cupsKey]||'').trim().toUpperCase();
       const fin=finKey?String(r[finKey]||'').trim():'';
       const fechaActo=fechaKey?(r[fechaKey]||''):'';
-      const grupos_arr=_getGruposActo(num);
-      if(!cups||!grupos_arr) continue;
-      const ckey=fin?cups+'|'+fin:cups;
       const diag=(r.codDiagnosticoPrincipal||r.codDiagnostico||'').trim().toUpperCase();
+      if(!cups) continue;
+      // Determinar grupos: consultas por código DX (= col Y Excel), resto por edad del paciente
+      let grupos_arr;
+      if(arch==='consultas'){
+        if(DX_CONSULTA_CV[diag]){
+          // Z001/Z002/Z003 → grupo directo
+          grupos_arr=[DX_CONSULTA_CV[diag]];
+        } else if(diag==='Z108'){
+          // Z108 (otros controles) → J/A/V por edad, EXCLUIR embarazadas
+          const allG=_getGruposActo(num);
+          if(allG){const a=Array.isArray(allG)?allG:[allG];
+            grupos_arr=a.includes('EMBARAZADA')?null:a.filter(g=>JAV_GRUPOS.has(g));
+            if(grupos_arr&&!grupos_arr.length) grupos_arr=null;}
+        } else {
+          // Otros DX (prenatal, DM/HTA, planif, etc.) → rutas especificas, sin grupos CV
+          const allG=_getGruposActo(num);
+          if(allG){const a=Array.isArray(allG)?allG:[allG];
+            grupos_arr=a.filter(g=>!CV_GRUPOS.has(g));
+            if(!grupos_arr.length) grupos_arr=null;}
+        }
+      } else {
+        grupos_arr=_getGruposActo(num);
+      }
+      if(!grupos_arr) continue;
+      const ckey=fin?cups+'|'+fin:cups;
       // Clave única global por fila (como Excel col AB/AC): paciente+fecha+CUPS+diagnóstico
       const rowKey=tipo+'|'+num+'|'+_normActoFecha(fechaActo)+'|'+cups+'|'+diag;
       for(const grupo of grupos_arr){
@@ -1618,6 +1646,17 @@ function _preAgregar(archivos,usuariosGrupos,fechaNacPorPac){
         if(!resultCups[arch][grupo]) resultCups[arch][grupo]={};
         if(!resultCups[arch][grupo][cups]) resultCups[arch][grupo][cups]=new Set();
         resultCups[arch][grupo][cups].add(rowKey);
+        // Audit: rastrear pacientes en rutas especificas para mostrar en "Sin final."
+        if(arch==='consultas'){
+          const allG=_getGruposActo(num);
+          if(allG){const allArr=Array.isArray(allG)?allG:[allG];
+            for(const ruta of allArr.filter(g=>RUTAS_AUDIT_SET.has(g))){
+              if(!sinFinRutas[grupo]) sinFinRutas[grupo]={};
+              if(!sinFinRutas[grupo][cups]) sinFinRutas[grupo][cups]={};
+              if(!sinFinRutas[grupo][cups][ruta]) sinFinRutas[grupo][cups][ruta]=new Set();
+              sinFinRutas[grupo][cups][ruta].add(num);
+            }}
+        }
       }
     }
   }
@@ -1655,6 +1694,16 @@ function _preAgregar(archivos,usuariosGrupos,fechaNacPorPac){
     }
   }
   counts['__cups_only']=countsCups;
+  // Serializar sinFinRutas (Sets → counts) para audit en UI
+  const sinFinRutasC={};
+  for(const[g,ck] of Object.entries(sinFinRutas)){
+    sinFinRutasC[g]={};
+    for(const[c,rs] of Object.entries(ck)){
+      sinFinRutasC[g][c]={};
+      for(const[r,s] of Object.entries(rs)) sinFinRutasC[g][c][r]=s.size;
+    }
+  }
+  counts['__ruta_audit']=sinFinRutasC;
 
   // Totales por registro (no deduplicados): {arch: {grupo: {cups: {num: count}}}}
   // Para sellantes y fortif que cuentan cada aplicación
@@ -1877,6 +1926,13 @@ function renderPreeval(d){
             style="padding:2px 7px;border-radius:10px;border:1.5px solid ${active?'#92400E':'#D97706'};background:${active?'#FEF3C7':'transparent'};
             color:${active?'#92400E':'#D97706'};font-size:10px;font-weight:700;cursor:pointer">
             ${active?'✓':'+'}${sinFin.toLocaleString("es-CO")}</button>`;
+        }
+        // Ruta audit: mostrar en qué rutas especificas están los pacientes de esta actividad
+        if(act.ruta_audit&&Object.keys(act.ruta_audit).length){
+          const RLBL={'EMBARAZADA':'Emb','PRECONCEPCIONAL':'Preconcep','PLANIFICACION':'Planif','DM':'DM','HIPERTENSION':'HTA'};
+          const chips=Object.entries(act.ruta_audit).filter(([,n])=>n>0)
+            .map(([r,n])=>`<span style="display:inline-block;padding:0 5px;border-radius:8px;background:#EDE9FE;color:#6D28D9;font-size:9px;font-weight:700">${RLBL[r]||r}:${n}</span>`).join(' ');
+          if(chips) sfCell+=`<div style="margin-top:3px;line-height:1.8">${chips}</div>`;
         }
         html+=`<tr style="border-bottom:1px solid var(--gris1)">
           <td style="padding:4px 8px 4px 16px;font-size:10.5px">${act.descripcion}</td>

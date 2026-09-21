@@ -845,6 +845,16 @@ def preeval():
                                     encontrados_total += count
                         encontrados_fin = encontrados_total
 
+                # Audit: rutas especificas de pacientes con CUPS coincidente en consultas
+                ruta_audit = {}
+                if archivo == "consultas":
+                    ruta_audit_raw = conteos.get("__ruta_audit", {})
+                    for grupo in grupos_aplicables:
+                        grp_map = ruta_audit_raw.get(grupo, {})
+                        for cups_val in cups_list:
+                            for ruta, cnt in grp_map.get(cups_val, {}).items():
+                                ruta_audit[ruta] = ruta_audit.get(ruta, 0) + cnt
+
                 acts[aid] = {
                     "descripcion": act_cfg.get("descripcion", aid),
                     "archivo": archivo,
@@ -852,6 +862,7 @@ def preeval():
                     "encontrados": encontrados_total,
                     "encontrados_fin": encontrados_fin,
                     "tiene_finalidad": bool(finalidades),
+                    "ruta_audit": ruta_audit or None,
                 }
             if any(v["encontrados"] > 0 for v in acts.values()):
                 resultados[pid] = {
