@@ -1934,12 +1934,18 @@ function renderPreeval(d){
             style="padding:2px 7px;border-radius:10px;border:1.5px solid ${active?'#92400E':'#D97706'};background:${active?'#FEF3C7':'transparent'};
             color:${active?'#92400E':'#D97706'};font-size:10px;font-weight:700;cursor:pointer">
             ${active?'✓':'+'}${sinFin.toLocaleString("es-CO")}</button>`;
-          // Audit: mostrar rutas donde están pacientes (solo cuando hay sin-finalidad)
+          // Audit: rutas donde también están los pacientes sin finalidad
           if(act.ruta_audit){
-            const RLBL={'EMBARAZADA':'🤰 Emb','PRECONCEPCIONAL':'📋 Preconcep','PLANIFICACION':'📅 Planif','DM':'💊 DM','HIPERTENSION':'💓 HTA'};
+            const RLBL={
+              'EMBARAZADA':'🤰 Embarazada',
+              'PRECONCEPCIONAL':'📋 Preconcepcional',
+              'PLANIFICACION':'📅 Planificación Familiar',
+              'DM':'💊 Diabetes Mellitus',
+              'HIPERTENSION':'💓 Hipertensión'
+            };
             const chips=Object.entries(act.ruta_audit).filter(([,n])=>n>0)
-              .map(([r,n])=>`<span title="Pacientes también en ${r}" style="padding:1px 6px;border-radius:6px;background:#F3E8FF;border:1px solid #C4B5FD;color:#6D28D9;font-size:9px;font-weight:700;white-space:nowrap">${RLBL[r]||r}: ${n}</span>`).join(' ');
-            if(chips) sfCell+=`<div style="margin-top:4px;font-size:9px;color:var(--gris3);display:flex;flex-wrap:wrap;gap:3px;align-items:center"><span style="opacity:.6">también en:</span> ${chips}</div>`;
+              .map(([r,n])=>`<div style="margin-top:2px;padding:2px 8px;border-radius:6px;background:#F3E8FF;border:1px solid #C4B5FD;color:#6D28D9;font-size:9.5px;font-weight:600;white-space:nowrap">${RLBL[r]||r}: <b>${n}</b> pacientes</div>`).join('');
+            if(chips) sfCell+=`<div style="margin-top:5px;font-size:9px;color:#6D28D9;font-weight:700;opacity:.7">También en:</div>${chips}`;
           }
         }
         html+=`<tr style="border-bottom:1px solid var(--gris1)">
