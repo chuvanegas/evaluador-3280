@@ -1812,9 +1812,13 @@ function renderPreeval(d){
     <span style="font-size:10px;color:var(--gris3)">${usarFin?'Registros con finalidad correcta — coincide con Excel "ACTIVIDAD CONCLUIDA"':'Todos los registros con CUPS coincidente (sin filtrar finalidad)'}</span>
   </div>`;
   // Tabla por programa — orden fijo por edad
-  const ORDEN_PROG=['PRIMERA_INFANCIA','INFANCIA','ADOLESCENCIA','JOVENES','ADULTEZ','VEJEZ',
-    'RUTA_MATERNA','DI_PRIMERA_INFANCIA','DI_INFANCIA','DI_ADOLESCENCIA','DI_JOVENES','DI_ADULTEZ','DI_VEJEZ','DI_SALUD_MENTAL',
-    'RCV_JOVENES','RCV_ADULTEZ','RCV_VEJEZ'];
+  const ORDEN_PROG=[
+    'PRIMERA_INFANCIA','INFANCIA','ADOLESCENCIA','JOVENES','ADULTEZ','VEJEZ',
+    'RUTA_MATERNA_PRECONCEPCION','RUTA_MATERNA_IVE','RUTA_MATERNA_PRENATAL','RUTA_MATERNA_PARTO','RUTA_MATERNA_POSPARTO',
+    'DI_PRIMERA_INFANCIA','DI_INFANCIA','DI_ADOLESCENCIA','DI_JOVENES','DI_ADULTEZ','DI_VEJEZ',
+    'DI0007','DI0008','DI0009','DI00011','DI_SALUD_MENTAL',
+    'RCV_RIESGO','RCV_DM','RCV_DM_HTA'
+  ];
   const resultEntries=Object.entries(d.resultados||{});
   resultEntries.sort(([a],[b])=>{
     const ia=ORDEN_PROG.indexOf(a),ib=ORDEN_PROG.indexOf(b);

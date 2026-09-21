@@ -983,9 +983,13 @@ def preeval_exportar():
     ws.column_dimensions["E"].width = 10
     row += 1
 
-    ORDEN_PROG = ["PRIMERA_INFANCIA","INFANCIA","ADOLESCENCIA","JOVENES","ADULTEZ","VEJEZ",
-        "RUTA_MATERNA","DI_PRIMERA_INFANCIA","DI_INFANCIA","DI_ADOLESCENCIA","DI_JOVENES","DI_ADULTEZ","DI_VEJEZ","DI_SALUD_MENTAL",
-        "RCV_JOVENES","RCV_ADULTEZ","RCV_VEJEZ"]
+    ORDEN_PROG = [
+        "PRIMERA_INFANCIA","INFANCIA","ADOLESCENCIA","JOVENES","ADULTEZ","VEJEZ",
+        "RUTA_MATERNA_PRECONCEPCION","RUTA_MATERNA_IVE","RUTA_MATERNA_PRENATAL","RUTA_MATERNA_PARTO","RUTA_MATERNA_POSPARTO",
+        "DI_PRIMERA_INFANCIA","DI_INFANCIA","DI_ADOLESCENCIA","DI_JOVENES","DI_ADULTEZ","DI_VEJEZ",
+        "DI0007","DI0008","DI0009","DI00011","DI_SALUD_MENTAL",
+        "RCV_RIESGO","RCV_DM","RCV_DM_HTA"
+    ]
     entries = sorted(resultados.items(), key=lambda x: ORDEN_PROG.index(x[0]) if x[0] in ORDEN_PROG else 999)
 
     for pid, prog in entries:
@@ -1025,7 +1029,7 @@ def preeval_exportar():
 
     # Pie
     row += 1
-    ws[f"A{row}"] = f"Generado: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M')} · Evaluador Res. 3280 v0.4.2 · DUSAKAWI EPSI"
+    ws[f"A{row}"] = f"Generado: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M')} · Evaluador Res. 3280 v0.4.3 · DUSAKAWI EPSI"
     ws[f"A{row}"].font = Font(italic=True, size=9, color="9CA3AF")
 
     buf = io.BytesIO()
