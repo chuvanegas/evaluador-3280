@@ -193,8 +193,7 @@
       "descripcion": "Hematocrito",
       "archivo": "procedimientos",
       "cups": [
-        "903883",
-        "902214"
+        "902211"
       ],
       "finalidad": [],
       "deduplicar": true,
@@ -262,13 +261,16 @@
       "cups": [
         "997107"
       ],
-      "finalidad": [],
+      "finalidad": [
+        "14"
+      ],
       "deduplicar": true,
       "aplica_a": [
         "PRIMERA_INFANCIA",
         "INFANCIA",
         "ADOLESCENCIA"
-      ]
+      ],
+      "por_registro": true
     },
     "proc_fortificacion_micronutrientes": {
       "descripcion": "Fortificación casera con micronutrientes en polvo",
