@@ -2083,25 +2083,26 @@ function renderPreeval(d){
         const color=found>0?"var(--verde2)":"var(--gris3)";
         let sfCell='';
         if(act.tiene_finalidad&&sinFin>0){
-          // Botón master
-          sfCell=`<button onclick="toggleSinFin('${aid}')" title="${sumandoAll?'Quitar todos del conteo':'Sumar todos los sin finalidad'}"
+          // Botón master (suma todos)
+          sfCell=`<button onclick="toggleSinFin('${aid}')" title="${sumandoAll?'Quitar todos del conteo':'Sumar TODOS los sin finalidad'}"
             style="padding:3px 10px;border-radius:10px;border:1.5px solid ${sumandoAll?'#92400E':'#D97706'};background:${sumandoAll?'#FEF3C7':'transparent'};
-            color:${sumandoAll?'#92400E':'#D97706'};font-size:10px;font-weight:700;cursor:pointer;display:block;margin-bottom:4px;width:100%;text-align:center">
-            ${sumandoAll?'✓ Sumando todos':'+'} ${sinFin.toLocaleString("es-CO")} sin finalidad</button>`;
-          // Botones individuales por ruta (solo cuando master NO está activo)
-          if(!sumandoAll&&act.ruta_sin_fin){
+            color:${sumandoAll?'#92400E':'#D97706'};font-size:10px;font-weight:700;cursor:pointer;display:block;margin-bottom:5px;width:100%;text-align:center">
+            ${sumandoAll?'✓':'+'}${sinFin.toLocaleString("es-CO")} sin finalidad</button>`;
+          // Chips individuales por ruta — SIEMPRE visibles, deshabilitados si master activo
+          if(act.ruta_sin_fin){
             const rutaEntries=Object.entries(act.ruta_sin_fin).filter(([,n])=>n>0);
-            if(rutaEntries.length){
-              sfCell+=`<div style="font-size:9px;color:var(--gris3);margin-bottom:3px;text-align:center">— o sumar solo: —</div>`;
-              for(const[ruta,cnt] of rutaEntries){
-                const key=aid+'::'+ruta;
-                const actRuta=_preevalSumarSinFin.has(key);
-                sfCell+=`<button onclick="toggleSinFin('${key}')"
-                  style="display:block;width:100%;text-align:left;margin-bottom:2px;padding:3px 8px;border-radius:6px;
-                  border:1px solid ${actRuta?'#6D28D9':'#C4B5FD'};background:${actRuta?'#EDE9FE':'#F5F3FF'};
-                  color:#6D28D9;font-size:9.5px;font-weight:600;cursor:pointer">
-                  ${actRuta?'✓ ':''} ${RLBL[ruta]||ruta}: <b>${cnt}</b></button>`;
-              }
+            for(const[ruta,cnt] of rutaEntries){
+              const key=aid+'::'+ruta;
+              const actRuta=!sumandoAll&&_preevalSumarSinFin.has(key);
+              const disabled=sumandoAll;
+              sfCell+=`<button onclick="${disabled?'':'toggleSinFin(\''+key+'\')'}"
+                style="display:block;width:100%;text-align:left;margin-bottom:2px;padding:3px 8px;border-radius:6px;
+                border:1px solid ${actRuta?'#6D28D9':disabled?'#E5E7EB':'#C4B5FD'};
+                background:${actRuta?'#EDE9FE':disabled?'#F9FAFB':'#F5F3FF'};
+                color:${actRuta?'#6D28D9':disabled?'#9CA3AF':'#7C3AED'};
+                font-size:9.5px;font-weight:600;cursor:${disabled?'default':'pointer'};
+                opacity:${disabled?'0.5':'1'}">
+                ${actRuta?'✓ ':''}${RLBL[ruta]||ruta}: <b>${cnt}</b></button>`;
             }
           }
         }
