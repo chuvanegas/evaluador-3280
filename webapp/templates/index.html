@@ -1854,6 +1854,90 @@ function toggleSinFin(key){ // key = aid (todos) OR aid::RUTA (solo esa ruta)
   else _preevalSumarSinFin.add(key);
   if(_preevalDatos) renderPreeval(_preevalDatos);
 }
+
+// Pacientes validados manualmente por actividad: {aid: Set<rowKey>}
+window._pacientesValidados = window._pacientesValidados || {};
+
+function abrirValidarPacientes(aid){
+  if(!_preevalDatos||!window._ripsDatos) return;
+  // Buscar la actividad en los programas
+  let actCfg=null;
+  for(const seg of Object.values(_preevalDatos.segmentos||{})){
+    for(const prog of Object.values(seg.programas||{})){
+      if((prog.actividades||{})[aid]){actCfg=prog.actividades[aid];break;}
+    }
+    if(actCfg) break;
+  }
+  if(!actCfg) return;
+  const cups=actCfg.cups||[];
+  const archivo=actCfg.archivo;
+  const finalidades=actCfg.finalidades||[];
+  const CUPS_KEY={consultas:'codConsulta',procedimientos:'codProcedimiento',medicamentos:'codTecnologiaSalud',otrosServicios:'codServicio'};
+  const FIN_KEY={consultas:'finalidadTecnologiaSalud',procedimientos:'finalidadTecnologiaSalud',medicamentos:'',otrosServicios:''};
+  const FECHA_KEY={consultas:'fechaInicioAtencion',procedimientos:'fechaInicioAtencion',medicamentos:'fechaDispensacionMedicamento',otrosServicios:'fechaInicioAtencion'};
+  const cupsKey=CUPS_KEY[archivo]||'';
+  const finKey=FIN_KEY[archivo]||'';
+  const fechaKey=FECHA_KEY[archivo]||'';
+  const cupsSet=new Set(cups.map(c=>c.toUpperCase()));
+  // Validados previamente
+  const yaValidados=window._pacientesValidados[aid]||new Set();
+  // Filtrar registros: CUPS match + finalidad NO está en la lista correcta
+  const seen=new Set();
+  const filas=[];
+  for(const r of (window._ripsDatos[archivo]||[])){
+    const cup=(r[cupsKey]||'').trim().toUpperCase();
+    if(!cupsSet.has(cup)) continue;
+    const fin=finKey?String(r[finKey]||'').trim():'';
+    if(finalidades.length&&fin&&finalidades.includes(fin)) continue; // finalidad correcta
+    const num=(r.numDocumentoIdentificacion||'').trim();
+    const tipo=(r.tipoDocumentoIdentificacion||'').trim();
+    const fecha=(r[fechaKey]||'').slice(0,10);
+    const diag=(r.codDiagnosticoPrincipal||r.codDiagnostico||'').trim().toUpperCase();
+    const rowKey=tipo+'|'+num+'|'+(fecha.length===8?fecha.slice(0,4)+'-'+fecha.slice(4,6)+'-'+fecha.slice(6,8):fecha)+'|'+cup+'|'+diag;
+    if(seen.has(rowKey)) continue;
+    seen.add(rowKey);
+    filas.push({rowKey,tipo,num,fecha,cup,fin,diag});
+  }
+  const totalError=filas.length;
+  let rows='';
+  for(const f of filas){
+    const chk=yaValidados.has(f.rowKey)?'checked':'';
+    const finLabel=f.fin||'<span style="color:#ef4444;font-style:italic">Sin finalidad</span>';
+    rows+=`<tr style="border-bottom:1px solid #f3f4f6">
+      <td style="padding:4px 8px;text-align:center"><input type="checkbox" data-rk="${f.rowKey.replace(/"/g,'&quot;')}" ${chk} style="cursor:pointer"></td>
+      <td style="padding:4px 8px;font-size:11px">${f.tipo}</td>
+      <td style="padding:4px 8px;font-size:11px;font-weight:600">${f.num}</td>
+      <td style="padding:4px 8px;font-size:11px">${f.fecha}</td>
+      <td style="padding:4px 8px;font-size:11px">${f.cup}</td>
+      <td style="padding:4px 8px;font-size:11px">${finLabel}</td>
+      <td style="padding:4px 8px;font-size:11px">${f.diag}</td>
+    </tr>`;
+  }
+  const m=document.getElementById('modalValidarPacientes');
+  m.querySelector('#mvpTitulo').textContent=actCfg.descripcion;
+  m.querySelector('#mvpTotal').textContent=`${totalError} registros con error de finalidad`;
+  m.querySelector('#mvpTabla tbody').innerHTML=rows||'<tr><td colspan="7" style="padding:20px;text-align:center;color:#9ca3af">No se encontraron registros con error</td></tr>';
+  m.querySelector('#mvpAid').value=aid;
+  m.style.display='flex';
+}
+
+function _cerrarValidarPacientes(){
+  document.getElementById('modalValidarPacientes').style.display='none';
+}
+
+function _guardarValidados(){
+  const aid=document.getElementById('mvpAid').value;
+  const checks=document.querySelectorAll('#mvpTabla input[type=checkbox]');
+  const sel=new Set();
+  checks.forEach(c=>{if(c.checked) sel.add(c.dataset.rk);});
+  window._pacientesValidados[aid]=sel;
+  _cerrarValidarPacientes();
+  if(_preevalDatos) renderPreeval(_preevalDatos);
+}
+
+function _seleccionarTodosValidar(v){
+  document.querySelectorAll('#mvpTabla input[type=checkbox]').forEach(c=>c.checked=v);
+}
 function abrirModalAuditoria(){
   if(!_preevalDatos) return;
   const RLBL={'EMBARAZADA':'🤰 Embarazada','PRECONCEPCIONAL':'📋 Preconcepcional','PLANIFICACION':'📅 Planificación Familiar','DM':'💊 Diabetes Mellitus','HIPERTENSION':'💓 Hipertensión'};
@@ -2109,7 +2193,7 @@ function renderPreeval(d){
           <th style="padding:6px 8px;text-align:left;font-weight:600;color:var(--gris3)">Actividad</th>
           <th style="padding:6px 8px;text-align:left;font-weight:600;color:var(--gris3)">Archivo</th>
           <th style="padding:6px 8px;text-align:center;font-weight:600;color:var(--gris3)">ACTIVIDAD CONCILIADA</th>
-          <th style="padding:6px 8px;text-align:center;font-weight:600;color:var(--gris3)" title="Registros sin finalidad correcta">Sin final.</th>
+          <th style="padding:6px 8px;text-align:center;font-weight:600;color:var(--gris3)" title="Registros con finalidad incorrecta o ausente">Error finalidad</th>
         </tr></thead><tbody>`;
     let segTotalFound=0, segTotalSinFin=0;
     for(const[pid,prog] of progs){
@@ -2133,7 +2217,7 @@ function renderPreeval(d){
         <th style="padding:3px 8px 3px 16px;text-align:left;font-weight:600;color:var(--gris3);font-size:9.5px">Actividad</th>
         <th style="padding:3px 8px;text-align:left;font-weight:600;color:var(--gris3);font-size:9.5px">Archivo</th>
         <th style="padding:3px 8px;text-align:center;font-weight:600;color:var(--gris3);font-size:9.5px">ACTIVIDAD CONCILIADA</th>
-        <th style="padding:3px 8px;text-align:center;font-weight:600;color:var(--gris3);font-size:9.5px">Sin final.</th>
+        <th style="padding:3px 8px;text-align:center;font-weight:600;color:var(--gris3);font-size:9.5px">Error finalidad</th>
       </tr>`;
       for(const[aid,act] of Object.entries(prog.actividades||{})){
         const sinFin=(act.encontrados||0)-(act.encontrados_fin||0);
@@ -2162,7 +2246,9 @@ function renderPreeval(d){
             if(!rutaSinFinLocal[ruta]) delete rutaSinFinLocal[ruta];
           }
         }
-        // found: base + master toggle + toggles individuales por ruta
+        // Pacientes validados manualmente
+        const validados=window._pacientesValidados&&window._pacientesValidados[aid]?window._pacientesValidados[aid].size:0;
+        // found: base + master toggle + toggles individuales por ruta + validados manualmente
         let found=usarFin?(act.encontrados_fin||0):(act.encontrados||0);
         if(usarFin&&sinFin>0){
           if(sumandoAll){ found+=sinFin; }
@@ -2170,16 +2256,28 @@ function renderPreeval(d){
             for(const[ruta,cnt] of Object.entries(rutaSinFinLocal)){
               if(_preevalSumarSinFin.has(aid+'::'+ruta)) found+=cnt;
             }
+            found+=validados;
           }
         }
         const color=found>0?"var(--verde2)":"var(--gris3)";
         let sfCell='';
+        // Botón "Validar pacientes" — siempre visible cuando hay archivo RIPS y la actividad tiene finalidad
+        if(act.tiene_finalidad&&window._ripsDatos){
+          const lbl=validados>0?`✓ ${validados} validado${validados>1?'s':''}  |  Validar pacientes`:'🔍 Validar pacientes';
+          const btnColor=validados>0?'#065F46':'#1d4ed8';
+          const btnBg=validados>0?'#D1FAE5':'#EFF6FF';
+          sfCell=`<button onclick="abrirValidarPacientes('${aid}')"
+            style="display:block;width:100%;text-align:center;padding:3px 8px;border-radius:6px;
+            border:1px solid ${validados>0?'#34D399':'#93C5FD'};background:${btnBg};
+            color:${btnColor};font-size:9.5px;font-weight:600;cursor:pointer;margin-bottom:5px">
+            ${lbl}</button>`;
+        }
         if(act.tiene_finalidad&&sinFin>0){
           // Botón master (suma todos)
-          sfCell=`<button onclick="toggleSinFin('${aid}')" title="${sumandoAll?'Quitar todos del conteo':'Sumar TODOS los sin finalidad'}"
+          sfCell+=`<button onclick="toggleSinFin('${aid}')" title="${sumandoAll?'Quitar todos del conteo':'Sumar TODOS los sin finalidad'}"
             style="padding:3px 10px;border-radius:10px;border:1.5px solid ${sumandoAll?'#92400E':'#D97706'};background:${sumandoAll?'#FEF3C7':'transparent'};
             color:${sumandoAll?'#92400E':'#D97706'};font-size:10px;font-weight:700;cursor:pointer;display:block;margin-bottom:5px;width:100%;text-align:center">
-            ${sumandoAll?'✓':'+'}${sinFin.toLocaleString("es-CO")} sin finalidad</button>`;
+            ${sumandoAll?'✓':'+'}${sinFin.toLocaleString("es-CO")} error finalidad</button>`;
           // Chips individuales por ruta — calculados localmente
           const rutaEntries=Object.entries(rutaSinFinLocal).filter(([,n])=>n>0);
           for(const[ruta,cnt] of rutaEntries){
@@ -3747,5 +3845,47 @@ function dashIrEvaluacion(){
   preevaluar();
 }
 </script>
+
+<!-- Modal Validar Pacientes -->
+<div id="modalValidarPacientes" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:700;align-items:flex-start;justify-content:center;overflow-y:auto;padding:24px 12px">
+  <div style="background:var(--blanco);border-radius:14px;max-width:920px;width:100%;box-shadow:0 8px 40px rgba(0,0,0,.18)">
+    <div style="padding:16px 20px;border-bottom:1px solid var(--gris1);display:flex;align-items:center;gap:12px">
+      <div style="flex:1">
+        <div style="font-weight:700;font-size:13px;color:var(--azul)">🔍 Validar pacientes — <span id="mvpTitulo"></span></div>
+        <div id="mvpTotal" style="font-size:11px;color:#ef4444;font-weight:600;margin-top:2px"></div>
+      </div>
+      <button onclick="_cerrarValidarPacientes()" style="background:none;border:none;font-size:18px;cursor:pointer;color:var(--gris3)">✕</button>
+    </div>
+    <div style="padding:12px 20px;background:#fef9f0;border-bottom:1px solid var(--gris1);display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+      <span style="font-size:11px;color:#92400E;font-weight:600">⚠️ Registros con finalidad incorrecta o ausente. Marque los que el prestador valide para incluirlos en el conteo.</span>
+      <div style="margin-left:auto;display:flex;gap:8px">
+        <button onclick="_seleccionarTodosValidar(true)" style="padding:4px 10px;border-radius:6px;border:1px solid #D97706;background:#FEF3C7;color:#92400E;font-size:10px;font-weight:600;cursor:pointer">Seleccionar todos</button>
+        <button onclick="_seleccionarTodosValidar(false)" style="padding:4px 10px;border-radius:6px;border:1px solid var(--gris2);background:none;color:var(--gris3);font-size:10px;font-weight:600;cursor:pointer">Limpiar selección</button>
+      </div>
+    </div>
+    <div style="overflow-x:auto;max-height:420px;overflow-y:auto">
+      <table id="mvpTabla" style="width:100%;border-collapse:collapse;font-size:11.5px">
+        <thead style="background:var(--gris0);position:sticky;top:0">
+          <tr>
+            <th style="padding:6px 8px;text-align:center;font-weight:600;color:var(--gris3);font-size:10px">✓</th>
+            <th style="padding:6px 8px;text-align:left;font-weight:600;color:var(--gris3);font-size:10px">Tipo Doc</th>
+            <th style="padding:6px 8px;text-align:left;font-weight:600;color:var(--gris3);font-size:10px">Núm. Doc</th>
+            <th style="padding:6px 8px;text-align:left;font-weight:600;color:var(--gris3);font-size:10px">Fecha</th>
+            <th style="padding:6px 8px;text-align:left;font-weight:600;color:var(--gris3);font-size:10px">CUPS</th>
+            <th style="padding:6px 8px;text-align:left;font-weight:600;color:var(--gris3);font-size:10px">Finalidad registrada</th>
+            <th style="padding:6px 8px;text-align:left;font-weight:600;color:var(--gris3);font-size:10px">Diagnóstico</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <div style="padding:14px 20px;border-top:1px solid var(--gris1);display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+      <div style="flex:1;font-size:10.5px;color:var(--gris3)">Los pacientes seleccionados se sumarán al conteo de <b>Actividad Conciliada</b> de esta actividad.</div>
+      <input type="hidden" id="mvpAid">
+      <button onclick="_cerrarValidarPacientes()" style="padding:6px 16px;border-radius:8px;border:1px solid var(--gris2);background:none;color:var(--gris3);font-size:11px;cursor:pointer">Cancelar</button>
+      <button onclick="_guardarValidados()" style="padding:6px 16px;border-radius:8px;border:none;background:var(--azul);color:#fff;font-size:11px;font-weight:700;cursor:pointer">✓ Incluir seleccionados en conteo</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>
