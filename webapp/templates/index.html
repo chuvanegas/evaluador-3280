@@ -1658,13 +1658,13 @@ function _preAgregar(archivos,usuariosGrupos,fechaNacPorPac){
               if(!sinFinRutas[grupo]) sinFinRutas[grupo]={};
               if(!sinFinRutas[grupo][cups]) sinFinRutas[grupo][cups]={};
               if(!sinFinRutas[grupo][cups][ruta]) sinFinRutas[grupo][cups][ruta]=new Set();
-              sinFinRutas[grupo][cups][ruta].add(num);
+              sinFinRutas[grupo][cups][ruta].add(rowKey);
               // Solo los que tienen finalidad (cups|fin)
               if(fin){
                 if(!sinFinRutasFin[grupo]) sinFinRutasFin[grupo]={};
                 if(!sinFinRutasFin[grupo][ckey]) sinFinRutasFin[grupo][ckey]={};
                 if(!sinFinRutasFin[grupo][ckey][ruta]) sinFinRutasFin[grupo][ckey][ruta]=new Set();
-                sinFinRutasFin[grupo][ckey][ruta].add(num);
+                sinFinRutasFin[grupo][ckey][ruta].add(rowKey);
               }
             }}
         }
@@ -1855,71 +1855,105 @@ function toggleSinFin(key){ // key = aid (todos) OR aid::RUTA (solo esa ruta)
 function abrirModalAuditoria(){
   if(!_preevalDatos) return;
   const RLBL={'EMBARAZADA':'🤰 Embarazada','PRECONCEPCIONAL':'📋 Preconcepcional','PLANIFICACION':'📅 Planificación Familiar','DM':'💊 Diabetes Mellitus','HIPERTENSION':'💓 Hipertensión'};
-  const d=_preevalDatos;
-  // Recopilar todos los pacientes sin finalidad por ruta, cruzando todos los programas
-  const resumen={}; // {ruta:{programa:{actividad:{total,sinFin}}}}
-  for(const[prog,datos] of Object.entries(d.resultados||{})){
-    for(const[aid,act] of Object.entries(datos.actividades||{})){
-      if(!act.tiene_finalidad) continue;
-      const sinFin=(act.encontrados||0)-(act.encontrados_fin||0);
-      if(act.ruta_audit){
-        for(const[ruta,total] of Object.entries(act.ruta_audit)){
-          const sf=(act.ruta_sin_fin&&act.ruta_sin_fin[ruta])||0;
-          if(!resumen[ruta]) resumen[ruta]={};
-          if(!resumen[ruta][prog]) resumen[ruta][prog]={};
-          resumen[ruta][prog][aid]={total,sinFin:sf,nombre:act.nombre||aid};
-        }
-      }
-    }
-  }
   const PROG_LBL={
     PRIMERA_INFANCIA:'Primera Infancia',INFANCIA:'Infancia',ADOLESCENCIA:'Adolescencia',
     JOVENES:'Jóvenes',ADULTEZ:'Adultez',VEJEZ:'Vejez',
     RUTA_MATERNA_PRECONCEPCION:'R.M. Preconcepción',RUTA_MATERNA_IVE:'R.M. IVE',
     RUTA_MATERNA_PRENATAL:'R.M. Prenatal',RUTA_MATERNA_PARTO:'R.M. Parto',RUTA_MATERNA_POSPARTO:'R.M. Posparto',
+    DI_PRIMERA_INFANCIA:'DI 1ra Inf.',DI_INFANCIA:'DI Infancia',DI_ADOLESCENCIA:'DI Adolesc.',
+    DI_JOVENES:'DI Jóvenes',DI_ADULTEZ:'DI Adultez',DI_VEJEZ:'DI Vejez',
+    DI0007:'DI Hipertensión',DI0008:'DI Diabetes',DI0009:'DI DM+HTA',DI00011:'DI Dislipidemia',DI_SALUD_MENTAL:'DI Salud Mental',
     RCV_RIESGO:'RCV Riesgo',RCV_DM:'RCV Diabetes',RCV_DM_HTA:'RCV DM+HTA'
   };
-  let html=`<div style="display:flex;flex-direction:column;gap:20px">`;
+  const d=_preevalDatos;
+  // Resumen global para cabecera
+  let totalSinFin=0, totalConRuta=0;
+  // {ruta: {prog: {aid: {desc, conRuta, sinFin, conFin}}}}
+  const resumen={};
+  for(const[prog,datos] of Object.entries(d.resultados||{})){
+    for(const[aid,act] of Object.entries(datos.actividades||{})){
+      if(!act.ruta_audit) continue;
+      for(const[ruta,conRuta] of Object.entries(act.ruta_audit)){
+        const sf=(act.ruta_sin_fin&&act.ruta_sin_fin[ruta])||0;
+        const cf=conRuta-sf;
+        if(!resumen[ruta]) resumen[ruta]={};
+        if(!resumen[ruta][prog]) resumen[ruta][prog]={};
+        resumen[ruta][prog][aid]={desc:act.descripcion||aid,conRuta,sinFin:sf,conFin:cf};
+        totalConRuta+=conRuta; totalSinFin+=sf;
+      }
+    }
+  }
   const rutasOrden=['EMBARAZADA','PRECONCEPCIONAL','PLANIFICACION','DM','HIPERTENSION'];
   const rutasPresentes=[...rutasOrden.filter(r=>resumen[r]),...Object.keys(resumen).filter(r=>!rutasOrden.includes(r))];
+  // Resumen por ruta para chips de cabecera
+  const rutaTotales={};
+  for(const ruta of rutasPresentes){
+    let cr=0,sf=0;
+    for(const acts of Object.values(resumen[ruta]||{}))
+      for(const a of Object.values(acts)){cr+=a.conRuta;sf+=a.sinFin;}
+    rutaTotales[ruta]={conRuta:cr,sinFin:sf};
+  }
+  let html=``;
+  // Cabecera resumen
+  html+=`<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px">`;
+  for(const ruta of rutasPresentes){
+    const{conRuta,sinFin}=rutaTotales[ruta];
+    html+=`<div style="flex:1;min-width:140px;border:1.5px solid ${sinFin>0?'#FCD34D':'#C4B5FD'};border-radius:8px;padding:8px 12px;background:${sinFin>0?'#FFFBEB':'#F5F3FF'}">
+      <div style="font-size:12px;font-weight:700;color:#4C1D95;margin-bottom:4px">${RLBL[ruta]||ruta}</div>
+      <div style="display:flex;gap:8px;font-size:11px">
+        <span style="color:#374151">📋 ${conRuta.toLocaleString('es-CO')} registros</span>
+        ${sinFin>0?`<span style="color:#B45309;font-weight:700">⚠️ ${sinFin.toLocaleString('es-CO')} sin final.</span>`:`<span style="color:#059669">✅ Todos con finalidad</span>`}
+      </div>
+    </div>`;
+  }
+  html+=`</div>`;
   if(!rutasPresentes.length){
     html+=`<div style="text-align:center;padding:40px;color:#6B7280;font-size:14px">✅ No se encontraron inconsistencias entre rutas</div>`;
   } else {
+    html+=`<div style="display:flex;flex-direction:column;gap:16px">`;
     for(const ruta of rutasPresentes){
-      const programas=resumen[ruta];
-      const totalPacRuta=Object.values(programas).reduce((s,acts)=>s+Object.values(acts).reduce((s2,a)=>s2+(a.sinFin||0),0),0);
-      html+=`<div style="border:1.5px solid #C4B5FD;border-radius:10px;overflow:hidden">
-        <div style="background:#EDE9FE;padding:10px 16px;display:flex;justify-content:space-between;align-items:center">
+      const{conRuta,sinFin}=rutaTotales[ruta];
+      const hasSinFin=sinFin>0;
+      html+=`<div style="border:1.5px solid ${hasSinFin?'#FCD34D':'#C4B5FD'};border-radius:10px;overflow:hidden">
+        <div style="background:${hasSinFin?'#FFFBEB':'#EDE9FE'};padding:10px 16px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
           <span style="font-size:14px;font-weight:700;color:#4C1D95">${RLBL[ruta]||ruta}</span>
-          <span style="font-size:12px;font-weight:600;color:#7C3AED;background:#F5F3FF;padding:2px 10px;border-radius:12px">${totalPacRuta} sin finalidad</span>
+          <div style="display:flex;gap:10px;font-size:12px;font-weight:600">
+            <span style="color:#6B7280">${conRuta.toLocaleString('es-CO')} registros totales</span>
+            <span style="color:${hasSinFin?'#B45309':'#059669'}">${hasSinFin?`⚠️ ${sinFin.toLocaleString('es-CO')} sin finalidad`:'✅ Todos con finalidad'}</span>
+          </div>
         </div>
-        <table style="width:100%;border-collapse:collapse;font-size:12px">
-          <thead><tr style="background:#F5F3FF;color:#4C1D95">
-            <th style="padding:7px 12px;text-align:left;font-weight:600">Programa</th>
-            <th style="padding:7px 12px;text-align:left;font-weight:600">Actividad</th>
-            <th style="padding:7px 8px;text-align:right;font-weight:600">Con ruta</th>
-            <th style="padding:7px 8px;text-align:right;font-weight:600;color:#D97706">Sin final.</th>
+        <div style="overflow-x:auto">
+        <table style="width:100%;border-collapse:collapse;font-size:12px;min-width:500px">
+          <thead><tr style="background:${hasSinFin?'#FEF9C3':'#F5F3FF'};color:#4C1D95;font-size:11px">
+            <th style="padding:6px 12px;text-align:left;font-weight:600;border-bottom:1px solid #E5E7EB">Programa</th>
+            <th style="padding:6px 12px;text-align:left;font-weight:600;border-bottom:1px solid #E5E7EB">Actividad</th>
+            <th style="padding:6px 8px;text-align:right;font-weight:600;border-bottom:1px solid #E5E7EB">Registros</th>
+            <th style="padding:6px 8px;text-align:right;font-weight:600;border-bottom:1px solid #E5E7EB;color:#059669">Con finalidad</th>
+            <th style="padding:6px 8px;text-align:right;font-weight:600;border-bottom:1px solid #E5E7EB;color:#B45309">Sin finalidad</th>
           </tr></thead><tbody>`;
-      for(const[prog,acts] of Object.entries(programas)){
+      for(const[prog,acts] of Object.entries(resumen[ruta])){
         for(const[aid,info] of Object.entries(acts)){
-          html+=`<tr style="border-top:1px solid #EDE9FE">
-            <td style="padding:6px 12px;color:#6B7280">${PROG_LBL[prog]||prog}</td>
-            <td style="padding:6px 12px;color:#111827">${info.nombre}</td>
-            <td style="padding:6px 8px;text-align:right;color:#374151">${(info.total||0).toLocaleString('es-CO')}</td>
-            <td style="padding:6px 8px;text-align:right;font-weight:700;color:${(info.sinFin||0)>0?'#B45309':'#6B7280'}">${(info.sinFin||0).toLocaleString('es-CO')}</td>
+          const rowHasSf=info.sinFin>0;
+          html+=`<tr style="border-top:1px solid #F3F4F6;background:${rowHasSf?'#FFFBEB':'white'}">
+            <td style="padding:6px 12px;color:#6B7280;white-space:nowrap">${PROG_LBL[prog]||prog}</td>
+            <td style="padding:6px 12px;color:#111827">${info.desc}</td>
+            <td style="padding:6px 8px;text-align:right;color:#374151;font-weight:600">${info.conRuta.toLocaleString('es-CO')}</td>
+            <td style="padding:6px 8px;text-align:right;color:#059669">${info.conFin.toLocaleString('es-CO')}</td>
+            <td style="padding:6px 8px;text-align:right;font-weight:700;color:${rowHasSf?'#B45309':'#9CA3AF'}">${rowHasSf?info.sinFin.toLocaleString('es-CO'):'—'}</td>
           </tr>`;
         }
       }
-      html+=`</tbody></table>
-        <div style="padding:8px 12px;background:#FAFAFA;border-top:1px solid #EDE9FE">
-          <textarea id="nota_${ruta}" placeholder="Observaciones / notas para el prestador..." rows="2"
-            style="width:100%;box-sizing:border-box;padding:6px 10px;border:1px solid #D1D5DB;border-radius:6px;font-size:11px;resize:vertical;font-family:inherit"></textarea>
+      html+=`</tbody></table></div>
+        <div style="padding:8px 12px;background:#FAFAFA;border-top:1px solid #E5E7EB">
+          <label style="font-size:10px;font-weight:600;color:#6B7280;display:block;margin-bottom:3px">📝 Notas / observaciones para el prestador</label>
+          <textarea id="nota_${ruta}" placeholder="Ej: Verificar finalidad correcta, duplicados en sistema, paciente con ruta cruzada no reportada..." rows="2"
+            style="width:100%;box-sizing:border-box;padding:6px 10px;border:1px solid #D1D5DB;border-radius:6px;font-size:11px;resize:vertical;font-family:inherit;color:#111827"></textarea>
         </div>
       </div>`;
     }
+    html+=`</div>`;
   }
-  html+=`</div>`;
-  // Crear modal
+  // Crear / reusar modal
   let modal=document.getElementById('audit-modal');
   if(!modal){
     modal=document.createElement('div');
@@ -1928,18 +1962,19 @@ function abrirModalAuditoria(){
     modal.addEventListener('click',e=>{if(e.target===modal) cerrarModalAuditoria();});
     document.body.appendChild(modal);
   }
-  modal.innerHTML=`<div style="background:white;border-radius:14px;width:100%;max-width:900px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.3)">
-    <div style="background:linear-gradient(135deg,#4C1D95,#7C3AED);padding:16px 20px;display:flex;justify-content:space-between;align-items:center">
+  const totalSfLabel=totalSinFin>0?`⚠️ ${totalSinFin.toLocaleString('es-CO')} sin finalidad`:'✅ Sin inconsistencias';
+  modal.innerHTML=`<div style="background:white;border-radius:14px;width:100%;max-width:960px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.3)">
+    <div style="background:linear-gradient(135deg,#4C1D95,#7C3AED);padding:16px 20px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
       <div>
         <div style="color:white;font-size:16px;font-weight:700">🔍 Auditoría de Rutas Cruzadas</div>
-        <div style="color:#DDD6FE;font-size:11px;margin-top:2px">Pacientes con actividad en consultas de CV que también tienen otra ruta activa</div>
+        <div style="color:#DDD6FE;font-size:11px;margin-top:2px">${totalConRuta.toLocaleString('es-CO')} registros en rutas — ${totalSfLabel}</div>
       </div>
       <div style="display:flex;gap:8px">
-        <button onclick="imprimirAuditoria()" style="padding:7px 16px;border-radius:7px;border:1px solid rgba(255,255,255,0.4);background:rgba(255,255,255,0.15);color:white;font-size:12px;font-weight:600;cursor:pointer">🖨️ Imprimir</button>
+        <button onclick="imprimirAuditoria()" style="padding:7px 16px;border-radius:7px;border:1px solid rgba(255,255,255,0.4);background:rgba(255,255,255,0.15);color:white;font-size:12px;font-weight:600;cursor:pointer">🖨️ Imprimir / PDF</button>
         <button onclick="cerrarModalAuditoria()" style="padding:7px 14px;border-radius:7px;border:1px solid rgba(255,255,255,0.4);background:rgba(255,255,255,0.15);color:white;font-size:12px;font-weight:600;cursor:pointer">✕ Cerrar</button>
       </div>
     </div>
-    <div style="padding:20px;overflow-y:auto;max-height:80vh" id="audit-modal-body">${html}</div>
+    <div style="padding:20px;overflow-y:auto;max-height:82vh" id="audit-modal-body">${html}</div>
   </div>`;
   modal.style.display='flex';
 }
