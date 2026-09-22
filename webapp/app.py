@@ -845,24 +845,46 @@ def preeval():
                                     encontrados_total += count
                         encontrados_fin = encontrados_total
 
-                # Audit: rutas especificas de pacientes con CUPS coincidente en consultas
+                # Audit: rutas especificas — total y con fin, para calcular sinFin por ruta
                 ruta_audit = {}
+                ruta_sin_fin = {}
                 if archivo == "consultas":
                     ruta_audit_raw = conteos.get("__ruta_audit", {})
+                    ruta_audit_fin_raw = conteos.get("__ruta_audit_fin", {})
                     for grupo in grupos_aplicables:
-                        grp_map = ruta_audit_raw.get(grupo, {})
+                        grp_all = ruta_audit_raw.get(grupo, {})
+                        grp_fin = ruta_audit_fin_raw.get(grupo, {})
                         for cups_val in cups_list:
-                            for ruta, cnt in grp_map.get(cups_val, {}).items():
+                            for ruta, cnt in grp_all.get(cups_val, {}).items():
                                 ruta_audit[ruta] = ruta_audit.get(ruta, 0) + cnt
+                        for fin_val in finalidades:
+                            ckey = cups_val + "|" + fin_val if finalidades else cups_val
+                            for cups_val2 in cups_list:
+                                ckey2 = cups_val2 + "|" + fin_val
+                                for ruta, cnt in grp_fin.get(ckey2, {}).items():
+                                    ruta_sin_fin[ruta] = ruta_sin_fin.get(ruta, 0) - cnt
+                    # sinFin = total - con_fin (non-negative)
+                    for ruta in list(ruta_sin_fin.keys()):
+                        total = ruta_audit.get(ruta, 0)
+                        ruta_sin_fin[ruta] = max(0, total + ruta_sin_fin.get(ruta, 0))
+                    # Add base from ruta_audit for rutas not yet in ruta_sin_fin
+                    for ruta, total in ruta_audit.items():
+                        if ruta not in ruta_sin_fin:
+                            # No fin data = all are sinFin
+                            ruta_sin_fin[ruta] = total
+                    ruta_sin_fin = {k: v for k, v in ruta_sin_fin.items() if v > 0}
 
                 acts[aid] = {
                     "descripcion": act_cfg.get("descripcion", aid),
                     "archivo": archivo,
                     "cups": act_cfg.get("cups", []),
+                    "grupos": grupos_aplicables,
+                    "finalidades": finalidades,
                     "encontrados": encontrados_total,
                     "encontrados_fin": encontrados_fin,
                     "tiene_finalidad": bool(finalidades),
                     "ruta_audit": ruta_audit or None,
+                    "ruta_sin_fin": ruta_sin_fin or None,
                 }
             if any(v["encontrados"] > 0 for v in acts.values()):
                 resultados[pid] = {

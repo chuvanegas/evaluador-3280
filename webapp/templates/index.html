@@ -1715,6 +1715,8 @@ function _preAgregar(archivos,usuariosGrupos,fechaNacPorPac){
     }
   }
   counts['__ruta_audit']=sinFinRutasC;
+  // Guardar globalmente para uso directo en renderPreeval (sin depender del servidor)
+  window._lastRutaAudit={c:sinFinRutasC, f:sinFinRutasFinC};
   const sinFinRutasFinC={};
   for(const[g,ck] of Object.entries(sinFinRutasFin)){
     sinFinRutasFinC[g]={};
@@ -2137,12 +2139,35 @@ function renderPreeval(d){
         const sinFin=(act.encontrados||0)-(act.encontrados_fin||0);
         const sumandoAll=_preevalSumarSinFin.has(aid);
         const RLBL={'EMBARAZADA':'🤰 Embarazada','PRECONCEPCIONAL':'📋 Preconcepcional','PLANIFICACION':'📅 Planificación Familiar','DM':'💊 Diabetes Mellitus','HIPERTENSION':'💓 Hipertensión'};
+        // Calcular sinFin por ruta desde datos locales (no depender del servidor)
+        const rutaSinFinLocal={};
+        if(window._lastRutaAudit&&act.cups&&act.grupos&&act.finalidades){
+          for(const grp of act.grupos){
+            const auditC=(window._lastRutaAudit.c||{})[grp]||{};
+            const auditF=(window._lastRutaAudit.f||{})[grp]||{};
+            for(const cup of act.cups){
+              for(const[ruta,total] of Object.entries(auditC[cup]||{})){
+                rutaSinFinLocal[ruta]=(rutaSinFinLocal[ruta]||0)+total;
+              }
+              for(const fin of act.finalidades){
+                const ckey=cup+'|'+fin;
+                for(const[ruta,withFin] of Object.entries(auditF[ckey]||{})){
+                  rutaSinFinLocal[ruta]=(rutaSinFinLocal[ruta]||0)-withFin;
+                }
+              }
+            }
+          }
+          for(const ruta of Object.keys(rutaSinFinLocal)){
+            rutaSinFinLocal[ruta]=Math.max(0,rutaSinFinLocal[ruta]);
+            if(!rutaSinFinLocal[ruta]) delete rutaSinFinLocal[ruta];
+          }
+        }
         // found: base + master toggle + toggles individuales por ruta
         let found=usarFin?(act.encontrados_fin||0):(act.encontrados||0);
         if(usarFin&&sinFin>0){
           if(sumandoAll){ found+=sinFin; }
-          else if(act.ruta_sin_fin){
-            for(const[ruta,cnt] of Object.entries(act.ruta_sin_fin)){
+          else{
+            for(const[ruta,cnt] of Object.entries(rutaSinFinLocal)){
               if(_preevalSumarSinFin.has(aid+'::'+ruta)) found+=cnt;
             }
           }
@@ -2155,22 +2180,20 @@ function renderPreeval(d){
             style="padding:3px 10px;border-radius:10px;border:1.5px solid ${sumandoAll?'#92400E':'#D97706'};background:${sumandoAll?'#FEF3C7':'transparent'};
             color:${sumandoAll?'#92400E':'#D97706'};font-size:10px;font-weight:700;cursor:pointer;display:block;margin-bottom:5px;width:100%;text-align:center">
             ${sumandoAll?'✓':'+'}${sinFin.toLocaleString("es-CO")} sin finalidad</button>`;
-          // Chips individuales por ruta — SIEMPRE visibles, deshabilitados si master activo
-          if(act.ruta_sin_fin){
-            const rutaEntries=Object.entries(act.ruta_sin_fin).filter(([,n])=>n>0);
-            for(const[ruta,cnt] of rutaEntries){
-              const key=aid+'::'+ruta;
-              const actRuta=!sumandoAll&&_preevalSumarSinFin.has(key);
-              const disabled=sumandoAll;
-              sfCell+=`<button onclick="${disabled?'':'toggleSinFin(\''+key+'\')'}"
-                style="display:block;width:100%;text-align:left;margin-bottom:2px;padding:3px 8px;border-radius:6px;
-                border:1px solid ${actRuta?'#6D28D9':disabled?'#E5E7EB':'#C4B5FD'};
-                background:${actRuta?'#EDE9FE':disabled?'#F9FAFB':'#F5F3FF'};
-                color:${actRuta?'#6D28D9':disabled?'#9CA3AF':'#7C3AED'};
-                font-size:9.5px;font-weight:600;cursor:${disabled?'default':'pointer'};
-                opacity:${disabled?'0.5':'1'}">
-                ${actRuta?'✓ ':''}${RLBL[ruta]||ruta}: <b>${cnt}</b></button>`;
-            }
+          // Chips individuales por ruta — calculados localmente
+          const rutaEntries=Object.entries(rutaSinFinLocal).filter(([,n])=>n>0);
+          for(const[ruta,cnt] of rutaEntries){
+            const key=aid+'::'+ruta;
+            const actRuta=!sumandoAll&&_preevalSumarSinFin.has(key);
+            const disabled=sumandoAll;
+            sfCell+=`<button onclick="${disabled?'':'toggleSinFin(\''+key+'\')'}"
+              style="display:block;width:100%;text-align:left;margin-bottom:2px;padding:3px 8px;border-radius:6px;
+              border:1px solid ${actRuta?'#6D28D9':disabled?'#E5E7EB':'#C4B5FD'};
+              background:${actRuta?'#EDE9FE':disabled?'#F9FAFB':'#F5F3FF'};
+              color:${actRuta?'#6D28D9':disabled?'#9CA3AF':'#7C3AED'};
+              font-size:9.5px;font-weight:600;cursor:${disabled?'default':'pointer'};
+              opacity:${disabled?'0.5':'1'}">
+              ${actRuta?'✓ ':''}${RLBL[ruta]||ruta}: <b>${cnt}</b></button>`;
           }
         }
         html+=`<tr style="border-bottom:1px solid var(--gris1)">
