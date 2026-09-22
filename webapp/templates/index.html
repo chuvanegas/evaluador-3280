@@ -1860,13 +1860,10 @@ window._pacientesValidados = window._pacientesValidados || {};
 
 function abrirValidarPacientes(aid){
   if(!_preevalDatos||!window._ripsDatos) return;
-  // Buscar la actividad en los programas
+  // Buscar la actividad en _preevalDatos.resultados (estructura real del servidor)
   let actCfg=null;
-  for(const seg of Object.values(_preevalDatos.segmentos||{})){
-    for(const prog of Object.values(seg.programas||{})){
-      if((prog.actividades||{})[aid]){actCfg=prog.actividades[aid];break;}
-    }
-    if(actCfg) break;
+  for(const prog of Object.values(_preevalDatos.resultados||{})){
+    if((prog.actividades||{})[aid]){actCfg=prog.actividades[aid];break;}
   }
   if(!actCfg) return;
   const cups=actCfg.cups||[];
