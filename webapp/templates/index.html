@@ -1589,6 +1589,7 @@ function _preAgregar(archivos,usuariosGrupos,fechaNacPorPac){
   const result={};      // {arch: {grupo: {cups|fin: Set<rowKey>}}}
   const resultCups={};  // {arch: {grupo: {cups: Set<rowKey>}}} — sin filtro de finalidad
   const seenRowKeys={};  // {arch: {grupo: Set<rowKey>}} — dedup global igual que Excel
+  const _rkRecord={};   // {arch: {rowKey: record}} — registro original por rowKey
   // Clasificación de CONSULTAS por código DX (igual que Excel col Y): no por edad del paciente
   const DX_CONSULTA_CV={'Z001':'PRIMERA_INFANCIA','Z002':'INFANCIA','Z003':'ADOLESCENCIA'};
   const JAV_GRUPOS=new Set(['JOVENES','ADULTEZ','VEJEZ']);
@@ -1643,6 +1644,8 @@ function _preAgregar(archivos,usuariosGrupos,fechaNacPorPac){
         if(!seenRowKeys[arch][grupo]) seenRowKeys[arch][grupo]=new Set();
         if(seenRowKeys[arch][grupo].has(rowKey)) continue;
         seenRowKeys[arch][grupo].add(rowKey);
+        if(!_rkRecord[arch]) _rkRecord[arch]={};
+        _rkRecord[arch][rowKey]=r; // guardar registro original para modal validar
         if(!result[arch][grupo]) result[arch][grupo]={};
         if(!result[arch][grupo][ckey]) result[arch][grupo][ckey]=new Set();
         result[arch][grupo][ckey].add(rowKey);
@@ -1726,6 +1729,10 @@ function _preAgregar(archivos,usuariosGrupos,fechaNacPorPac){
   counts['__ruta_audit_fin']=sinFinRutasFinC;
   // Guardar globalmente para uso directo en renderPreeval (ambas variables ya inicializadas)
   window._lastRutaAudit={c:sinFinRutasC, f:sinFinRutasFinC};
+  // Guardar para modal validar pacientes: registros exactos sin finalidad por (arch,grupo,cups)
+  window._rkRecord=_rkRecord;
+  window._resultCupsGlobal=resultCups; // {arch:{grupo:{cups:Set<rowKey>}}}
+  window._resultFinGlobal=result;      // {arch:{grupo:{ckey:Set<rowKey>}}}
 
   // Totales por registro (no deduplicados): {arch: {grupo: {cups: {num: count}}}}
   // Para sellantes y fortif que cuentan cada aplicación
@@ -1859,7 +1866,7 @@ function toggleSinFin(key){ // key = aid (todos) OR aid::RUTA (solo esa ruta)
 window._pacientesValidados = window._pacientesValidados || {};
 
 function abrirValidarPacientes(aid){
-  if(!_preevalDatos||!window._ripsDatos) return;
+  if(!_preevalDatos||!window._resultCupsGlobal||!window._rkRecord) return;
   // Buscar la actividad en _preevalDatos.resultados (estructura real del servidor)
   let actCfg=null;
   for(const prog of Object.values(_preevalDatos.resultados||{})){
@@ -1869,32 +1876,47 @@ function abrirValidarPacientes(aid){
   const cups=actCfg.cups||[];
   const archivo=actCfg.archivo;
   const finalidades=actCfg.finalidades||[];
-  const CUPS_KEY={consultas:'codConsulta',procedimientos:'codProcedimiento',medicamentos:'codTecnologiaSalud',otrosServicios:'codServicio'};
+  const grupos=actCfg.grupos||[];
   const FIN_KEY={consultas:'finalidadTecnologiaSalud',procedimientos:'finalidadTecnologiaSalud',medicamentos:'',otrosServicios:''};
   const FECHA_KEY={consultas:'fechaInicioAtencion',procedimientos:'fechaInicioAtencion',medicamentos:'fechaDispensacionMedicamento',otrosServicios:'fechaInicioAtencion'};
-  const cupsKey=CUPS_KEY[archivo]||'';
   const finKey=FIN_KEY[archivo]||'';
   const fechaKey=FECHA_KEY[archivo]||'';
-  const cupsSet=new Set(cups.map(c=>c.toUpperCase()));
+  const finSet=new Set(finalidades);
   // Validados previamente
   const yaValidados=window._pacientesValidados[aid]||new Set();
-  // Filtrar registros: CUPS match + finalidad NO está en la lista correcta
-  const seen=new Set();
+  // Obtener rowKeys sin finalidad: están en resultCups pero NO en result con fin correcta
+  // usando los datos deduplicados exactos del _preAgregar (mismo dedup que Excel)
+  const sinFinRKs=new Set();
+  const rkRec=window._rkRecord[archivo]||{};
+  for(const grp of grupos){
+    const cupsMap=(window._resultCupsGlobal[archivo]||{})[grp]||{};
+    const finMap=(window._resultFinGlobal[archivo]||{})[grp]||{};
+    for(const cup of cups){
+      const allRKs=cupsMap[cup.toUpperCase()]||new Set();
+      // Construir set de rowKeys CON finalidad correcta para este grupo/cups
+      const conFinRKs=new Set();
+      for(const fin of finalidades){
+        const ckey=cup.toUpperCase()+'|'+fin;
+        for(const rk of (finMap[ckey]||new Set())) conFinRKs.add(rk);
+      }
+      for(const rk of allRKs){
+        if(!conFinRKs.has(rk)) sinFinRKs.add(rk);
+      }
+    }
+  }
+  // Construir filas desde los registros originales
   const filas=[];
-  for(const r of (window._ripsDatos[archivo]||[])){
-    const cup=(r[cupsKey]||'').trim().toUpperCase();
-    if(!cupsSet.has(cup)) continue;
+  for(const rk of sinFinRKs){
+    const r=rkRec[rk];
+    if(!r) continue;
     const fin=finKey?String(r[finKey]||'').trim():'';
-    if(finalidades.length&&fin&&finalidades.includes(fin)) continue; // finalidad correcta
     const num=(r.numDocumentoIdentificacion||'').trim();
     const tipo=(r.tipoDocumentoIdentificacion||'').trim();
     const fecha=(r[fechaKey]||'').slice(0,10);
     const diag=(r.codDiagnosticoPrincipal||r.codDiagnostico||'').trim().toUpperCase();
-    const rowKey=tipo+'|'+num+'|'+(fecha.length===8?fecha.slice(0,4)+'-'+fecha.slice(4,6)+'-'+fecha.slice(6,8):fecha)+'|'+cup+'|'+diag;
-    if(seen.has(rowKey)) continue;
-    seen.add(rowKey);
-    filas.push({rowKey,tipo,num,fecha,cup,fin,diag});
+    filas.push({rowKey:rk,tipo,num,fecha,fin,diag});
   }
+  filas.sort((a,b)=>a.num.localeCompare(b.num));
   const totalError=filas.length;
   let rows='';
   for(const f of filas){
@@ -1905,7 +1927,6 @@ function abrirValidarPacientes(aid){
       <td style="padding:4px 8px;font-size:11px">${f.tipo}</td>
       <td style="padding:4px 8px;font-size:11px;font-weight:600">${f.num}</td>
       <td style="padding:4px 8px;font-size:11px">${f.fecha}</td>
-      <td style="padding:4px 8px;font-size:11px">${f.cup}</td>
       <td style="padding:4px 8px;font-size:11px">${finLabel}</td>
       <td style="padding:4px 8px;font-size:11px">${f.diag}</td>
     </tr>`;
@@ -1913,7 +1934,7 @@ function abrirValidarPacientes(aid){
   const m=document.getElementById('modalValidarPacientes');
   m.querySelector('#mvpTitulo').textContent=actCfg.descripcion;
   m.querySelector('#mvpTotal').textContent=`${totalError} registros con error de finalidad`;
-  m.querySelector('#mvpTabla tbody').innerHTML=rows||'<tr><td colspan="7" style="padding:20px;text-align:center;color:#9ca3af">No se encontraron registros con error</td></tr>';
+  m.querySelector('#mvpTabla tbody').innerHTML=rows||'<tr><td colspan="6" style="padding:20px;text-align:center;color:#9ca3af">No se encontraron registros con error de finalidad para esta actividad</td></tr>';
   m.querySelector('#mvpAid').value=aid;
   m.style.display='flex';
 }
@@ -3844,7 +3865,7 @@ function dashIrEvaluacion(){
 </script>
 
 <!-- Modal Validar Pacientes -->
-<div id="modalValidarPacientes" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:700;align-items:flex-start;justify-content:center;overflow-y:auto;padding:24px 12px">
+<div id="modalValidarPacientes" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:900;align-items:flex-start;justify-content:center;overflow-y:auto;padding:24px 12px;pointer-events:auto">
   <div style="background:var(--blanco);border-radius:14px;max-width:920px;width:100%;box-shadow:0 8px 40px rgba(0,0,0,.18)">
     <div style="padding:16px 20px;border-bottom:1px solid var(--gris1);display:flex;align-items:center;gap:12px">
       <div style="flex:1">
@@ -3865,10 +3886,9 @@ function dashIrEvaluacion(){
         <thead style="background:var(--gris0);position:sticky;top:0">
           <tr>
             <th style="padding:6px 8px;text-align:center;font-weight:600;color:var(--gris3);font-size:10px">✓</th>
-            <th style="padding:6px 8px;text-align:left;font-weight:600;color:var(--gris3);font-size:10px">Tipo Doc</th>
-            <th style="padding:6px 8px;text-align:left;font-weight:600;color:var(--gris3);font-size:10px">Núm. Doc</th>
-            <th style="padding:6px 8px;text-align:left;font-weight:600;color:var(--gris3);font-size:10px">Fecha</th>
-            <th style="padding:6px 8px;text-align:left;font-weight:600;color:var(--gris3);font-size:10px">CUPS</th>
+            <th style="padding:6px 8px;text-align:left;font-weight:600;color:var(--gris3);font-size:10px">Tipo</th>
+            <th style="padding:6px 8px;text-align:left;font-weight:600;color:var(--gris3);font-size:10px">Núm. Documento</th>
+            <th style="padding:6px 8px;text-align:left;font-weight:600;color:var(--gris3);font-size:10px">Fecha atención</th>
             <th style="padding:6px 8px;text-align:left;font-weight:600;color:var(--gris3);font-size:10px">Finalidad registrada</th>
             <th style="padding:6px 8px;text-align:left;font-weight:600;color:var(--gris3);font-size:10px">Diagnóstico</th>
           </tr>
