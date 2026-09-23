@@ -1970,20 +1970,33 @@ function abrirValidarPacientes(aid, rutaGrupo){
     const diag=(r.codDiagnosticoPrincipal||r.codDiagnostico||'').trim().toUpperCase();
     const meta=pacMeta[num]||{};
     const sexo=SEXO_LBL[meta.sexo]||meta.sexo||'—';
-    // Calcular edad precisa en días/meses/años usando fechaNac vs fecha del acto
+    // Calcular edad con la misma fórmula que _calcularCobertura: fechaNac vs globalFechaMax
     let edadLabel='—';
-    const fnRaw=meta.fechaNac||'';
-    const fechaRef=fecha||'';
-    if(fnRaw&&fechaRef){
-      const fn=fnRaw.replace(/(\d{4})(\d{2})(\d{2})/,'$1-$2-$3');
-      const ref=fechaRef.replace(/(\d{4})(\d{2})(\d{2})/,'$1-$2-$3');
-      const dNac=new Date(fn);const dRef=new Date(ref);
-      if(!isNaN(dNac)&&!isNaN(dRef)&&dRef>=dNac){
-        const diffMs=dRef-dNac;
-        const diffDias=Math.floor(diffMs/86400000);
-        if(diffDias<30) edadLabel=diffDias+' día'+(diffDias!==1?'s':'');
-        else if(diffDias<365){const m=Math.floor(diffDias/30.44);edadLabel=m+' mes'+(m!==1?'es':'');}
-        else{const a=Math.floor(diffDias/365.25);const mR=Math.floor((diffDias%365.25)/30.44);edadLabel=a+' año'+(a!==1?'s':'')+(mR>0?' '+mR+' m':'');}
+    const fnRaw=(meta.fechaNac||'').replace(/(\d{4})(\d{2})(\d{2})/,'$1-$2-$3');
+    const refFecha=window._globalFechaMax||'';
+    if(fnRaw&&refFecha){
+      const[yn,mn,dn]=fnRaw.split('-').map(Number);
+      const[yr,mr,dr]=refFecha.split('-').map(Number);
+      if(yn&&yr){
+        // Años completos (idéntico a calcEdad)
+        let anosCompletos=yr-yn;
+        if(mr<mn||(mr===mn&&dr<dn)) anosCompletos--;
+        if(anosCompletos<0) anosCompletos=0;
+        if(anosCompletos===0){
+          // Menos de 1 año: calcular meses y días exactos
+          const dNac=new Date(fnRaw);const dRef=new Date(refFecha);
+          const diffDias=Math.floor((dRef-dNac)/86400000);
+          if(diffDias<30) edadLabel=diffDias+' día'+(diffDias!==1?'s':'');
+          else{
+            let meses=(yr*12+mr)-(yn*12+mn);
+            if(dr<dn) meses--;
+            edadLabel=meses+' mes'+(meses!==1?'es':'');
+          }
+        } else {
+          // 1 año o más: años + meses residuales
+          let mesesR=mr-mn;if(dr<dn) mesesR--;if(mesesR<0) mesesR+=12;
+          edadLabel=anosCompletos+' año'+(anosCompletos!==1?'s':'')+(mesesR>0?' '+mesesR+' m':'');
+        }
       }
     } else if(meta.edad!=null) edadLabel=meta.edad+' años';
     const edad=edadLabel;
@@ -3883,7 +3896,7 @@ function _calcularCobertura(archivos){
     detalle.push({tipo_doc:meta.tipo,num_doc:num,fechaNac:meta.fechaNac,edad,sexo:meta.sexo,grupo:g,dxGrupos,total_actos:actos.length,cups_repetidos:repetidos});
   }
   detalle.sort((a,b)=>((a.grupo||'')>(b.grupo||'')?1:-1)||((a.num_doc>b.num_doc)?1:-1));
-  return{cobertura,usuarios_detalle:detalle,total_usuarios:detalle.length};
+  return{cobertura,usuarios_detalle:detalle,total_usuarios:detalle.length,globalFechaMax};
 }
 
 async function dashProcesarRIPS(){
@@ -3937,7 +3950,8 @@ async function dashProcesarRIPS(){
   window._archivosInfo=archivosInfo;
   st.textContent='Calculando cobertura...';
   // Calcular todo en el browser
-  const {cobertura,usuarios_detalle,total_usuarios}=_calcularCobertura(archivos);
+  const {cobertura,usuarios_detalle,total_usuarios,globalFechaMax}=_calcularCobertura(archivos);
+  window._globalFechaMax=globalFechaMax||'';
   // Enviar solo el resumen compacto al servidor (para sesión y evaluación)
   try{
     // Guardar archivos y detalle de usuarios en memoria del browser para pre-evaluación
