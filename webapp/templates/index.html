@@ -2035,6 +2035,10 @@ function abrirValidarPacientes(aid){
 
 function _cerrarValidarPacientes(){
   document.getElementById('modalValidarPacientes').style.display='none';
+  if(window._validarPacientesDesdeAuditoria){
+    window._validarPacientesDesdeAuditoria=false;
+    abrirModalAuditoria();
+  }
 }
 
 function _guardarValidados(){
@@ -2205,7 +2209,11 @@ function abrirModalAuditoria(){
       if(act.ruta_audit){
         for(const[ruta,cr] of Object.entries(act.ruta_audit)){
           const rutaSf=(act.ruta_sin_fin&&act.ruta_sin_fin[ruta])||0;
-          rutaChips+=`<span style="margin-left:4px;padding:1px 5px;border-radius:4px;background:${rutaSf>0?'#FEF3C7':'#F0FDF4'};border:1px solid ${rutaSf>0?'#FCD34D':'#BBF7D0'};color:${rutaSf>0?'#92400E':'#065F46'};font-size:9.5px;white-space:nowrap">${RLBL[ruta]||ruta}:${cr}${rutaSf>0?` ⚠️${rutaSf}`:''}</span>`;
+          rutaChips+=`<div style="padding:3px 8px;border-radius:5px;background:${rutaSf>0?'#FEF3C7':'#F0FDF4'};border:1px solid ${rutaSf>0?'#FCD34D':'#BBF7D0'};font-size:9.5px">
+            <div style="font-weight:700;color:#4C1D95;margin-bottom:1px">🔀 Ruta cruzada</div>
+            <div style="color:#374151">${RLBL[ruta]||ruta}: <b>${cr.toLocaleString('es-CO')}</b> registros</div>
+            ${rutaSf>0?`<div style="color:#92400E;font-weight:700">⚠️ ${rutaSf.toLocaleString('es-CO')} sin finalidad correcta</div>`:`<div style="color:#065F46">✅ Finalidad correcta</div>`}
+          </div>`;
         }
       }
       html+=`<tr style="border-top:1px solid #F3F4F6;background:${actMal?'#FFF5F5':'white'}">
@@ -2234,7 +2242,7 @@ function abrirModalAuditoria(){
               <div style="max-width:360px">
                 <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;flex-wrap:wrap">
                   <span style="background:#FEE2E2;color:#991B1B;padding:2px 7px;border-radius:3px;font-weight:700;font-size:9.5px">⚠️ Tipo de error: Finalidad incorrecta</span>
-                  <button onclick="cerrarModalAuditoria();abrirValidarPacientes('${aid}')" style="padding:2px 9px;border-radius:4px;border:1.5px solid #7C3AED;background:#F5F3FF;color:#5B21B6;font-size:9.5px;font-weight:700;cursor:pointer">👥 Ver pacientes</button>
+                  <button onclick="cerrarModalAuditoria();window._validarPacientesDesdeAuditoria=true;abrirValidarPacientes('${aid}')" style="padding:2px 9px;border-radius:4px;border:1.5px solid #7C3AED;background:#F5F3FF;color:#5B21B6;font-size:9.5px;font-weight:700;cursor:pointer">👥 Ver pacientes</button>
                 </div>
                 <div style="font-size:10px;color:#374151;margin-bottom:4px">
                   <b>Finalidad requerida:</b> ${finEsperadaHtml}
