@@ -1733,6 +1733,7 @@ function _preAgregar(archivos,usuariosGrupos,fechaNacPorPac){
   window._rkRecord=_rkRecord;
   window._resultCupsGlobal=resultCups; // {arch:{grupo:{cups:Set<rowKey>}}}
   window._resultFinGlobal=result;      // {arch:{grupo:{ckey:Set<rowKey>}}}
+  window._sinFinRutasGlobal=sinFinRutas; // {grupo:{cups:{ruta:Set<rowKey>}}} — rowKeys exactos ruta cruzada
 
   // Totales por registro (no deduplicados): {arch: {grupo: {cups: {num: count}}}}
   // Para sellantes y fortif que cuentan cada aplicación
@@ -1918,14 +1919,18 @@ function abrirValidarPacientes(aid, rutaGrupo){
   // Validados previamente
   const yaValidados=window._pacientesValidados[aid]||new Set();
   const rkRec=window._rkRecord[archivo]||{};
-  // MODO RUTA CRUZADA: mostrar registros del grupo de ruta que aparecen en esta actividad
+  // MODO RUTA CRUZADA: usar los rowKeys exactos de sinFinRutas (mismo dedup que la auditoría)
+  // sinFinRutas[grupo][cups][ruta] = Set<rowKey> donde grupo=grupo de la actividad, ruta=PLANIFICACION etc.
   const sinFinRKs=new Set();
   if(rutaGrupo){
-    // Buscar en el grupo de ruta (ej: PLANIFICACION) los registros que coincidan con los CUPS
-    const cupsMapRuta=(window._resultCupsGlobal[archivo]||{})[rutaGrupo]||{};
-    for(const cup of cups){
-      const rks=cupsMapRuta[cup.toUpperCase()]||new Set();
-      for(const rk of rks) sinFinRKs.add(rk);
+    const rutasGlobal=window._sinFinRutasGlobal||{};
+    for(const grp of grupos){
+      const cupsMap=rutasGlobal[grp]||{};
+      for(const cup of cups){
+        const rutaMap=cupsMap[cup.toUpperCase()]||{};
+        const rks=rutaMap[rutaGrupo]||new Set();
+        for(const rk of rks) sinFinRKs.add(rk);
+      }
     }
   } else {
     // MODO NORMAL: registros con CUPS correcto pero finalidad incorrecta
