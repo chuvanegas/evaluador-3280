@@ -2158,7 +2158,46 @@ function abrirModalAuditoria(){
       const conFin=act.encontrados_fin||0;
       const sf=total-conFin;
       const actMal=act.tiene_finalidad&&sf>0;
-      // Rutas cruzadas para esta actividad
+      // Finalidades esperadas (mostrar código + descripción)
+      const FIN_LBL2={'01':'Dx/Tto','05':'Detección','09':'Protección','10':'Educación','11':'Rehabilitación','12':'Salud oral','13':'Vacunación','14':'Crec. y des.','15':'Med. alt.','17':'Suplementación','18':'Planif.(prom)','19':'Planif.(cons)','20':'Planif.(proc)','21':'Ctrl prenatal','22':'Atención parto','23':'Posparto','24':'Urgencias','25':'RN','26':'Ter.resp.','27':'Hemoterapia','30':'Otro'};
+      let finEsperadaHtml='<span style="color:#9ca3af;font-size:10px">—</span>';
+      if(act.tiene_finalidad&&act.finalidades&&act.finalidades.length){
+        finEsperadaHtml=act.finalidades.map(f=>`<span style="display:inline-block;background:#dbeafe;color:#1d4ed8;border-radius:3px;padding:1px 5px;font-size:9.5px;font-weight:700;margin:1px">${f}${FIN_LBL2[f]?' – '+FIN_LBL2[f]:''}</span>`).join(' ');
+      }
+      // Para actividades con error: calcular breakdown de qué finalidades se registraron
+      let errorBreakdownHtml='';
+      if(actMal&&window._resultCupsGlobal&&window._resultFinGlobal&&window._rkRecord&&act.cups&&act.grupos&&act.finalidades){
+        const finKey2={'consultas':'finalidadTecnologiaSalud','procedimientos':'finalidadTecnologiaSalud','medicamentos':'','otrosServicios':''};
+        const fk=finKey2[act.archivo]||'';
+        const finSet2=new Set(act.finalidades);
+        const sinFinRKs2=new Set();
+        for(const grp2 of act.grupos){
+          const cupsMap2=(window._resultCupsGlobal[act.archivo]||{})[grp2]||{};
+          const finMap2=(window._resultFinGlobal[act.archivo]||{})[grp2]||{};
+          for(const cup2 of act.cups){
+            const allRKs2=cupsMap2[cup2.toUpperCase()]||new Set();
+            const conFinRKs2=new Set();
+            for(const fin2 of act.finalidades){const ckey2=cup2.toUpperCase()+'|'+fin2;for(const rk2 of(finMap2[ckey2]||new Set()))conFinRKs2.add(rk2);}
+            for(const rk2 of allRKs2){if(!conFinRKs2.has(rk2))sinFinRKs2.add(rk2);}
+          }
+        }
+        // Contar qué finalidades tienen esos registros
+        const conteoFin={};
+        const rkRec2=window._rkRecord[act.archivo]||{};
+        for(const rk2 of sinFinRKs2){
+          const r2=rkRec2[rk2];
+          const fin2=r2&&fk?String(r2[fk]||'').trim():'';
+          const k2=fin2||'(sin finalidad)';
+          conteoFin[k2]=(conteoFin[k2]||0)+1;
+        }
+        const partes=Object.entries(conteoFin).sort((a,b)=>b[1]-a[1]).map(([fin2,cnt2])=>{
+          const esSinFin=fin2==='(sin finalidad)';
+          const desc=esSinFin?'sin finalidad':`${fin2}${FIN_LBL2[fin2]?' – '+FIN_LBL2[fin2]:''}`;
+          return `<span style="display:inline-block;background:${esSinFin?'#fef3c7':'#fee2e2'};color:${esSinFin?'#92400e':'#991b1b'};border-radius:3px;padding:1px 5px;font-size:9.5px;font-weight:600;margin:1px">${cnt2} con ${desc}</span>`;
+        });
+        errorBreakdownHtml=partes.join(' ');
+      }
+      // Rutas cruzadas para esta actividad (usando datos locales también)
       let rutaChips='';
       if(act.ruta_audit){
         for(const[ruta,cr] of Object.entries(act.ruta_audit)){
@@ -2167,10 +2206,13 @@ function abrirModalAuditoria(){
         }
       }
       html+=`<tr style="border-top:1px solid #F3F4F6;background:${actMal?'#FFF5F5':'white'}">
-        <td style="padding:5px 12px;color:#111827;width:45%">${act.descripcion||''}</td>
+        <td style="padding:5px 12px;color:#111827;font-size:11px">${act.descripcion||''}</td>
         <td style="padding:5px 8px;color:#6B7280;font-size:10px;white-space:nowrap">${act.archivo||''}</td>
         <td style="padding:5px 8px;text-align:right;font-weight:700;color:${total>0?'#059669':'#9CA3AF'}">${total>0?total.toLocaleString('es-CO'):'—'}</td>
-        ${act.tiene_finalidad?`<td style="padding:5px 8px;text-align:right;font-weight:700;color:${actMal?'#DC2626':'#9CA3AF'}">${actMal?`⚠️ ${sf.toLocaleString('es-CO')}`:'✅'}</td>`:`<td style="padding:5px 8px;text-align:center;color:#9CA3AF;font-size:10px">sin cod.</td>`}
+        <td style="padding:5px 8px">${finEsperadaHtml}</td>
+        ${act.tiene_finalidad
+          ?`<td style="padding:5px 8px">${actMal?`<div style="font-weight:700;color:#DC2626;font-size:10px;margin-bottom:2px">⚠️ ${sf.toLocaleString('es-CO')} registros</div><div>${errorBreakdownHtml}</div>`:'<span style="color:#059669;font-weight:700;font-size:10px">✅ Correcto</span>'}</td>`
+          :`<td style="padding:5px 8px;text-align:center;color:#9CA3AF;font-size:10px">sin cód.</td>`}
         <td style="padding:5px 8px">${rutaChips}</td>
       </tr>`;
     }
