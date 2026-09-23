@@ -1898,7 +1898,7 @@ function toggleSinFin(key){ // key = aid (todos) OR aid::RUTA (solo esa ruta)
 // Pacientes validados manualmente por actividad: {aid: Set<rowKey>}
 window._pacientesValidados = window._pacientesValidados || {};
 
-function abrirValidarPacientes(aid){
+function abrirValidarPacientes(aid, rutaGrupo){
   if(!_preevalDatos||!window._resultCupsGlobal||!window._rkRecord) return;
   // Buscar la actividad en _preevalDatos.resultados (estructura real del servidor)
   let actCfg=null;
@@ -1917,23 +1917,31 @@ function abrirValidarPacientes(aid){
   const finSet=new Set(finalidades);
   // Validados previamente
   const yaValidados=window._pacientesValidados[aid]||new Set();
-  // Obtener rowKeys sin finalidad: están en resultCups pero NO en result con fin correcta
-  // usando los datos deduplicados exactos del _preAgregar (mismo dedup que Excel)
-  const sinFinRKs=new Set();
   const rkRec=window._rkRecord[archivo]||{};
-  for(const grp of grupos){
-    const cupsMap=(window._resultCupsGlobal[archivo]||{})[grp]||{};
-    const finMap=(window._resultFinGlobal[archivo]||{})[grp]||{};
+  // MODO RUTA CRUZADA: mostrar registros del grupo de ruta que aparecen en esta actividad
+  const sinFinRKs=new Set();
+  if(rutaGrupo){
+    // Buscar en el grupo de ruta (ej: PLANIFICACION) los registros que coincidan con los CUPS
+    const cupsMapRuta=(window._resultCupsGlobal[archivo]||{})[rutaGrupo]||{};
     for(const cup of cups){
-      const allRKs=cupsMap[cup.toUpperCase()]||new Set();
-      // Construir set de rowKeys CON finalidad correcta para este grupo/cups
-      const conFinRKs=new Set();
-      for(const fin of finalidades){
-        const ckey=cup.toUpperCase()+'|'+fin;
-        for(const rk of (finMap[ckey]||new Set())) conFinRKs.add(rk);
-      }
-      for(const rk of allRKs){
-        if(!conFinRKs.has(rk)) sinFinRKs.add(rk);
+      const rks=cupsMapRuta[cup.toUpperCase()]||new Set();
+      for(const rk of rks) sinFinRKs.add(rk);
+    }
+  } else {
+    // MODO NORMAL: registros con CUPS correcto pero finalidad incorrecta
+    for(const grp of grupos){
+      const cupsMap=(window._resultCupsGlobal[archivo]||{})[grp]||{};
+      const finMap=(window._resultFinGlobal[archivo]||{})[grp]||{};
+      for(const cup of cups){
+        const allRKs=cupsMap[cup.toUpperCase()]||new Set();
+        const conFinRKs=new Set();
+        for(const fin of finalidades){
+          const ckey=cup.toUpperCase()+'|'+fin;
+          for(const rk of (finMap[ckey]||new Set())) conFinRKs.add(rk);
+        }
+        for(const rk of allRKs){
+          if(!conFinRKs.has(rk)) sinFinRKs.add(rk);
+        }
       }
     }
   }
@@ -1993,7 +2001,12 @@ function abrirValidarPacientes(aid){
         errorColor='#0369a1';errorBg='#f0f9ff';
       }
     }
-    if(!errorTipo) errorTipo='Error de finalidad';
+    // En modo ruta cruzada, el error principal es la clasificación incorrecta
+    if(rutaGrupo){
+      const RUTA_LBL3={'EMBARAZADA':'Embarazada','PRECONCEPCIONAL':'Preconcepcional','PLANIFICACION':'Planificación Familiar','DM':'Diabetes Mellitus','HIPERTENSION':'Hipertensión'};
+      errorTipo='Paciente clasificado en '+( RUTA_LBL3[rutaGrupo]||rutaGrupo)+(errorTipo?' · '+errorTipo:'');
+      errorColor='#92400e';errorBg='#fef3c7';
+    } else if(!errorTipo) errorTipo='Error de finalidad';
     filas.push({rowKey:rk,tipo,num,fecha,fin,diag,edad,sexo,cursoVida,errorTipo,errorColor,errorBg});
   }
   filas.sort((a,b)=>a.num.localeCompare(b.num));
@@ -2025,10 +2038,19 @@ function abrirValidarPacientes(aid){
   }
   const m=document.getElementById('modalValidarPacientes');
   m.querySelector('#mvpTitulo').textContent=actCfg.descripcion;
-  // Resumen en el total
-  const resumenHtml=Object.entries(resumen).map(([k,n])=>`<span style="margin-right:8px">· ${k}: <b>${n}</b></span>`).join('');
-  m.querySelector('#mvpTotal').innerHTML=`<span style="color:#dc2626;font-weight:700">${totalError} registros con error</span> <span style="color:#6b7280;font-size:10px;font-weight:400">${resumenHtml}</span>`;
-  m.querySelector('#mvpTabla tbody').innerHTML=rows||`<tr><td colspan="10" style="padding:20px;text-align:center;color:#9ca3af">No se encontraron registros con error para esta actividad</td></tr>`;
+  const RUTA_LBL2={'EMBARAZADA':'Embarazada','PRECONCEPCIONAL':'Preconcepcional','PLANIFICACION':'Planificación Familiar','DM':'Diabetes Mellitus','HIPERTENSION':'Hipertensión'};
+  // Resumen en el total — diferente mensaje según el modo
+  if(rutaGrupo){
+    const rutaNombre=RUTA_LBL2[rutaGrupo]||rutaGrupo;
+    m.querySelector('#mvpTotal').innerHTML=`<span style="color:#92400e;font-weight:700">🔀 ${totalError} paciente(s) de ruta cruzada — ${rutaNombre}</span> <span style="color:#6b7280;font-size:10px">Estos pacientes están clasificados en ${rutaNombre} pero tienen registros en esta actividad</span>`;
+  } else {
+    const resumenHtml=Object.entries(resumen).map(([k,n])=>`<span style="margin-right:8px">· ${k}: <b>${n}</b></span>`).join('');
+    m.querySelector('#mvpTotal').innerHTML=`<span style="color:#dc2626;font-weight:700">${totalError} registros con error</span> <span style="color:#6b7280;font-size:10px;font-weight:400">${resumenHtml}</span>`;
+  }
+  const emptyMsg=rutaGrupo
+    ?`<tr><td colspan="10" style="padding:20px;text-align:center;color:#9ca3af">No se encontraron registros de la ruta ${RUTA_LBL2[rutaGrupo]||rutaGrupo} para esta actividad</td></tr>`
+    :`<tr><td colspan="10" style="padding:20px;text-align:center;color:#9ca3af">No se encontraron registros con error para esta actividad</td></tr>`;
+  m.querySelector('#mvpTabla tbody').innerHTML=rows||emptyMsg;
   m.querySelector('#mvpAid').value=aid;
   m.style.display='flex';
 }
@@ -2213,10 +2235,10 @@ function abrirModalAuditoria(){
             <div style="color:#374151"><b>${RLBL[ruta]||ruta}:</b> ${cr.toLocaleString('es-CO')} registros de pacientes de otra ruta</div>
             ${rutaSf>0
               ?`<div style="color:#92400E;font-weight:700;margin-top:2px">⚠️ ${rutaSf.toLocaleString('es-CO')} también con finalidad incorrecta</div>
-                <button onclick="cerrarModalAuditoria();window._validarPacientesDesdeAuditoria=true;abrirValidarPacientes('${aid}')" style="margin-top:4px;padding:2px 8px;border-radius:4px;border:1.5px solid #92400E;background:#FFFBEB;color:#92400E;font-size:9px;font-weight:700;cursor:pointer">👥 Ver pacientes con error</button>`
+                <button onclick="cerrarModalAuditoria();window._validarPacientesDesdeAuditoria=true;abrirValidarPacientes('${aid}','${ruta}')" style="margin-top:4px;padding:2px 8px;border-radius:4px;border:1.5px solid #92400E;background:#FFFBEB;color:#92400E;font-size:9px;font-weight:700;cursor:pointer">👥 Ver pacientes con error</button>`
               :`<div style="display:flex;align-items:center;gap:6px;margin-top:2px">
                   <span style="color:#065F46;font-size:9.5px">✅ Finalidad correcta en esos registros</span>
-                  <button onclick="cerrarModalAuditoria();window._validarPacientesDesdeAuditoria=true;abrirValidarPacientes('${aid}')" style="padding:2px 8px;border-radius:4px;border:1.5px solid #065F46;background:#F0FDF4;color:#065F46;font-size:9px;font-weight:700;cursor:pointer">👥 Ver pacientes</button>
+                  <button onclick="cerrarModalAuditoria();window._validarPacientesDesdeAuditoria=true;abrirValidarPacientes('${aid}','${ruta}')" style="padding:2px 8px;border-radius:4px;border:1.5px solid #065F46;background:#F0FDF4;color:#065F46;font-size:9px;font-weight:700;cursor:pointer">👥 Ver pacientes</button>
                 </div>`}
           </div>`;
         }
