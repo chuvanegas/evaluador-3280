@@ -2001,18 +2001,21 @@ function abrirValidarPacientes(aid, rutaGrupo){
     } else if(meta.edad!=null) edadLabel=meta.edad+' años';
     const edad=edadLabel;
     const cursoVida=GRUPO_LBL[meta.grupo]||meta.grupo||'—';
-    // Clasificar tipo de error + solución separados
+    // Clasificar tipo de error + solución con lenguaje normativo formal
+    const NORMA='Res. 3280 de 2018 / Res. 948 de 2026';
     let errorTipo='';let solucion='';let errorColor='#dc2626';let errorBg='#fef2f2';
     if(!fin){
-      errorTipo='Sin finalidad';
+      errorTipo='Sin finalidad registrada';
       const esperadas=finalidades.map(f2=>FIN_LBL[f2]?`${f2} – ${FIN_LBL[f2]}`:f2).join(' / ');
-      solucion=esperadas?`Registrar finalidad: ${esperadas}`:'Registrar la finalidad correspondiente';
+      solucion=esperadas
+        ?`El registro no cuenta con código de finalidad. Según ${NORMA}, esta actividad requiere registrar la finalidad: ${esperadas}`
+        :'El registro no cuenta con código de finalidad. Debe completarse con el código que corresponda según la normativa vigente.';
       errorColor='#b45309';errorBg='#fffbeb';
     } else if(finalidades.length&&!finSet.has(fin)){
       const finDesc=FIN_LBL[fin]||fin;
       const esperadas=finalidades.map(f2=>FIN_LBL[f2]?`${f2} – ${FIN_LBL[f2]}`:f2).join(' / ');
-      errorTipo=`Finalidad incorrecta`;
-      solucion=`Cambiar finalidad ${fin} (${finDesc}) → ${esperadas}`;
+      errorTipo=`Finalidad ${fin} — ${finDesc}`;
+      solucion=`La finalidad registrada (${fin} – ${finDesc}) no corresponde a esta actividad según ${NORMA}. La finalidad requerida es: ${esperadas}.`;
       errorColor='#dc2626';errorBg='#fef2f2';
     }
     // Ruta cruzada: paciente pertenece a ruta diferente al programa
@@ -2023,7 +2026,8 @@ function abrirValidarPacientes(aid, rutaGrupo){
       if(rutasCruz.length&&!grupos.some(g=>['EMBARAZADA','PRECONCEPCIONAL','PLANIFICACION','DM','HIPERTENSION'].includes(g))){
         const rutaLabel=rutasCruz.map(g=>RUTA_LBL[g]||g).join(', ');
         if(!errorTipo){errorTipo='Ruta cruzada';errorColor='#7c3aed';errorBg='#f5f3ff';}
-        solucion=(solucion?solucion+' · ':'')+`Verificar: paciente también registrado en ${rutaLabel}`;
+        solucion=(solucion?solucion+' Adicionalmente, el ':' El')
+          +`paciente figura en la ruta ${rutaLabel}. El prestador debe verificar si la atención también aplica para dicha ruta o si el registro es un duplicado entre programas.`;
       }
     }
     // Diagnóstico cruzado (consultas): DX sugiere otro programa
@@ -2031,18 +2035,18 @@ function abrirValidarPacientes(aid, rutaGrupo){
       const progDx=DX_A_PROG[diag];
       const esCorr=grupos.some(g=>diag==='Z001'&&g==='PRIMERA_INFANCIA'||diag==='Z002'&&g==='INFANCIA'||diag==='Z003'&&g==='ADOLESCENCIA'||diag==='Z108'&&['JOVENES','ADULTEZ','VEJEZ'].includes(g));
       if(!esCorr){
-        if(!errorTipo){errorTipo='Diagnóstico cruzado';errorColor='#0369a1';errorBg='#f0f9ff';}
-        solucion=(solucion?solucion+' · ':'')+`Dx ${diag} clasifica al paciente en ${progDx} — verificar a qué programa corresponde la atención`;
+        if(!errorTipo){errorTipo='Diagnóstico no corresponde al curso de vida';errorColor='#0369a1';errorBg='#f0f9ff';}
+        solucion=(solucion?solucion+' ':'')+`El diagnóstico principal ${diag} clasifica al paciente en ${progDx} según la tabla de clasificación por DX de la ${NORMA}. El prestador debe verificar si la atención corresponde al programa evaluado o al de ${progDx}.`;
       }
     }
-    // En modo ruta cruzada, el error principal es la clasificación
+    // Modo ruta cruzada: el error principal es la clasificación del paciente
     if(rutaGrupo){
       const RUTA_LBL3={'EMBARAZADA':'Embarazada','PRECONCEPCIONAL':'Preconcepcional','PLANIFICACION':'Planificación Familiar','DM':'Diabetes Mellitus','HIPERTENSION':'Hipertensión'};
       const rutaNom=RUTA_LBL3[rutaGrupo]||rutaGrupo;
-      errorTipo='Ruta cruzada';
-      solucion=`Paciente clasificado en ${rutaNom}. Confirmar si la atención corresponde a esta actividad o a ${rutaNom}`+(solucion?' · '+solucion:'');
+      errorTipo='Registro en programa diferente al afiliado';
+      solucion=`El paciente está clasificado en la ruta de ${rutaNom}. Este registro aparece en la actividad del programa evaluado, lo cual puede indicar una atención compartida entre programas. El prestador debe confirmar si la atención corresponde a ${rutaNom} o al programa evaluado, y ajustar el registro en el sistema de información.`+(solucion?' '+solucion:'');
       errorColor='#92400e';errorBg='#fef3c7';
-    } else if(!errorTipo){errorTipo='Error de finalidad';solucion='Revisar y corregir la finalidad registrada';}
+    } else if(!errorTipo){errorTipo='Error de finalidad';solucion=`Revisar y corregir el código de finalidad de acuerdo con ${NORMA}.`;}
     filas.push({rowKey:rk,tipo,num,fecha,fin,diag,edad,sexo,cursoVida,errorTipo,solucion,errorColor,errorBg});
   }
   filas.sort((a,b)=>a.num.localeCompare(b.num));
@@ -2070,7 +2074,7 @@ function abrirValidarPacientes(aid, rutaGrupo){
       <td style="padding:5px 8px">${finLabel}</td>
       <td style="padding:5px 8px;font-size:10px;color:#374151">${f.diag}</td>
       <td style="padding:5px 8px;white-space:nowrap"><span style="display:inline-block;background:${f.errorBg};color:${f.errorColor};border-radius:4px;padding:2px 6px;font-size:9.5px;font-weight:700;line-height:1.4">${f.errorTipo}</span></td>
-      <td style="padding:5px 10px;font-size:9.5px;color:#374151;border-left:2px solid #e5e7eb;max-width:260px">${f.solucion||'—'}</td>
+      <td style="padding:5px 10px;font-size:9.5px;color:#374151;border-left:2px solid #e5e7eb;min-width:200px;line-height:1.45">${f.solucion||'—'}</td>
     </tr>`;
   }
   const m=document.getElementById('modalValidarPacientes');
@@ -4124,7 +4128,7 @@ function dashIrEvaluacion(){
   <!-- Backdrop semitransparente solo a la izquierda -->
   <div style="position:absolute;inset:0;background:rgba(15,23,42,.45)"></div>
   <!-- Panel derecho -->
-  <div style="position:absolute;top:0;right:0;bottom:0;width:min(640px,100vw);background:#ffffff;display:flex;flex-direction:column;box-shadow:-4px 0 32px rgba(0,0,0,.18)">
+  <div style="position:absolute;top:0;right:0;bottom:0;width:min(960px,100vw);background:#ffffff;display:flex;flex-direction:column;box-shadow:-4px 0 32px rgba(0,0,0,.18)">
     <!-- Header -->
     <div style="padding:14px 18px;border-bottom:1px solid #e5e7eb;background:#f8fafc;display:flex;align-items:flex-start;gap:10px;flex-shrink:0">
       <div style="flex:1;min-width:0">
