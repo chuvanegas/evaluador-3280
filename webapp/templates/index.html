@@ -2209,52 +2209,65 @@ function abrirModalAuditoria(){
       if(act.ruta_audit){
         for(const[ruta,cr] of Object.entries(act.ruta_audit)){
           const rutaSf=(act.ruta_sin_fin&&act.ruta_sin_fin[ruta])||0;
-          rutaChips+=`<div style="padding:3px 8px;border-radius:5px;background:${rutaSf>0?'#FEF3C7':'#F0FDF4'};border:1px solid ${rutaSf>0?'#FCD34D':'#BBF7D0'};font-size:9.5px">
-            <div style="font-weight:700;color:#4C1D95;margin-bottom:1px">🔀 Ruta cruzada</div>
-            <div style="color:#374151">${RLBL[ruta]||ruta}: <b>${cr.toLocaleString('es-CO')}</b> registros</div>
-            ${rutaSf>0?`<div style="color:#92400E;font-weight:700">⚠️ ${rutaSf.toLocaleString('es-CO')} sin finalidad correcta</div>`:`<div style="color:#065F46">✅ Finalidad correcta</div>`}
+          rutaChips+=`<div style="padding:4px 10px;border-radius:5px;background:${rutaSf>0?'#FEF3C7':'#F0FDF4'};border:1px solid ${rutaSf>0?'#FCD34D':'#BBF7D0'};font-size:9.5px">
+            <div style="color:#374151"><b>${RLBL[ruta]||ruta}:</b> ${cr.toLocaleString('es-CO')} registros de pacientes de otra ruta</div>
+            ${rutaSf>0
+              ?`<div style="color:#92400E;font-weight:700;margin-top:2px">⚠️ ${rutaSf.toLocaleString('es-CO')} también con finalidad incorrecta</div>
+                <button onclick="cerrarModalAuditoria();window._validarPacientesDesdeAuditoria=true;abrirValidarPacientes('${aid}')" style="margin-top:4px;padding:2px 8px;border-radius:4px;border:1.5px solid #92400E;background:#FFFBEB;color:#92400E;font-size:9px;font-weight:700;cursor:pointer">👥 Ver pacientes con error</button>`
+              :`<div style="color:#065F46;margin-top:1px">✅ Finalidad correcta en esos registros</div>`}
           </div>`;
         }
       }
-      html+=`<tr style="border-top:1px solid #F3F4F6;background:${actMal?'#FFF5F5':'white'}">
-        <td colspan="6" style="padding:8px 12px">
+      // Determinar si hay algo relevante que mostrar para esta actividad
+      const hayRutas=!!rutaChips;
+      const hayError=actMal;
+      const hayRegistros=total>0;
+      // Si no hay registros Y no hay rutas cruzadas: fila compacta sin métricas vacías
+      const sinRegistros=!hayRegistros&&!hayRutas;
+      html+=`<tr style="border-top:1px solid #F3F4F6;background:${hayError?'#FFF5F5':hayRutas?'#FFFBEB':'white'}">
+        <td colspan="6" style="padding:${sinRegistros?'5px 12px':'8px 12px'}">
           <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap">
             <!-- Descripción + tipo -->
             <div style="flex:1;min-width:180px">
-              <div style="font-weight:700;color:#111827;font-size:11.5px;line-height:1.3;margin-bottom:3px">${act.descripcion||''}</div>
-              <div style="font-size:10px;color:#6B7280">Tipo de actividad: <span style="font-weight:600;color:#374151">${ARCH_LBL[act.archivo]||act.archivo||''}</span></div>
+              <div style="font-weight:700;color:${sinRegistros?'#9CA3AF':'#111827'};font-size:${sinRegistros?'10.5px':'11.5px'};line-height:1.3;margin-bottom:2px">${act.descripcion||''}</div>
+              <div style="font-size:9.5px;color:#9CA3AF">Tipo: ${ARCH_LBL[act.archivo]||act.archivo||''}${sinRegistros?' · <i>Sin registros en RIPS</i>':''}</div>
             </div>
+            ${sinRegistros?'':`
             <!-- Métricas + error -->
             <div style="display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap">
-              <!-- Correctas -->
-              <div style="text-align:center;min-width:56px">
-                <div style="font-size:9.5px;color:#6B7280;margin-bottom:2px">Correctas</div>
-                <div style="font-weight:700;font-size:15px;color:${conFin>0?'#059669':'#9CA3AF'}">${act.tiene_finalidad?(conFin>0?conFin.toLocaleString('es-CO'):'0'):(total>0?total.toLocaleString('es-CO'):'—')}</div>
-              </div>
-              <!-- Incorrectas / error -->
+              <!-- Conteo principal -->
               ${act.tiene_finalidad?`
-              <div style="text-align:center;min-width:56px">
-                <div style="font-size:9.5px;color:#6B7280;margin-bottom:2px">Incorrectas</div>
-                <div style="font-weight:700;font-size:15px;color:${actMal?'#DC2626':'#059669'}">${sf>0?sf.toLocaleString('es-CO'):'0'}</div>
-              </div>`:''}
-              <!-- Detalle del error -->
-              ${actMal?`
+              <div style="text-align:center;min-width:52px">
+                <div style="font-size:9px;color:#6B7280;margin-bottom:1px">Correctas</div>
+                <div style="font-weight:700;font-size:15px;color:${conFin>0?'#059669':'#9CA3AF'}">${conFin>0?conFin.toLocaleString('es-CO'):'0'}</div>
+              </div>
+              <div style="text-align:center;min-width:52px">
+                <div style="font-size:9px;color:#6B7280;margin-bottom:1px">Incorrectas</div>
+                <div style="font-weight:700;font-size:15px;color:${hayError?'#DC2626':'#059669'}">${sf>0?sf.toLocaleString('es-CO'):'0'}</div>
+              </div>`:`
+              <div style="text-align:center;min-width:52px">
+                <div style="font-size:9px;color:#6B7280;margin-bottom:1px">Registros</div>
+                <div style="font-weight:700;font-size:15px;color:#059669">${total.toLocaleString('es-CO')}</div>
+              </div>`}
+              <!-- Detalle del error de finalidad -->
+              ${hayError?`
               <div style="max-width:360px">
                 <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;flex-wrap:wrap">
-                  <span style="background:#FEE2E2;color:#991B1B;padding:2px 7px;border-radius:3px;font-weight:700;font-size:9.5px">⚠️ Tipo de error: Finalidad incorrecta</span>
+                  <span style="background:#FEE2E2;color:#991B1B;padding:2px 7px;border-radius:3px;font-weight:700;font-size:9.5px">⚠️ Error: Finalidad incorrecta</span>
                   <button onclick="cerrarModalAuditoria();window._validarPacientesDesdeAuditoria=true;abrirValidarPacientes('${aid}')" style="padding:2px 9px;border-radius:4px;border:1.5px solid #7C3AED;background:#F5F3FF;color:#5B21B6;font-size:9.5px;font-weight:700;cursor:pointer">👥 Ver pacientes</button>
                 </div>
-                <div style="font-size:10px;color:#374151;margin-bottom:4px">
-                  <b>Finalidad requerida:</b> ${finEsperadaHtml}
-                </div>
+                <div style="font-size:10px;color:#374151;margin-bottom:4px"><b>Finalidad requerida:</b> ${finEsperadaHtml}</div>
                 <div style="font-size:9.5px;color:#6B7280;margin-bottom:3px"><b>Finalidades registradas incorrectamente:</b></div>
                 <div style="display:flex;flex-wrap:wrap;gap:2px">${errorBreakdownHtml}</div>
               </div>`
               :act.tiene_finalidad?`<div style="display:flex;align-items:center"><span style="font-size:10px;color:#059669;font-weight:700">✅ Sin errores de finalidad</span></div>`
-              :`<div style="display:flex;align-items:center"><span style="font-size:10px;color:#9CA3AF">Sin código de finalidad</span></div>`}
+              :''}
               <!-- Rutas cruzadas -->
-              ${rutaChips?`<div style="display:flex;flex-wrap:wrap;gap:2px;align-items:center">${rutaChips}</div>`:''}
-            </div>
+              ${hayRutas?`<div style="display:flex;flex-wrap:wrap;gap:4px;align-items:flex-start">
+                <div style="font-size:9.5px;color:#92400E;font-weight:700;width:100%;margin-bottom:2px">⚠️ Pacientes de otra ruta detectados:</div>
+                ${rutaChips}
+              </div>`:''}
+            </div>`}
           </div>
         </td>
       </tr>`;
