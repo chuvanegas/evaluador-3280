@@ -2001,15 +2001,18 @@ function abrirValidarPacientes(aid, rutaGrupo){
     } else if(meta.edad!=null) edadLabel=meta.edad+' años';
     const edad=edadLabel;
     const cursoVida=GRUPO_LBL[meta.grupo]||meta.grupo||'—';
-    // Clasificar tipo de error
-    let errorTipo='';let errorColor='#dc2626';let errorBg='#fef2f2';
+    // Clasificar tipo de error + solución separados
+    let errorTipo='';let solucion='';let errorColor='#dc2626';let errorBg='#fef2f2';
     if(!fin){
-      errorTipo='Sin finalidad registrada';
+      errorTipo='Sin finalidad';
+      const esperadas=finalidades.map(f2=>FIN_LBL[f2]?`${f2} – ${FIN_LBL[f2]}`:f2).join(' / ');
+      solucion=esperadas?`Registrar finalidad: ${esperadas}`:'Registrar la finalidad correspondiente';
       errorColor='#b45309';errorBg='#fffbeb';
     } else if(finalidades.length&&!finSet.has(fin)){
       const finDesc=FIN_LBL[fin]||fin;
-      const esperadas=finalidades.map(f2=>FIN_LBL[f2]?`${f2} – ${FIN_LBL[f2]}`:f2).join(', ');
-      errorTipo=`Finalidad ${fin} (${finDesc}) — esperada: ${esperadas}`;
+      const esperadas=finalidades.map(f2=>FIN_LBL[f2]?`${f2} – ${FIN_LBL[f2]}`:f2).join(' / ');
+      errorTipo=`Finalidad incorrecta`;
+      solucion=`Cambiar finalidad ${fin} (${finDesc}) → ${esperadas}`;
       errorColor='#dc2626';errorBg='#fef2f2';
     }
     // Ruta cruzada: paciente pertenece a ruta diferente al programa
@@ -2017,13 +2020,10 @@ function abrirValidarPacientes(aid, rutaGrupo){
     if(pacGrupos){
       const pacArr=Array.isArray(pacGrupos)?pacGrupos:[pacGrupos];
       const rutasCruz=pacArr.filter(g=>RUTA_LBL[g]);
-      const gruposCV=['PRIMERA_INFANCIA','INFANCIA','ADOLESCENCIA','JOVENES','ADULTEZ','VEJEZ'];
-      const enGrupoCorr=grupos.some(g=>pacArr.includes(g));
       if(rutasCruz.length&&!grupos.some(g=>['EMBARAZADA','PRECONCEPCIONAL','PLANIFICACION','DM','HIPERTENSION'].includes(g))){
-        // Actividad CV pero paciente tiene ruta adicional
         const rutaLabel=rutasCruz.map(g=>RUTA_LBL[g]||g).join(', ');
-        errorTipo=(errorTipo?errorTipo+' · ':'')+'Paciente también en ruta: '+rutaLabel;
-        if(!fin) {errorColor='#7c3aed';errorBg='#f5f3ff';}
+        if(!errorTipo){errorTipo='Ruta cruzada';errorColor='#7c3aed';errorBg='#f5f3ff';}
+        solucion=(solucion?solucion+' · ':'')+`Verificar: paciente también registrado en ${rutaLabel}`;
       }
     }
     // Diagnóstico cruzado (consultas): DX sugiere otro programa
@@ -2031,17 +2031,19 @@ function abrirValidarPacientes(aid, rutaGrupo){
       const progDx=DX_A_PROG[diag];
       const esCorr=grupos.some(g=>diag==='Z001'&&g==='PRIMERA_INFANCIA'||diag==='Z002'&&g==='INFANCIA'||diag==='Z003'&&g==='ADOLESCENCIA'||diag==='Z108'&&['JOVENES','ADULTEZ','VEJEZ'].includes(g));
       if(!esCorr){
-        errorTipo=(errorTipo?errorTipo+' · ':'')+'Dx '+diag+' → '+progDx;
-        errorColor='#0369a1';errorBg='#f0f9ff';
+        if(!errorTipo){errorTipo='Diagnóstico cruzado';errorColor='#0369a1';errorBg='#f0f9ff';}
+        solucion=(solucion?solucion+' · ':'')+`Dx ${diag} clasifica al paciente en ${progDx} — verificar a qué programa corresponde la atención`;
       }
     }
-    // En modo ruta cruzada, el error principal es la clasificación incorrecta
+    // En modo ruta cruzada, el error principal es la clasificación
     if(rutaGrupo){
       const RUTA_LBL3={'EMBARAZADA':'Embarazada','PRECONCEPCIONAL':'Preconcepcional','PLANIFICACION':'Planificación Familiar','DM':'Diabetes Mellitus','HIPERTENSION':'Hipertensión'};
-      errorTipo='Paciente clasificado en '+( RUTA_LBL3[rutaGrupo]||rutaGrupo)+(errorTipo?' · '+errorTipo:'');
+      const rutaNom=RUTA_LBL3[rutaGrupo]||rutaGrupo;
+      errorTipo='Ruta cruzada';
+      solucion=`Paciente clasificado en ${rutaNom}. Confirmar si la atención corresponde a esta actividad o a ${rutaNom}`+(solucion?' · '+solucion:'');
       errorColor='#92400e';errorBg='#fef3c7';
-    } else if(!errorTipo) errorTipo='Error de finalidad';
-    filas.push({rowKey:rk,tipo,num,fecha,fin,diag,edad,sexo,cursoVida,errorTipo,errorColor,errorBg});
+    } else if(!errorTipo){errorTipo='Error de finalidad';solucion='Revisar y corregir la finalidad registrada';}
+    filas.push({rowKey:rk,tipo,num,fecha,fin,diag,edad,sexo,cursoVida,errorTipo,solucion,errorColor,errorBg});
   }
   filas.sort((a,b)=>a.num.localeCompare(b.num));
   // Resumen de tipos de error
@@ -2067,7 +2069,8 @@ function abrirValidarPacientes(aid, rutaGrupo){
       <td style="padding:5px 8px;font-size:10px;color:#374151">${f.fecha}</td>
       <td style="padding:5px 8px">${finLabel}</td>
       <td style="padding:5px 8px;font-size:10px;color:#374151">${f.diag}</td>
-      <td style="padding:5px 8px"><span style="display:inline-block;background:${f.errorBg};color:${f.errorColor};border-radius:4px;padding:2px 6px;font-size:9.5px;font-weight:600;line-height:1.4">${f.errorTipo}</span></td>
+      <td style="padding:5px 8px;white-space:nowrap"><span style="display:inline-block;background:${f.errorBg};color:${f.errorColor};border-radius:4px;padding:2px 6px;font-size:9.5px;font-weight:700;line-height:1.4">${f.errorTipo}</span></td>
+      <td style="padding:5px 10px;font-size:9.5px;color:#374151;border-left:2px solid #e5e7eb;max-width:260px">${f.solucion||'—'}</td>
     </tr>`;
   }
   const m=document.getElementById('modalValidarPacientes');
@@ -2082,8 +2085,8 @@ function abrirValidarPacientes(aid, rutaGrupo){
     m.querySelector('#mvpTotal').innerHTML=`<span style="color:#dc2626;font-weight:700">${totalError} registros con error</span> <span style="color:#6b7280;font-size:10px;font-weight:400">${resumenHtml}</span>`;
   }
   const emptyMsg=rutaGrupo
-    ?`<tr><td colspan="10" style="padding:20px;text-align:center;color:#9ca3af">No se encontraron registros de la ruta ${RUTA_LBL2[rutaGrupo]||rutaGrupo} para esta actividad</td></tr>`
-    :`<tr><td colspan="10" style="padding:20px;text-align:center;color:#9ca3af">No se encontraron registros con error para esta actividad</td></tr>`;
+    ?`<tr><td colspan="11" style="padding:20px;text-align:center;color:#9ca3af">No se encontraron registros de la ruta ${RUTA_LBL2[rutaGrupo]||rutaGrupo} para esta actividad</td></tr>`
+    :`<tr><td colspan="11" style="padding:20px;text-align:center;color:#9ca3af">No se encontraron registros con error para esta actividad</td></tr>`;
   m.querySelector('#mvpTabla tbody').innerHTML=rows||emptyMsg;
   m.querySelector('#mvpAid').value=aid;
   m.style.display='flex';
@@ -4152,6 +4155,7 @@ function dashIrEvaluacion(){
             <th style="padding:7px 8px;text-align:left;font-weight:600;color:#6b7280;font-size:10px;border-bottom:1px solid #e5e7eb">Finalidad</th>
             <th style="padding:7px 8px;text-align:left;font-weight:600;color:#6b7280;font-size:10px;border-bottom:1px solid #e5e7eb">Dx</th>
             <th style="padding:7px 8px;text-align:left;font-weight:600;color:#dc2626;font-size:10px;border-bottom:1px solid #e5e7eb">Tipo de error</th>
+            <th style="padding:7px 8px;text-align:left;font-weight:600;color:#059669;font-size:10px;border-bottom:1px solid #e5e7eb;border-left:2px solid #e5e7eb">A corregir</th>
           </tr>
         </thead>
         <tbody></tbody>
