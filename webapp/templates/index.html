@@ -1969,8 +1969,24 @@ function abrirValidarPacientes(aid, rutaGrupo){
     const fecha=(r[fechaKey]||'').slice(0,10);
     const diag=(r.codDiagnosticoPrincipal||r.codDiagnostico||'').trim().toUpperCase();
     const meta=pacMeta[num]||{};
-    const edad=meta.edad!=null?meta.edad:'—';
     const sexo=SEXO_LBL[meta.sexo]||meta.sexo||'—';
+    // Calcular edad precisa en días/meses/años usando fechaNac vs fecha del acto
+    let edadLabel='—';
+    const fnRaw=meta.fechaNac||'';
+    const fechaRef=fecha||'';
+    if(fnRaw&&fechaRef){
+      const fn=fnRaw.replace(/(\d{4})(\d{2})(\d{2})/,'$1-$2-$3');
+      const ref=fechaRef.replace(/(\d{4})(\d{2})(\d{2})/,'$1-$2-$3');
+      const dNac=new Date(fn);const dRef=new Date(ref);
+      if(!isNaN(dNac)&&!isNaN(dRef)&&dRef>=dNac){
+        const diffMs=dRef-dNac;
+        const diffDias=Math.floor(diffMs/86400000);
+        if(diffDias<30) edadLabel=diffDias+' día'+(diffDias!==1?'s':'');
+        else if(diffDias<365){const m=Math.floor(diffDias/30.44);edadLabel=m+' mes'+(m!==1?'es':'');}
+        else{const a=Math.floor(diffDias/365.25);const mR=Math.floor((diffDias%365.25)/30.44);edadLabel=a+' año'+(a!==1?'s':'')+(mR>0?' '+mR+' m':'');}
+      }
+    } else if(meta.edad!=null) edadLabel=meta.edad+' años';
+    const edad=edadLabel;
     const cursoVida=GRUPO_LBL[meta.grupo]||meta.grupo||'—';
     // Clasificar tipo de error
     let errorTipo='';let errorColor='#dc2626';let errorBg='#fef2f2';
@@ -2033,7 +2049,7 @@ function abrirValidarPacientes(aid, rutaGrupo){
       <td style="padding:5px 8px;font-size:10px;color:#6b7280">${f.tipo}</td>
       <td style="padding:5px 8px;font-size:11px;font-weight:700;color:#111827;font-variant-numeric:tabular-nums">${f.num}</td>
       <td style="padding:5px 8px;font-size:10px;color:#6b7280;text-align:center">${f.sexo}</td>
-      <td style="padding:5px 8px;font-size:10px;color:#374151;text-align:center;font-weight:600">${f.edad} a.</td>
+      <td style="padding:5px 8px;font-size:10px;color:#374151;text-align:center;font-weight:600">${f.edad}</td>
       <td style="padding:5px 8px;font-size:10px;color:#374151">${f.cursoVida}</td>
       <td style="padding:5px 8px;font-size:10px;color:#374151">${f.fecha}</td>
       <td style="padding:5px 8px">${finLabel}</td>
