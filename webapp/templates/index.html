@@ -1826,12 +1826,38 @@ async function preevaluar(){
         }
       }
       window._usuariosGruposGlobal=usuariosGrupos; // para clasificar errores en modal validar
-      // Mapa rápido numDoc → {edad, sexo, grupo, fechaNac} para enriquecer panel validar
-      window._pacienteMetaGlobal={};
+      // Mapa completo numDoc → {sexo, fechaNac, edad, grupo} cruzando USUARIOS + usuarios_detalle
+      // Fuente 1: archivo USUARIOS (cubre TODOS los pacientes, tiene sexo y fechaNac)
+      const _pmg={};
+      for(const u of (window._ripsDatos.usuarios||[])){
+        const num=(u.numDocumentoIdentificacion||'').trim();
+        if(!num) continue;
+        // Calcular edad al momento del pre-eval (año actual)
+        let edadCalc=null;
+        if(u.fechaNacimiento){
+          const fn=u.fechaNacimiento.replace(/(\d{4})(\d{2})(\d{2})/,'$1-$2-$3');
+          const hoy=new Date();
+          const [yn,mn,dn]=fn.split('-').map(Number);
+          if(yn){edadCalc=hoy.getFullYear()-yn-(hoy.getMonth()+1<mn||(hoy.getMonth()+1===mn&&hoy.getDate()<dn)?1:0);}
+        }
+        _pmg[num]={sexo:u.codSexo||'',fechaNac:u.fechaNacimiento||'',edad:edadCalc,grupo:null};
+      }
+      // Fuente 2: usuarios_detalle agrega grupo/edad calculado por acto
       for(const u of (window._usuariosDetalle||[])){
         const key=u.num_doc;
-        if(!window._pacienteMetaGlobal[key]) window._pacienteMetaGlobal[key]={edad:u.edad,sexo:u.sexo,grupo:u.grupo,fechaNac:u.fechaNac};
+        if(_pmg[key]){
+          if(_pmg[key].grupo===null) _pmg[key].grupo=u.grupo;
+          if(_pmg[key].edad===null&&u.edad!=null) _pmg[key].edad=u.edad;
+        } else {
+          _pmg[key]={sexo:u.sexo||'',fechaNac:u.fechaNac||'',edad:u.edad,grupo:u.grupo};
+        }
       }
+      // Fuente 3: para pacientes solo en servicios (sin registro en USUARIOS), añadir grupo desde usuariosGrupos
+      for(const[num,grpRaw] of Object.entries(usuariosGrupos)){
+        if(!_pmg[num]) _pmg[num]={sexo:'',fechaNac:'',edad:null,grupo:Array.isArray(grpRaw)?grpRaw[0]:grpRaw};
+        else if(_pmg[num].grupo===null) _pmg[num].grupo=Array.isArray(grpRaw)?grpRaw[0]:grpRaw;
+      }
+      window._pacienteMetaGlobal=_pmg;
       conteos=_preAgregar(archivos,usuariosGrupos,fechaNacPorPac);
     }catch(err){
       st.textContent="❌ Error JS: "+err.message;
